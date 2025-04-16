@@ -23,10 +23,11 @@ class ModuleScaffold extends Command
             'module' => $module,
         ]);
 
-        // 2. Controlador API (sin métodos de vista)
+        // 2. Controlador API
         $this->call('module:make-controller', [
             'controller' => "{$module}/{$name}Controller",
             '--api' => true,
+            'module' => $module,
         ]);
 
         // 3. Migración
@@ -38,16 +39,19 @@ class ModuleScaffold extends Command
 
         // 4. Form Requests
         $this->call('module:make-request', [
-            'name' => "{$module}/Store{$name}Request",
+            'name' => "Store{$name}Request",
+            'module' => $module,
         ]);
 
         $this->call('module:make-request', [
-            'name' => "{$module}/Update{$name}Request",
+            'name' => "Update{$name}Request",
+            'module' => $module,
         ]);
 
         // 5. API Resource
         $this->call('module:make-resource', [
-            'name' => "{$module}/{$name}Resource",
+            'name' => "{$name}Resource",
+            'module' => $module,
         ]);
 
         // 6. Factory
@@ -57,11 +61,12 @@ class ModuleScaffold extends Command
         ]);
 
         // 7. Seeder
-        $this->call('module:make-seeder', [
-            'name' => "{$name}Seeder",
+        $this->call('module:make-seed', [
+            'name' => "{$name}Seeded",
             'module' => $module,
         ]);
 
         $this->info("✅ Scaffold API completo generado para {$name} en módulo {$module}.");
     }
+
 }
