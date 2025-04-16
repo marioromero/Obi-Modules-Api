@@ -1,3 +1,10 @@
 {
-    "Users": true
+    "Users": true,
+    "Geography": true,
+    "Clients": true,
+    "Cases": true,
+    "Banks": true,
+    "Reports": true,
+    "Appointments": true,
+    "Mailing": true
 }

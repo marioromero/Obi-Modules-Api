@@ -1,0 +1,11 @@
+{
+    "name": "Cases",
+    "alias": "cases",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Cases\\Providers\\CasesServiceProvider"
+    ],
+    "files": []
+}

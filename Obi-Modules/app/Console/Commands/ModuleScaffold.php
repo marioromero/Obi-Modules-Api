@@ -15,7 +15,13 @@ class ModuleScaffold extends Command
         $module = Str::studly($this->argument('module'));
         $name = Str::studly($this->argument('name'));
 
-        $this->info("📦 Generando estructura API para '{$name}' en módulo '{$module}'");
+        // Verificar si el módulo existe
+        if (!is_dir(base_path("Modules/{$module}"))) {
+            $this->error("🚫 El módulo '{$module}' no existe. Créalo primero con: php artisan module:make {$module}");
+            return Command::FAILURE;
+        }
+
+        $this->info("📦 Generando estructura API para '{$name}' en módulo '{$module}'...");
 
         // 1. Modelo
         $this->call('module:make-model', [
@@ -25,7 +31,7 @@ class ModuleScaffold extends Command
 
         // 2. Controlador API
         $this->call('module:make-controller', [
-            'controller' => "{$module}/{$name}Controller",
+            'controller' => "{$name}Controller",
             '--api' => true,
             'module' => $module,
         ]);
@@ -62,11 +68,11 @@ class ModuleScaffold extends Command
 
         // 7. Seeder
         $this->call('module:make-seed', [
-            'name' => "{$name}Seeded",
+            'name' => "{$name}Seeder",
             'module' => $module,
         ]);
 
         $this->info("✅ Scaffold API completo generado para {$name} en módulo {$module}.");
+        return Command::SUCCESS;
     }
-
 }
