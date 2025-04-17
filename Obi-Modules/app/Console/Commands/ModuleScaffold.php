@@ -13,66 +13,71 @@ class ModuleScaffold extends Command
     public function handle()
     {
         $module = Str::studly($this->argument('module'));
-        $name = Str::studly($this->argument('name'));
+        $name   = Str::studly($this->argument('name'));
 
-        // Verificar si el módulo existe
-        if (!is_dir(base_path("Modules/{$module}"))) {
-            $this->error("🚫 El módulo '{$module}' no existe. Créalo primero con: php artisan module:make {$module}");
+        if (! is_dir(base_path("Modules/{$module}"))) {
+            $this->error("🚫 El módulo '{$module}' no existe. Primero: php artisan module:make {$module}");
             return Command::FAILURE;
         }
 
-        $this->info("📦 Generando estructura API para '{$name}' en módulo '{$module}'...");
+        // Sobrescribir rutas para que se generen donde deben
+        config([
+            'modules.paths.generator.controller.path' => 'app/Http/Controllers',
+            'modules.paths.generator.request.path'    => 'app/Http/Requests',
+            'modules.paths.generator.resource.path'   => 'app/Transformers',
+        ]);
 
-        // 1. Modelo
+        $this->info("📦 Scaffold API para {$name} en módulo {$module}...");
+
+        // Modelo
         $this->call('module:make-model', [
-            'model' => $name,
+            'model'  => $name,
             'module' => $module,
         ]);
 
-        // 2. Controlador API
+        // Controlador API
         $this->call('module:make-controller', [
             'controller' => "{$name}Controller",
-            '--api' => true,
-            'module' => $module,
+            '--api'      => true,
+            'module'     => $module,
         ]);
 
-        // 3. Migración
+        // Migración
         $table = Str::plural(Str::snake($name));
         $this->call('module:make-migration', [
-            'name' => "create_{$table}_table",
+            'name'   => "create_{$table}_table",
             'module' => $module,
         ]);
 
-        // 4. Form Requests
+        // Requests
         $this->call('module:make-request', [
-            'name' => "Store{$name}Request",
+            'name'   => "Store{$name}Request",
             'module' => $module,
         ]);
-
         $this->call('module:make-request', [
-            'name' => "Update{$name}Request",
+            'name'   => "Update{$name}Request",
             'module' => $module,
         ]);
 
-        // 5. API Resource
+        // Transformer (Resource)
         $this->call('module:make-resource', [
-            'name' => "{$name}Resource",
+            'name'   => "{$name}Resource",
             'module' => $module,
         ]);
 
-        // 6. Factory
+        // Factory
         $this->call('module:make-factory', [
-            'name' => "{$name}Factory",
+            'name'   => "{$name}Factory",
             'module' => $module,
         ]);
 
-        // 7. Seeder
+        // Seeder
         $this->call('module:make-seed', [
-            'name' => "{$name}Seeder",
+            'name'   => "{$name}Seeder",
             'module' => $module,
         ]);
 
-        $this->info("✅ Scaffold API completo generado para {$name} en módulo {$module}.");
+        $this->info("✅ Scaffold completo para {$name} en módulo {$module}.");
         return Command::SUCCESS;
     }
 }
