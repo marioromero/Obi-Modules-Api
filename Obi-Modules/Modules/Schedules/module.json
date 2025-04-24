@@ -1,0 +1,11 @@
+{
+    "name": "Schedules",
+    "alias": "schedules",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Schedules\\Providers\\SchedulesServiceProvider"
+    ],
+    "files": []
+}

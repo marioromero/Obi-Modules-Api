@@ -6,5 +6,7 @@
     "Banks": true,
     "Reports": true,
     "Appointments": true,
-    "Mailing": true
+    "Mailing": true,
+    "Customers": true,
+    "Schedules": true
 }
