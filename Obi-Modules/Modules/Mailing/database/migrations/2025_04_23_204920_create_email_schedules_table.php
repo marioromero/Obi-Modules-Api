@@ -12,7 +12,11 @@ return new class extends Migration
     {
         Schema::create('email_schedules', function (Blueprint $table) {
             $table->id();
-            // Agrega más campos según los necesites luego
+            $table->dateTime('start_in');
+            $table->boolean('send_once');
+            $table->integer('send_frecuency_days')->nullable();
+            $table->foreignId('customer_set')->constrained('customers_sets');
+            $table->foreignId('email_template')->constrained('email_templates');
         });
     }
 

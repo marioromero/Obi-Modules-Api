@@ -10,15 +10,15 @@ return new class extends Migration
 
     public function up(): void
     {
-        Schema::create('customers_sets', function (Blueprint $table) {
+        Schema::create('customer_detail', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 50);
-            $table->unsignedBigInteger('user_id'); // FK to users_db.users
+            $table->unsignedBigInteger('customer_id');
+            $table->foreignId('customer_set_id')->constrained('customers_sets');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('customers_sets');
+        Schema::dropIfExists('customer_detail');
     }
 };
