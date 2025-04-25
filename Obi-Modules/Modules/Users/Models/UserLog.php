@@ -2,21 +2,35 @@
 
 namespace Modules\Users\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Users\Database\Factories\UserLogFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class UserLog extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'users_db';
+    protected $table = 'user_logs';
+    public $timestamps = false;
 
-    // protected static function newFactory(): UserLogFactory
-    // {
-    //     // return UserLogFactory::new();
-    // }
+    protected $fillable = [
+        'timestamp',
+        'datails',
+        'user_id',
+        'event_id',
+    ];
+
+    /** RELACIONES INTERNAS **/
+
+    // Relación de UserLog con User (un UserLog pertenece a un User)
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // Relación de UserLog con Event (un UserLog pertenece a un Event)
+    public function event()
+    {
+        return $this->belongsTo(Event::class, 'event_id');
+    }
 }

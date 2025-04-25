@@ -2,21 +2,24 @@
 
 namespace Modules\Customers\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Customers\Database\Factories\CustomerStatusFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class CustomerStatus extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'customers_db';
+    protected $table = 'customer_statuses';
+    public $timestamps = false;
 
-    // protected static function newFactory(): CustomerStatusFactory
-    // {
-    //     // return CustomerStatusFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+    ];
+
+    // Relación de CustomerStatus con Customer (un CustomerStatus tiene muchos Customers)
+    public function customers()
+    {
+        return $this->hasMany(Customer::class, 'case_status_id');
+    }
 }

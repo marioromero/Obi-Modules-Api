@@ -2,21 +2,23 @@
 
 namespace Modules\Cases\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Cases\Database\Factories\AccidentTypeFactory;
+use Illuminate\Database\Eloquent\Model;
+use Modules\Cases\Models\CaseEntity;
 
 class AccidentType extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'cases_db';
+    protected $table = 'accident_types';
+    public $timestamps = false;
 
-    // protected static function newFactory(): AccidentTypeFactory
-    // {
-    //     // return AccidentTypeFactory::new();
-    // }
+    protected $fillable = ['name'];
+
+    // Relación de AccidentType con CaseEntity (un tipo de accidente tiene muchos casos)
+    public function cases()
+    {
+        return $this->hasMany(CaseEntity::class, 'accident_type_id');
+    }
 }

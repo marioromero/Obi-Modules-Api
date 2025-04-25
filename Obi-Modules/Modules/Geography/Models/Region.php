@@ -2,21 +2,31 @@
 
 namespace Modules\Geography\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Geography\Database\Factories\RegionFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Region extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'geography_db';
+    protected $table = 'regions';
+    public $timestamps = false;
 
-    // protected static function newFactory(): RegionFactory
-    // {
-    //     // return RegionFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+        'country_id',
+    ];
+
+    // Relación de Region con Country (una Region pertenece a un Country)
+    public function country()
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
+
+    // Relación de Region con Province (una Region tiene muchas Provinces)
+    public function provinces()
+    {
+        return $this->hasMany(Province::class, 'region_id');
+    }
 }

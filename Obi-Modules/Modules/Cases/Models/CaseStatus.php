@@ -2,21 +2,25 @@
 
 namespace Modules\Cases\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Cases\Database\Factories\CaseStatusFactory;
+use Illuminate\Database\Eloquent\Model;
+use Modules\Cases\Models\CaseEntity; // 👈 Corrección importante
 
 class CaseStatus extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'cases_db';
+    protected $table = 'case_statuses';
+    public $timestamps = false;
 
-    // protected static function newFactory(): CaseStatusFactory
-    // {
-    //     // return CaseStatusFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+    ];
+
+    // Relación de CaseStatus con Case (un CaseStatus tiene muchos Cases)
+    public function cases()
+    {
+        return $this->hasMany(CaseEntity::class, 'case_status_id');
+    }
 }

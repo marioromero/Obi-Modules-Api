@@ -2,21 +2,50 @@
 
 namespace Modules\Cases\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Cases\Database\Factories\CommentFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Comment extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'cases_db';
+    protected $table = 'comments';
+    public $timestamps = false;
 
-    // protected static function newFactory(): CommentFactory
-    // {
-    //     // return CommentFactory::new();
-    // }
+    protected $fillable = [
+        'content',
+        'created_at',
+        'case_id',
+        'user_id',
+        'response_from',
+    ];
+
+    /** RELACIONES INTERNAS (dentro de Cases) **/
+
+    // Relación de Comment con CaseEntity (un Comment pertenece a un CaseEntity)
+    public function case()
+    {
+        return $this->belongsTo(CaseEntity::class, 'case_id');
+    }
+
+    // Relación de Comment consigo mismo (un Comment puede responder a otro Comment)
+    public function parentComment()
+    {
+        return $this->belongsTo(Comment::class, 'response_from');
+    }
+
+    // Relación de Comment con otros Comments que respondan a él
+    public function responses()
+    {
+        return $this->hasMany(Comment::class, 'response_from');
+    }
+
+    /** RELACIONES EXTERNAS (a otros módulos) **/
+
+    // Relación de Comment con Users::User
+    public function user()
+    {
+        return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
+    }
 }

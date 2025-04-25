@@ -2,21 +2,36 @@
 
 namespace Modules\Mailing\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Mailing\Database\Factories\EmailScheduleFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class EmailSchedule extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'mailing_db';
+    protected $table = 'email_schedules';
+    public $timestamps = false;
 
-    // protected static function newFactory(): EmailScheduleFactory
-    // {
-    //     // return EmailScheduleFactory::new();
-    // }
+    protected $fillable = [
+        'start_in',
+        'send_once',
+        'send_frecuency_days',
+        'customer_set',
+        'email_template',
+    ];
+
+    /** RELACIONES INTERNAS **/
+
+    // Relación de EmailSchedule con CustomersSet (un EmailSchedule pertenece a un CustomersSet)
+    public function customersSet()
+    {
+        return $this->belongsTo(CustomersSet::class, 'customer_set');
+    }
+
+    // Relación de EmailSchedule con EmailTemplate (un EmailSchedule pertenece a un EmailTemplate)
+    public function emailTemplate()
+    {
+        return $this->belongsTo(EmailTemplate::class, 'email_template');
+    }
 }

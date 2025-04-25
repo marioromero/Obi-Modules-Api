@@ -2,21 +2,50 @@
 
 namespace Modules\Customers\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Customers\Database\Factories\CustomerFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'customers_db';
+    protected $table = 'customers';
+    public $timestamps = false;
 
-    // protected static function newFactory(): CustomerFactory
-    // {
-    //     // return CustomerFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+        'lastname',
+        'dni',
+        'username',
+        'password',
+        'email',
+        'address',
+        'phone',
+        'phone2',
+        'gender',
+        'marital_status',
+        'occupation',
+        'case_status_id',
+        'commune_id',
+        'user_id',
+    ];
+
+    // Relación de Customer con CustomerStatus (un Customer pertenece a un CustomerStatus)
+    public function customerStatus()
+    {
+        return $this->belongsTo(CustomerStatus::class, 'case_status_id');
+    }
+
+    // Relación de Customer con Commune (un Customer pertenece a una Commune) [FK externa]
+    public function commune()
+    {
+        return $this->belongsTo(\Modules\Geography\Models\Commune::class, 'commune_id');
+    }
+
+    // Relación de Customer con User (un Customer puede pertenecer a un User) [FK externa]
+    public function user()
+    {
+        return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
+    }
 }

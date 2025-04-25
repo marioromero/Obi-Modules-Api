@@ -2,21 +2,25 @@
 
 namespace Modules\Geography\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Geography\Database\Factories\CommuneFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Commune extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'geography_db';
+    protected $table = 'communes';
+    public $timestamps = false;
 
-    // protected static function newFactory(): CommuneFactory
-    // {
-    //     // return CommuneFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+        'province_id',
+    ];
+
+    // Relación de Commune con Province (una Commune pertenece a una Province)
+    public function province()
+    {
+        return $this->belongsTo(Province::class, 'province_id');
+    }
 }

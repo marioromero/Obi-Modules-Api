@@ -2,21 +2,28 @@
 
 namespace Modules\Mailing\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Mailing\Database\Factories\EmailTemplateFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class EmailTemplate extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'mailing_db';
+    protected $table = 'email_templates';
+    public $timestamps = false;
 
-    // protected static function newFactory(): EmailTemplateFactory
-    // {
-    //     // return EmailTemplateFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+        'user_id',
+        'content',
+    ];
+
+    /** RELACIONES EXTERNAS **/
+
+    // Relación de EmailTemplate con User (Users módulo)
+    public function user()
+    {
+        return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
+    }
 }

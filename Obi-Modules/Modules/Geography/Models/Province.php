@@ -2,21 +2,31 @@
 
 namespace Modules\Geography\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Geography\Database\Factories\ProvinceFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Province extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'geography_db';
+    protected $table = 'provinces';
+    public $timestamps = false;
 
-    // protected static function newFactory(): ProvinceFactory
-    // {
-    //     // return ProvinceFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+        'region_id',
+    ];
+
+    // Relación de Province con Region (una Province pertenece a un Region)
+    public function region()
+    {
+        return $this->belongsTo(Region::class, 'region_id');
+    }
+
+    // Relación de Province con Commune (una Province tiene muchas Communes)
+    public function communes()
+    {
+        return $this->hasMany(Commune::class, 'province_id');
+    }
 }

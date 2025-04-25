@@ -2,21 +2,26 @@
 
 namespace Modules\Schedules\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Schedules\Database\Factories\ScheduleStatusFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class ScheduleStatus extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'schedules_db';
+    protected $table = 'schedule_statuses';
+    public $timestamps = false;
 
-    // protected static function newFactory(): ScheduleStatusFactory
-    // {
-    //     // return ScheduleStatusFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+    ];
+
+    /** RELACIONES INTERNAS **/
+
+    // Relación de ScheduleStatus con Schedule (un ScheduleStatus tiene muchos Schedules)
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'schedule_state_id');
+    }
 }

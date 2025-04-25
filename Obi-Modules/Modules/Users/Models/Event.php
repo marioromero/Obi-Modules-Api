@@ -2,21 +2,24 @@
 
 namespace Modules\Users\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Users\Database\Factories\EventFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'users_db';
+    protected $table = 'events';
+    public $timestamps = false;
 
-    // protected static function newFactory(): EventFactory
-    // {
-    //     // return EventFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+    ];
+
+    // Relación de Event con UserLog (un Event tiene muchos UserLogs)
+    public function userLogs()
+    {
+        return $this->hasMany(UserLog::class, 'event_id');
+    }
 }

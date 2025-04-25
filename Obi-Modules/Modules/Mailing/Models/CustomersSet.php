@@ -2,21 +2,27 @@
 
 namespace Modules\Mailing\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Mailing\Database\Factories\CustomersSetFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class CustomersSet extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'mailing_db';
+    protected $table = 'customers_sets';
+    public $timestamps = false;
 
-    // protected static function newFactory(): CustomersSetFactory
-    // {
-    //     // return CustomersSetFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+        'user_id',
+    ];
+
+    /** RELACIONES EXTERNAS **/
+
+    // Relación de CustomersSet con User (Users módulo)
+    public function user()
+    {
+        return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
+    }
 }

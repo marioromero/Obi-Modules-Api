@@ -2,21 +2,30 @@
 
 namespace Modules\Reports\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Reports\Database\Factories\ReportFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'reports_db';
+    protected $table = 'reports';
+    public $timestamps = false;
 
-    // protected static function newFactory(): ReportFactory
-    // {
-    //     // return ReportFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+        'description',
+        'content',
+        'is_shared',
+        'user_id',
+    ];
+
+    /** RELACIONES EXTERNAS **/
+
+    // Relación de Report con Users::User (un Report pertenece a un User)
+    public function user()
+    {
+        return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
+    }
 }

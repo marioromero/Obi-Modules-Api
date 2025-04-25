@@ -2,21 +2,25 @@
 
 namespace Modules\Banks\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Banks\Database\Factories\BankFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Bank extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'banks_db';
+    protected $table = 'banks';
+    public $timestamps = false;
 
-    // protected static function newFactory(): BankFactory
-    // {
-    //     // return BankFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+        'is_visible',
+    ];
+
+    // Relación de Bank con Insurer (un Bank tiene muchos Insurers)
+    public function insurers()
+    {
+        return $this->hasMany(Insurer::class, 'bank_id');
+    }
 }

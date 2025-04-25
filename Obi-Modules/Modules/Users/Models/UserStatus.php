@@ -2,21 +2,24 @@
 
 namespace Modules\Users\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Users\Database\Factories\UserStatusFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class UserStatus extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'users_db';
+    protected $table = 'user_statuses';
+    public $timestamps = false;
 
-    // protected static function newFactory(): UserStatusFactory
-    // {
-    //     // return UserStatusFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+    ];
+
+    // Relación de UserStatus con User (un UserStatus tiene muchos Users)
+    public function users()
+    {
+        return $this->hasMany(User::class, 'status_id');
+    }
 }

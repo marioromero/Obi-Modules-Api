@@ -2,21 +2,28 @@
 
 namespace Modules\Banks\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Banks\Database\Factories\LossAdjusterFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class LossAdjuster extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'banks_db';
+    protected $table = 'loss_adjusters';
+    public $timestamps = false;
 
-    // protected static function newFactory(): LossAdjusterFactory
-    // {
-    //     // return LossAdjusterFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+        'is_visible',
+        'insurer_id',
+    ];
+
+    /** RELACIONES INTERNAS **/
+
+    // Relación de LossAdjuster con Insurer (un LossAdjuster pertenece a un Insurer)
+    public function insurer()
+    {
+        return $this->belongsTo(Insurer::class, 'insurer_id');
+    }
 }

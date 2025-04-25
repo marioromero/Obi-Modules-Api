@@ -2,21 +2,24 @@
 
 namespace Modules\Users\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Users\Database\Factories\RoleFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'users_db';
+    protected $table = 'roles';
+    public $timestamps = false;
 
-    // protected static function newFactory(): RoleFactory
-    // {
-    //     // return RoleFactory::new();
-    // }
+    protected $fillable = [
+        'name',
+    ];
+
+    // Relación de Role con User (un Role tiene muchos Users)
+    public function users()
+    {
+        return $this->hasMany(User::class, 'role_id');
+    }
 }
