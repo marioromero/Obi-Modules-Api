@@ -1,16 +1,100 @@
 <?php
 
-namespace Modules\Geography\Database\Seeders;
+namespace Modules\Geography\database\seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CountrySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // $this->call([]);
+        DB::table('countries')->insert([
+            ['name' => 'Antigua y Barbuda', 'demonym_male' => 'antiguano', 'demonym_female' => 'antiguana'],
+            ['name' => 'Argentina', 'demonym_male' => 'argentino', 'demonym_female' => 'argentina'],
+            ['name' => 'Bahamas', 'demonym_male' => 'bahameño', 'demonym_female' => 'bahameña'],
+            ['name' => 'Barbados', 'demonym_male' => 'barbadense', 'demonym_female' => 'barbadense'],
+            ['name' => 'Belice', 'demonym_male' => 'beliceño', 'demonym_female' => 'beliceña'],
+            ['name' => 'Bolivia', 'demonym_male' => 'boliviano', 'demonym_female' => 'boliviana'],
+            ['name' => 'Brasil', 'demonym_male' => 'brasileño', 'demonym_female' => 'brasileña'],
+            ['name' => 'Canadá', 'demonym_male' => 'canadiense', 'demonym_female' => 'canadiense'],
+            ['name' => 'Chile', 'demonym_male' => 'chileno', 'demonym_female' => 'chilena'],
+            ['name' => 'Colombia', 'demonym_male' => 'colombiano', 'demonym_female' => 'colombiana'],
+            ['name' => 'Costa Rica', 'demonym_male' => 'costarricense', 'demonym_female' => 'costarricense'],
+            ['name' => 'Cuba', 'demonym_male' => 'cubano', 'demonym_female' => 'cubana'],
+            ['name' => 'Dominica', 'demonym_male' => 'dominiqués', 'demonym_female' => 'dominiquesa'],
+            ['name' => 'Ecuador', 'demonym_male' => 'ecuatoriano', 'demonym_female' => 'ecuatoriana'],
+            ['name' => 'El Salvador', 'demonym_male' => 'salvadoreño', 'demonym_female' => 'salvadoreña'],
+            ['name' => 'Estados Unidos', 'demonym_male' => 'estadounidense', 'demonym_female' => 'estadounidense'],
+            ['name' => 'Granada', 'demonym_male' => 'granadino', 'demonym_female' => 'granadina'],
+            ['name' => 'Guatemala', 'demonym_male' => 'guatemalteco', 'demonym_female' => 'guatemalteca'],
+            ['name' => 'Guyana', 'demonym_male' => 'guyanés', 'demonym_female' => 'guyanesa'],
+            ['name' => 'Haití', 'demonym_male' => 'haitiano', 'demonym_female' => 'haitiana'],
+            ['name' => 'Honduras', 'demonym_male' => 'hondureño', 'demonym_female' => 'hondureña'],
+            ['name' => 'Jamaica', 'demonym_male' => 'jamaicano', 'demonym_female' => 'jamaicana'],
+            ['name' => 'México', 'demonym_male' => 'mexicano', 'demonym_female' => 'mexicana'],
+            ['name' => 'Nicaragua', 'demonym_male' => 'nicaragüense', 'demonym_female' => 'nicaragüense'],
+            ['name' => 'Panamá', 'demonym_male' => 'panameño', 'demonym_female' => 'panameña'],
+            ['name' => 'Paraguay', 'demonym_male' => 'paraguayo', 'demonym_female' => 'paraguaya'],
+            ['name' => 'Perú', 'demonym_male' => 'peruano', 'demonym_female' => 'peruana'],
+            ['name' => 'República Dominicana', 'demonym_male' => 'dominicano', 'demonym_female' => 'dominicana'],
+            ['name' => 'San Cristóbal y Nieves', 'demonym_male' => 'sancristobaleño', 'demonym_female' => 'sancristobaleña'],
+            ['name' => 'Santa Lucía', 'demonym_male' => 'santalucense', 'demonym_female' => 'santalucense'],
+            ['name' => 'San Vicente y las Granadinas', 'demonym_male' => 'sanvicentino', 'demonym_female' => 'sanvicentina'],
+            ['name' => 'Surinam', 'demonym_male' => 'surinamés', 'demonym_female' => 'surinamesa'],
+            ['name' => 'Trinidad y Tobago', 'demonym_male' => 'trinitense', 'demonym_female' => 'trinitense'],
+            ['name' => 'Uruguay', 'demonym_male' => 'uruguayo', 'demonym_female' => 'uruguaya'],
+            ['name' => 'Venezuela', 'demonym_male' => 'venezolano', 'demonym_female' => 'venezolana'],
+            ['name' => 'Albania', 'demonym_male' => 'albanés', 'demonym_female' => 'albanesa'],
+            ['name' => 'Alemania', 'demonym_male' => 'alemán', 'demonym_female' => 'alemana'],
+            ['name' => 'Andorra', 'demonym_male' => 'andorrano', 'demonym_female' => 'andorrana'],
+            ['name' => 'Austria', 'demonym_male' => 'austriaco', 'demonym_female' => 'austriaca'],
+            ['name' => 'Bélgica', 'demonym_male' => 'belga', 'demonym_female' => 'belga'],
+            ['name' => 'Bielorrusia', 'demonym_male' => 'bielorruso', 'demonym_female' => 'bielorrusa'],
+            ['name' => 'Bosnia y Herzegovina', 'demonym_male' => 'bosnio', 'demonym_female' => 'bosnia'],
+            ['name' => 'Bulgaria', 'demonym_male' => 'búlgaro', 'demonym_female' => 'búlgara'],
+            ['name' => 'Chipre', 'demonym_male' => 'chipriota', 'demonym_female' => 'chipriota'],
+            ['name' => 'Croacia', 'demonym_male' => 'croata', 'demonym_female' => 'croata'],
+            ['name' => 'Dinamarca', 'demonym_male' => 'danés', 'demonym_female' => 'danesa'],
+            ['name' => 'Eslovaquia', 'demonym_male' => 'eslovaco', 'demonym_female' => 'eslovaca'],
+            ['name' => 'Eslovenia', 'demonym_male' => 'esloveno', 'demonym_female' => 'eslovena'],
+            ['name' => 'España', 'demonym_male' => 'español', 'demonym_female' => 'española'],
+            ['name' => 'Estonia', 'demonym_male' => 'estonio', 'demonym_female' => 'estonia'],
+            ['name' => 'Finlandia', 'demonym_male' => 'finlandés', 'demonym_female' => 'finlandesa'],
+            ['name' => 'Francia', 'demonym_male' => 'francés', 'demonym_female' => 'francesa'],
+            ['name' => 'Grecia', 'demonym_male' => 'griego', 'demonym_female' => 'griega'],
+            ['name' => 'Hungría', 'demonym_male' => 'húngaro', 'demonym_female' => 'húngara'],
+            ['name' => 'Irlanda', 'demonym_male' => 'irlandés', 'demonym_female' => 'irlandesa'],
+            ['name' => 'Islandia', 'demonym_male' => 'islandés', 'demonym_female' => 'islandesa'],
+            ['name' => 'Italia', 'demonym_male' => 'italiano', 'demonym_female' => 'italiana'],
+            ['name' => 'Kosovo', 'demonym_male' => 'kosovar', 'demonym_female' => 'kosovar'],
+            ['name' => 'Letonia', 'demonym_male' => 'letón', 'demonym_female' => 'letona'],
+            ['name' => 'Liechtenstein', 'demonym_male' => 'liechtensteiniano', 'demonym_female' => 'liechtensteiniana'],
+            ['name' => 'Lituania', 'demonym_male' => 'lituano', 'demonym_female' => 'lituana'],
+            ['name' => 'Luxemburgo', 'demonym_male' => 'luxemburgués', 'demonym_female' => 'luxemburguesa'],
+            ['name' => 'Macedonia del Norte', 'demonym_male' => 'macedonio', 'demonym_female' => 'macedonia'],
+            ['name' => 'Malta', 'demonym_male' => 'maltés', 'demonym_female' => 'maltesa'],
+            ['name' => 'Moldavia', 'demonym_male' => 'moldavo', 'demonym_female' => 'moldava'],
+            ['name' => 'Mónaco', 'demonym_male' => 'monegasco', 'demonym_female' => 'monegasca'],
+            ['name' => 'Montenegro', 'demonym_male' => 'montenegrino', 'demonym_female' => 'montenegrina'],
+            ['name' => 'Noruega', 'demonym_male' => 'noruego', 'demonym_female' => 'noruega'],
+            ['name' => 'Países Bajos', 'demonym_male' => 'neerlandés', 'demonym_female' => 'neerlandesa'],
+            ['name' => 'Polonia', 'demonym_male' => 'polaco', 'demonym_female' => 'polaca'],
+            ['name' => 'Portugal', 'demonym_male' => 'portugués', 'demonym_female' => 'portuguesa'],
+            ['name' => 'Reino Unido', 'demonym_male' => 'británico', 'demonym_female' => 'británica'],
+            ['name' => 'República Checa', 'demonym_male' => 'checo', 'demonym_female' => 'checa'],
+            ['name' => 'Rumanía', 'demonym_male' => 'rumano', 'demonym_female' => 'rumana'],
+            ['name' => 'Rusia', 'demonym_male' => 'ruso', 'demonym_female' => 'rusa'],
+            ['name' => 'San Marino', 'demonym_male' => 'sanmarinense', 'demonym_female' => 'sanmarinense'],
+            ['name' => 'Serbia', 'demonym_male' => 'serbio', 'demonym_female' => 'serbia'],
+            ['name' => 'Suecia', 'demonym_male' => 'sueco', 'demonym_female' => 'sueca'],
+            ['name' => 'Suiza', 'demonym_male' => 'suizo', 'demonym_female' => 'suiza'],
+            ['name' => 'Ucrania', 'demonym_male' => 'ucraniano', 'demonym_female' => 'ucraniana'],
+            ['name' => 'China', 'demonym_male' => 'chino', 'demonym_female' => 'china'],
+            ['name' => 'Corea del Sur', 'demonym_male' => 'surcoreano', 'demonym_female' => 'surcoreana'],
+            ['name' => 'Japón', 'demonym_male' => 'japonés', 'demonym_female' => 'japonesa'],
+            ['name' => 'Australia', 'demonym_male' => 'australiano', 'demonym_female' => 'australiana'],
+            ['name' => 'Nueva Zelanda', 'demonym_male' => 'neozelandés', 'demonym_female' => 'neozelandesa'],
+        ]);
     }
 }

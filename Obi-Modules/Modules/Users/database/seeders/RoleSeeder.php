@@ -3,14 +3,18 @@
 namespace Modules\Users\Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class RoleSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // $this->call([]);
+        DB::table('roles')->insert([
+            ['name' => 'Administrador'],
+            ['name' => 'Coordinador'],
+            ['name' => 'Ejecutivo'],
+            ['name' => 'Administrativo'],
+            ['name' => 'Asesor'],
+        ]);
     }
 }

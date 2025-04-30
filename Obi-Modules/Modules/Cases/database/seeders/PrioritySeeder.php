@@ -1,16 +1,18 @@
 <?php
 
-namespace Modules\Cases\Database\Seeders;
+namespace Modules\Cases\database\seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PrioritySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // $this->call([]);
+        DB::table('priorities')->insert([
+            ['name' => 'Alta'],
+            ['name' => 'Media'],
+            ['name' => 'Baja'],
+        ]);
     }
 }

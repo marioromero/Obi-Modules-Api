@@ -1,16 +1,22 @@
 <?php
 
-namespace Modules\Cases\Database\Seeders;
+namespace Modules\Cases\database\seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class AccidentTypeSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // $this->call([]);
+        DB::table('accident_types')->insert([
+            ['name' => 'Filtración'],
+            ['name' => 'Incendio'],
+            ['name' => 'Riesgos de la naturaleza'],
+            ['name' => 'Riesgos de la naturaleza (Nevazón)'],
+            ['name' => 'Rotura cañería'],
+            ['name' => 'Sismo'],
+            ['name' => 'Temporal'],
+        ]);
     }
 }
