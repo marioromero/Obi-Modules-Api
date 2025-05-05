@@ -9,7 +9,6 @@ class CommuneSeeder extends Seeder
 {
     public function run(): void
     {
-        // Bloque 1: Región de Arica y Parinacota
         DB::table('communes')->insert([
             ['name' => 'Arica', 'province_id' => 1],
             ['name' => 'Camarones', 'province_id' => 1],
@@ -163,6 +162,7 @@ class CommuneSeeder extends Seeder
             ['name' => 'Requínoa', 'province_id' => 28],
             ['name' => 'San Vicente', 'province_id' => 28],
             ['name' => 'San Fernando', 'province_id' => 29],
+            ['name' => 'Chépica', 'province_id' => 29],
             ['name' => 'Chimbarongo', 'province_id' => 29],
             ['name' => 'Lolol', 'province_id' => 29],
             ['name' => 'Nancagua', 'province_id' => 29],
