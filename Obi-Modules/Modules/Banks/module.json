@@ -3,7 +3,7 @@
     "alias": "banks",
     "description": "",
     "keywords": [],
-    "priority": 0,
+    "priority": 20,
     "providers": [
         "Modules\\Banks\\Providers\\BanksServiceProvider"
     ],

@@ -3,7 +3,7 @@
     "alias": "cases",
     "description": "",
     "keywords": [],
-    "priority": 0,
+    "priority": 50,
     "providers": [
         "Modules\\Cases\\Providers\\CasesServiceProvider"
     ],

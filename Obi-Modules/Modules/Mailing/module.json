@@ -3,7 +3,7 @@
     "alias": "mailing",
     "description": "",
     "keywords": [],
-    "priority": 0,
+    "priority": 70,
     "providers": [
         "Modules\\Mailing\\Providers\\MailingServiceProvider"
     ],

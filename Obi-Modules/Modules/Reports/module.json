@@ -3,7 +3,7 @@
     "alias": "reports",
     "description": "",
     "keywords": [],
-    "priority": 0,
+    "priority": 80,
     "providers": [
         "Modules\\Reports\\Providers\\ReportsServiceProvider"
     ],

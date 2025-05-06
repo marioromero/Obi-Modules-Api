@@ -3,7 +3,7 @@
     "alias": "users",
     "description": "",
     "keywords": [],
-    "priority": 0,
+    "priority": 30,
     "providers": [
         "Modules\\Users\\Providers\\UsersServiceProvider"
     ],

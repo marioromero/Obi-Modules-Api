@@ -3,7 +3,7 @@
     "alias": "schedules",
     "description": "",
     "keywords": [],
-    "priority": 0,
+    "priority": 60,
     "providers": [
         "Modules\\Schedules\\Providers\\SchedulesServiceProvider"
     ],
