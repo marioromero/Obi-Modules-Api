@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    protected string $name = 'Geography';
+    protected string $moduleName = 'Geography';
+    protected string $moduleNameLower = 'geography';
 
     /**
      * Called before routes are registered.
@@ -35,7 +36,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapWebRoutes(): void
     {
-        Route::middleware('web')->group(module_path($this->name, '/routes/web.php'));
+        Route::middleware('web')->group(module_path($this->moduleNameLower, '/routes/web.php'));
     }
 
     /**
@@ -45,6 +46,14 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapApiRoutes(): void
     {
-        Route::middleware('api')->prefix('api')->name('api.')->group(module_path($this->name, '/routes/api.php'));
+        Route::middleware('api')
+            ->as('api.')                                        // nombres como api.users.index
+            ->prefix('api/' . config('api.version'))            // api/v1/...
+            ->domain(
+                config('api.subdomain')
+                    ? config('api.subdomain') . '.' . parse_url(config('app.url'), PHP_URL_HOST)
+                    : null
+            )
+            ->group(module_path($this->moduleNameLower, '/routes/api.php'));
     }
 }

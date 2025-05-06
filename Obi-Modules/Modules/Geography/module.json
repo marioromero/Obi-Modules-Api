@@ -3,7 +3,7 @@
     "alias": "geography",
     "description": "",
     "keywords": [],
-    "priority": 0,
+    "priority": 10,
     "providers": [
         "Modules\\Geography\\Providers\\GeographyServiceProvider"
     ],
