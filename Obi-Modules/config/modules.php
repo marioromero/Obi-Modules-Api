@@ -263,6 +263,13 @@ return [
         'composer-output' => false,
     ],
 
+    'cache' => [
+        'enabled' => env('MODULE_CACHE', false),
+        'key' => 'laravel-modules',
+        'lifetime' => env('MODULE_CACHE_TTL', 60),
+    ],
+
+
     /*
     |--------------------------------------------------------------------------
     | Choose what laravel-modules will register as custom namespaces.
