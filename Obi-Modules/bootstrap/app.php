@@ -11,7 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Alias para usar en rutas puntuales: ->middleware('api-auth')
+        $middleware->alias([
+            'api-auth', \App\Http\Middleware\VerifyExternalAuth::class
+        ]);
+
+        // Inyectar VerifyExternalAuth en to-do el grupo api
+        $middleware->appendToGroup('api', \App\Http\Middleware\VerifyExternalAuth::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
