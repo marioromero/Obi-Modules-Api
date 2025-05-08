@@ -10,16 +10,15 @@ return new class extends Migration
 
     public function up(): void
     {
-        Schema::create('regions', function (Blueprint $table) {
+        Schema::create('version_p_a', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100);
-            $table->foreignId('country_id')->constrained('countries');
-            $table->foreignId('version_id')->constrained('version_p_a');
+            $table->dateTime('fecha');
+            $table->boolean('activo')->default(true);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('regions');
+        Schema::dropIfExists('version_p_a');
     }
 };

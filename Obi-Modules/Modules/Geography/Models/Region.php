@@ -16,6 +16,7 @@ class Region extends Model
     protected $fillable = [
         'name',
         'country_id',
+        'version_id',
     ];
 
     // Relación de Region con Country (una Region pertenece a un Country)
@@ -28,5 +29,11 @@ class Region extends Model
     public function provinces()
     {
         return $this->hasMany(Province::class, 'region_id');
+    }
+
+    //Relación: Una Region pertenece a una VersionPA
+    public function versionPA()
+    {
+        return $this->belongsTo(VersionPA::class, 'version_id');
     }
 }
