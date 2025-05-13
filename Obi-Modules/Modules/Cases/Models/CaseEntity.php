@@ -122,4 +122,8 @@ class CaseEntity extends Model
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'created_by');
     }
+    public function schedules()      // 3️⃣  Schedule → CaseEntity
+    {
+        return $this->hasMany(\Modules\Schedules\Models\Schedule::class, 'case_id');
+    }
 }

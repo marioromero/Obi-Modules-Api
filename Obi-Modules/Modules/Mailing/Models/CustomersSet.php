@@ -25,4 +25,8 @@ class CustomersSet extends Model
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
     }
+    public function emailSchedules()   // 🔟  EmailSchedule → CustomersSet
+    {
+        return $this->hasMany(\Modules\Mailing\Models\EmailSchedule::class, 'customer_set');
+    }
 }

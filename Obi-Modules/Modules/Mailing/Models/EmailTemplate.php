@@ -17,6 +17,7 @@ class EmailTemplate extends Model
         'name',
         'user_id',
         'content',
+        'department_id',
     ];
 
     /** RELACIONES EXTERNAS **/
@@ -25,5 +26,14 @@ class EmailTemplate extends Model
     public function user()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
+    }
+    public function emailSchedules()   // 1️⃣1️⃣  EmailSchedule → EmailTemplate
+    {
+        return $this->hasMany(EmailSchedule::class, 'email_template');
+    }
+
+    public function department()       // 1️⃣2️⃣  Departamento ↔ Plantilla
+    {
+        return $this->belongsTo(\Modules\Mailing\Models\Department::class, 'department_id');
     }
 }

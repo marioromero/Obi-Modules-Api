@@ -2,21 +2,25 @@
 
 namespace Modules\Users\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Modules\Users\Database\Factories\ConfigurationFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Configuration extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-    protected $fillable = [];
+    protected $connection = 'users_db';
+    protected $table      = 'configurations';
+    public    $timestamps = false;
 
-    // protected static function newFactory(): ConfigurationFactory
-    // {
-    //     // return ConfigurationFactory::new();
-    // }
+    protected $fillable = [
+        'content',
+        'type_id',
+    ];
+
+    public function type()             // 1️⃣5️⃣  Type ↔ Configuration
+    {
+        return $this->belongsTo(Type::class, 'type_id');
+    }
 }

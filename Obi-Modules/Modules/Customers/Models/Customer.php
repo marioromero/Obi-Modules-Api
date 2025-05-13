@@ -48,4 +48,13 @@ class Customer extends Model
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
     }
+    public function cases()          // 2️⃣  CaseEntity → Customer
+    {
+        return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'customer_id');
+    }
+
+    public function customerDetails() // 8️⃣  CustomerDetail → Customer
+    {
+        return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_id');
+    }
 }

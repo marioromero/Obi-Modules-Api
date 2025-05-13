@@ -23,4 +23,18 @@ class Commune extends Model
     {
         return $this->belongsTo(Province::class, 'province_id');
     }
+    public function cases()          // 1️⃣  CaseEntity → Commune
+    {
+        return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'commune_id');
+    }
+
+    public function customers()      // 6️⃣  Customer → Commune
+    {
+        return $this->hasMany(\Modules\Customers\Models\Customer::class, 'commune_id');
+    }
+
+    public function users()          // 6️⃣  User → Commune
+    {
+        return $this->hasMany(\Modules\Users\Models\User::class, 'commune_id');
+    }
 }
