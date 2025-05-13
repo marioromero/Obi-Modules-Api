@@ -56,4 +56,5 @@ class User extends Model
     {
         return $this->belongsTo(Commune::class, 'commune_id');
     }
+
 }
