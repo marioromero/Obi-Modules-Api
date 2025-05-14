@@ -29,6 +29,7 @@ class UserLog extends Model
     }
 
     // Relación de UserLog con Event (un UserLog pertenece a un Event)
+    //No Action
     public function event()
     {
         return $this->belongsTo(Event::class, 'event_id');

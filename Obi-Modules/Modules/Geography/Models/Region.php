@@ -26,6 +26,7 @@ class Region extends Model
     }
 
     // Relación de Region con Province (una Region tiene muchas Provinces)
+    //Cascade
     public function provinces()
     {
         return $this->hasMany(Province::class, 'region_id');

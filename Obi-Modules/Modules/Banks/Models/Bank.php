@@ -19,6 +19,7 @@ class Bank extends Model
     ];
 
     // Relación de Bank con Insurer (un Bank tiene muchos Insurers)
+    //Cascade
     public function insurers()
     {
         return $this->hasMany(Insurer::class, 'bank_id');

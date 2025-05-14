@@ -32,6 +32,7 @@ class Customer extends Model
     ];
 
     // Relación de Customer con CustomerStatus (un Customer pertenece a un CustomerStatus)
+    //No Action
     public function customerStatus()
     {
         return $this->belongsTo(CustomerStatus::class, 'case_status_id');
@@ -44,6 +45,7 @@ class Customer extends Model
     }
 
     // Relación de Customer con User (un Customer puede pertenecer a un User) [FK externa]
+    //Set Null
     public function user()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
@@ -52,7 +54,7 @@ class Customer extends Model
     {
         return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'customer_id');
     }
-
+    //Cascade
     public function customerDetails() // 8️⃣  CustomerDetail → Customer
     {
         return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_id');

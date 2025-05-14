@@ -17,7 +17,7 @@ class Department extends Model
         'name',
         'email',
     ];
-
+    
     public function emailTemplates()   // 1️⃣2️⃣  Department → EmailTemplate
     {
         return $this->hasMany(\Modules\Mailing\Models\EmailTemplate::class, 'department_id');

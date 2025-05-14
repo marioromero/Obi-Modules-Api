@@ -23,6 +23,7 @@ class EmailTemplate extends Model
     /** RELACIONES EXTERNAS **/
 
     // Relación de EmailTemplate con User (Users módulo)
+    //Set Null
     public function user()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
@@ -31,7 +32,7 @@ class EmailTemplate extends Model
     {
         return $this->hasMany(EmailSchedule::class, 'email_template');
     }
-
+    //Set Null
     public function department()       // 1️⃣2️⃣  Departamento ↔ Plantilla
     {
         return $this->belongsTo(\Modules\Mailing\Models\Department::class, 'department_id');

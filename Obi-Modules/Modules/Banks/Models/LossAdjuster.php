@@ -22,6 +22,7 @@ class LossAdjuster extends Model
     /** RELACIONES INTERNAS **/
 
     // Relación de LossAdjuster con Insurer (un LossAdjuster pertenece a un Insurer)
+    //Cascade
     public function insurer()
     {
         return $this->belongsTo(Insurer::class, 'insurer_id');

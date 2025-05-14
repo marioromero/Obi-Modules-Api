@@ -18,7 +18,7 @@ class Configuration extends Model
         'content',
         'type_id',
     ];
-
+    //No Action
     public function type()             // 1️⃣5️⃣  Type ↔ Configuration
     {
         return $this->belongsTo(Type::class, 'type_id');

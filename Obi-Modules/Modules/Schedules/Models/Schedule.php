@@ -24,6 +24,7 @@ class Schedule extends Model
     /** RELACIONES INTERNAS **/
 
     // Relación de Schedule con ScheduleStatus (un Schedule pertenece a un ScheduleStatus)
+    //No Action
     public function scheduleStatus()
     {
         return $this->belongsTo(ScheduleStatus::class, 'schedule_state_id');
@@ -32,6 +33,7 @@ class Schedule extends Model
     /** RELACIONES EXTERNAS **/
 
     // Relación de Schedule con User (Users módulo) - scheduling_user
+    //Set Null
     public function schedulingUser()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'scheduling_user');
@@ -44,6 +46,7 @@ class Schedule extends Model
     }
 
     // Relación de Schedule con CaseEntity (Cases módulo) - case_id
+    //Cascade
     public function case()
     {
         return $this->belongsTo(\Modules\Cases\Models\CaseEntity::class, 'case_id');

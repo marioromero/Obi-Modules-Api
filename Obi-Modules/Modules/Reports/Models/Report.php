@@ -24,6 +24,7 @@ class Report extends Model
     /** RELACIONES EXTERNAS **/
 
     // Relación de Report con Users::User (un Report pertenece a un User)
+    //Set Null
     public function user()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');

@@ -24,12 +24,14 @@ class EmailSchedule extends Model
     /** RELACIONES INTERNAS **/
 
     // Relación de EmailSchedule con CustomersSet (un EmailSchedule pertenece a un CustomersSet)
+    //Cascade
     public function customersSet()
     {
         return $this->belongsTo(CustomersSet::class, 'customer_set');
     }
 
     // Relación de EmailSchedule con EmailTemplate (un EmailSchedule pertenece a un EmailTemplate)
+    //No Action
     public function emailTemplate()
     {
         return $this->belongsTo(EmailTemplate::class, 'email_template');

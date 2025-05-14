@@ -56,24 +56,28 @@ class CaseEntity extends Model
     /** RELACIONES INTERNAS (dentro de Cases) **/
 
     // Relación de CaseEntity con CaseStatus (un CaseEntity pertenece a un CaseStatus)
+    //No Action
     public function caseStatus()
     {
         return $this->belongsTo(CaseStatus::class, 'case_status_id');
     }
 
     // Relación de CaseEntity con AccidentType (un CaseEntity pertenece a un AccidentType)
+    //No Action
     public function accidentType()
     {
         return $this->belongsTo(AccidentType::class, 'accident_type_id');
     }
 
     // Relación de CaseEntity con Priority (un CaseEntity pertenece a una Priority)
+    //No Action
     public function priorityRelation()
     {
         return $this->belongsTo(Priority::class, 'priority');
     }
 
     // Relación de CaseEntity con sus propios Comments (un CaseEntity tiene muchos Comments)
+    //Cascade
     public function comments()
     {
         return $this->hasMany(Comment::class, 'case_id');
@@ -100,28 +104,33 @@ class CaseEntity extends Model
     }
 
     // Relación de CaseEntity con Users::User como agente
+    //Set Null
     public function agent()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'agent_id');
     }
 
     // Relación de CaseEntity con Users::User como consultor
+    //Set Null
     public function consultant()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'consulant_id');
     }
 
     // Relación de CaseEntity con Users::User como usuario asignado
+    //Set Null
     public function assignedUser()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'assigned_user');
     }
 
     // Relación de CaseEntity con Users::User como creador
+    //Set Null
     public function creator()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'created_by');
     }
+    //Cascade
     public function schedules()      // 3️⃣  Schedule → CaseEntity
     {
         return $this->hasMany(\Modules\Schedules\Models\Schedule::class, 'case_id');

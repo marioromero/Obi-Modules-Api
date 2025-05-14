@@ -21,12 +21,19 @@ class CustomersSet extends Model
     /** RELACIONES EXTERNAS **/
 
     // Relación de CustomersSet con User (Users módulo)
+    //Set Null
     public function user()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
     }
+    //Cascade
     public function emailSchedules()   // 🔟  EmailSchedule → CustomersSet
     {
         return $this->hasMany(\Modules\Mailing\Models\EmailSchedule::class, 'customer_set');
+    }
+    //Cascade
+    public function customerDetails()
+    {
+        return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_set_id');
     }
 }

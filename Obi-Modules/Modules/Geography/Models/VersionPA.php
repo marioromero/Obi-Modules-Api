@@ -21,6 +21,7 @@ class VersionPA extends Model
     ];
 
     //Relación: Una VersionPA tiene muchas Region
+    //Cascade
     public function regions()
     {
         return $this->hasMany(Region::class, 'version_id');

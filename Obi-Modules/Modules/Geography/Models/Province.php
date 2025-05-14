@@ -25,6 +25,7 @@ class Province extends Model
     }
 
     // Relación de Province con Commune (una Province tiene muchas Communes)
+    //Cascade
     public function communes()
     {
         return $this->hasMany(Commune::class, 'province_id');

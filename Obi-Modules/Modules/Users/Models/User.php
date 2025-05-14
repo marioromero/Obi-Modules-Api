@@ -32,12 +32,14 @@ class User extends Model
     /** RELACIONES INTERNAS **/
 
     // Relación de User con Role (un User pertenece a un Role)
+    //No Action
     public function role()
     {
         return $this->belongsTo(Role::class, 'role_id');
     }
 
     // Relación de User con UserStatus (un User pertenece a un UserStatus)
+    //No Action
     public function status()
     {
         return $this->belongsTo(UserStatus::class, 'status_id');
@@ -76,6 +78,7 @@ class User extends Model
     }
 
     // 5️⃣  Comentarios
+    //Set Null
     public function comments()
     {
         return $this->hasMany(\Modules\Cases\Models\Comment::class, 'user_id');
@@ -108,6 +111,7 @@ class User extends Model
     }
 
     // 1️⃣3️⃣  Reportes
+    //Set Null
     public function reports()
     {
         return $this->hasMany(\Modules\Reports\Models\Report::class, 'user_id');

@@ -30,6 +30,7 @@ class Comment extends Model
     }
 
     // Relación de Comment consigo mismo (un Comment puede responder a otro Comment)
+    //Cascade
     public function parentComment()
     {
         return $this->belongsTo(Comment::class, 'response_from');

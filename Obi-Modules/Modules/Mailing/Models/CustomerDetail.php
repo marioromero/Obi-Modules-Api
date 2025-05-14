@@ -29,6 +29,7 @@ class CustomerDetail extends Model
     /** RELACIONES EXTERNAS **/
 
     // Relación de CustomerDetail con Customer (Customers módulo)
+    //Cascade
     public function customer()
     {
         return $this->belongsTo(\Modules\Customers\Models\Customer::class, 'customer_id');

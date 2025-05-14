@@ -20,6 +20,7 @@ class Country extends Model
     ];
 
     // Relación de Country con Region (un Country tiene muchas Regions)
+    //Cascade
     public function regions()
     {
         return $this->hasMany(Region::class, 'country_id');
