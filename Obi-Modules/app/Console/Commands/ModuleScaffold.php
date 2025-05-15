@@ -25,6 +25,7 @@ class ModuleScaffold extends Command
             'modules.paths.generator.controller.path' => 'app/Http/Controllers',
             'modules.paths.generator.request.path'    => 'app/Http/Requests',
             'modules.paths.generator.resource.path'   => 'app/Transformers',
+            'modules.paths.generator.controller.namespace' => 'App\\Http\\Controllers',
         ]);
 
         $this->info("📦 Scaffold API para {$name} en módulo {$module}...");

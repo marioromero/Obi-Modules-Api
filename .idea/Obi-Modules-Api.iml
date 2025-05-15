@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="WEB_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules" isTestSource="false" packagePrefix="Modules\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Users/app" isTestSource="false" packagePrefix="Modules\Users\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Users/database/factories" isTestSource="false" packagePrefix="Modules\Users\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Users/database/seeders" isTestSource="false" packagePrefix="Modules\Users\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Users/tests" isTestSource="true" packagePrefix="Modules\Users\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/app" isTestSource="false" packagePrefix="App\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/database/factories" isTestSource="false" packagePrefix="Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/database/seeders" isTestSource="false" packagePrefix="Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/tests" isTestSource="true" packagePrefix="Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/tests/Feature" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/tests/Unit" isTestSource="true" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

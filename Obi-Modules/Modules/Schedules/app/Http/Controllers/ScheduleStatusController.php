@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Schedules\Http\Controllers;
+namespace Modules\Schedules\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -57,3 +57,6 @@ class ScheduleStatusController extends Controller
         return response()->json([]);
     }
 }
+
+
+

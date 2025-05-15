@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Users\Http\Controllers;
+namespace Modules\Users\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -57,3 +57,6 @@ class RoleController extends Controller
         return response()->json([]);
     }
 }
+
+
+

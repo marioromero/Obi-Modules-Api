@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Customers\Http\Controllers;
+namespace Modules\Customers\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -57,3 +57,6 @@ class CustomerController extends Controller
         return response()->json([]);
     }
 }
+
+
+

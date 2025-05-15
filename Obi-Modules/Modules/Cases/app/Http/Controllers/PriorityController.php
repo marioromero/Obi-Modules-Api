@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Cases\Http\Controllers;
+namespace Modules\Cases\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -57,3 +57,6 @@ class PriorityController extends Controller
         return response()->json([]);
     }
 }
+
+
+

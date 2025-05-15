@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Geography\Http\Controllers;
+namespace Modules\Geography\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -57,3 +57,6 @@ class VersionPAController extends Controller
         return response()->json([]);
     }
 }
+
+
+

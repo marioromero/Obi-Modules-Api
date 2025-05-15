@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Mailing\Http\Controllers;
+namespace Modules\Mailing\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -57,3 +57,6 @@ class EmailScheduleController extends Controller
         return response()->json([]);
     }
 }
+
+
+

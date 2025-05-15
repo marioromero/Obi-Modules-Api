@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Reports\Http\Controllers;
+namespace Modules\Reports\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -57,3 +57,6 @@ class ReportController extends Controller
         return response()->json([]);
     }
 }
+
+
+

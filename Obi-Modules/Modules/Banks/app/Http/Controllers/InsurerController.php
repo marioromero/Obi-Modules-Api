@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Banks\Http\Controllers;
+namespace Modules\Banks\app\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -57,3 +57,6 @@ class InsurerController extends Controller
         return response()->json([]);
     }
 }
+
+
+
