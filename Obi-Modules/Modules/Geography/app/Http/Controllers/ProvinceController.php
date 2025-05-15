@@ -2,61 +2,55 @@
 
 namespace Modules\Geography\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Geography\Models\Province;
+use App\Http\Controllers\Controller;
+
 
 class ProvinceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = Province::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(Province $province)
+    {
+        return response()->json($province);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $province = Province::create($data);
+        return response()->json($province, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, Province $province)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $province->update($data);
+        return response()->json($province);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, Province $province)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $province->update($data);
+        return response()->json($province);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(Province $province)
     {
-        //
-
-        return response()->json([]);
+        $province->delete();
+        return response()->noContent();
     }
 }
-
-
-

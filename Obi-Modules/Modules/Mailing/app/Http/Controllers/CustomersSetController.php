@@ -2,61 +2,53 @@
 
 namespace Modules\Mailing\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Mailing\Models\CustomersSet;
+use App\Http\Controllers\Controller;
 
 class CustomersSetController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = CustomersSet::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(CustomersSet $customersSet)
+    {
+        return response()->json($customersSet);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $customersSet = CustomersSet::create($data);
+        return response()->json($customersSet, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, CustomersSet $customersSet)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $customersSet->update($data);
+        return response()->json($customersSet);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, CustomersSet $customersSet)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $customersSet->update($data);
+        return response()->json($customersSet);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(CustomersSet $customersSet)
     {
-        //
-
-        return response()->json([]);
+        $customersSet->delete();
+        return response()->noContent();
     }
 }
-
-
-

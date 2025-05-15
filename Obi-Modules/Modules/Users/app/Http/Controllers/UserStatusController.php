@@ -2,61 +2,57 @@
 
 namespace Modules\Users\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Users\Models\UserStatus;
+
+use App\Http\Controllers\Controller;
+
 
 class UserStatusController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = UserStatus::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(UserStatus $userStatus)
+    {
+        return response()->json($userStatus);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $userStatus = UserStatus::create($data);
+        return response()->json($userStatus, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, UserStatus $userStatus)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $userStatus->update($data);
+        return response()->json($userStatus);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, UserStatus $userStatus)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $userStatus->update($data);
+        return response()->json($userStatus);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(UserStatus $userStatus)
     {
-        //
-
-        return response()->json([]);
+        $userStatus->delete();
+        return response()->noContent();
     }
 }
-
-
-

@@ -2,61 +2,54 @@
 
 namespace Modules\Customers\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Customers\Models\Customer;
+use App\Http\Controllers\Controller;
 
 class CustomerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+ 
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = Customer::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(Customer $customer)
+    {
+        return response()->json($customer);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $customer = Customer::create($data);
+        return response()->json($customer, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, Customer $customer)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $customer->update($data);
+        return response()->json($customer);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, Customer $customer)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $customer->update($data);
+        return response()->json($customer);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(Customer $customer)
     {
-        //
-
-        return response()->json([]);
+        $customer->delete();
+        return response()->noContent();
     }
 }
-
-
-

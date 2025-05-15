@@ -2,61 +2,57 @@
 
 namespace Modules\Users\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Users\Models\Type;
+
+use App\Http\Controllers\Controller;
+
 
 class TypeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = Type::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(Type $type)
+    {
+        return response()->json($type);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $type = Type::create($data);
+        return response()->json($type, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, Type $type)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $type->update($data);
+        return response()->json($type);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, Type $type)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $type->update($data);
+        return response()->json($type);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(Type $type)
     {
-        //
-
-        return response()->json([]);
+        $type->delete();
+        return response()->noContent();
     }
 }
-
-
-

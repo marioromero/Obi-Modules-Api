@@ -2,61 +2,55 @@
 
 namespace Modules\Mailing\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Mailing\Models\Department;
+use App\Http\Controllers\Controller;
+
 
 class DepartmentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = Department::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(Department $department)
+    {
+        return response()->json($department);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $department = Department::create($data);
+        return response()->json($department, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, Department $department)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $department->update($data);
+        return response()->json($department);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, Department $department)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $department->update($data);
+        return response()->json($department);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(Department $department)
     {
-        //
-
-        return response()->json([]);
+        $department->delete();
+        return response()->noContent();
     }
 }
-
-
-

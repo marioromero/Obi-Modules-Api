@@ -2,61 +2,55 @@
 
 namespace Modules\Banks\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Banks\Models\Bank;
+use App\Http\Controllers\Controller;
+
 
 class BankController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = Bank::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(Bank $bank)
+    {
+        return response()->json($bank);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $bank = Bank::create($data);
+        return response()->json($bank, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, Bank $bank)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $bank->update($data);
+        return response()->json($bank);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, Bank $bank)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $bank->update($data);
+        return response()->json($bank);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(Bank $bank)
     {
-        //
-
-        return response()->json([]);
+        $bank->delete();
+        return response()->noContent();
     }
 }
-
-
-

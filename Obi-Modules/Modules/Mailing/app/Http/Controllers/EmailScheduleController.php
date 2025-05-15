@@ -2,61 +2,54 @@
 
 namespace Modules\Mailing\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Mailing\Models\EmailSchedule;
+use App\Http\Controllers\Controller;
 
 class EmailScheduleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = EmailSchedule::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(EmailSchedule $emailSchedule)
+    {
+        return response()->json($emailSchedule);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $emailSchedule = EmailSchedule::create($data);
+        return response()->json($emailSchedule, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, EmailSchedule $emailSchedule)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $emailSchedule->update($data);
+        return response()->json($emailSchedule);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, EmailSchedule $emailSchedule)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $emailSchedule->update($data);
+        return response()->json($emailSchedule);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(EmailSchedule $emailSchedule)
     {
-        //
-
-        return response()->json([]);
+        $emailSchedule->delete();
+        return response()->noContent();
     }
 }
-
-
-

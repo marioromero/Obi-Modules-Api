@@ -2,61 +2,55 @@
 
 namespace Modules\Mailing\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Mailing\Models\CustomerDetail;
+use App\Http\Controllers\Controller;
+
 
 class CustomerDetailController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+ 
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = CustomerDetail::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(CustomerDetail $customerDetail)
+    {
+        return response()->json($customerDetail);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $customerDetail = CustomerDetail::create($data);
+        return response()->json($customerDetail, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, CustomerDetail $customerDetail)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $customerDetail->update($data);
+        return response()->json($customerDetail);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, CustomerDetail $customerDetail)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $customerDetail->update($data);
+        return response()->json($customerDetail);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(CustomerDetail $customerDetail)
     {
-        //
-
-        return response()->json([]);
+        $customerDetail->delete();
+        return response()->noContent();
     }
 }
-
-
-
