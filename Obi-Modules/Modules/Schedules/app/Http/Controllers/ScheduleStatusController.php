@@ -2,61 +2,55 @@
 
 namespace Modules\Schedules\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Schedules\Models\ScheduleStatus;
+use App\Http\Controllers\Controller;
+
 
 class ScheduleStatusController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = ScheduleStatus::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(ScheduleStatus $scheduleStatus)
+    {
+        return response()->json($scheduleStatus);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $scheduleStatus = ScheduleStatus::create($data);
+        return response()->json($scheduleStatus, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, ScheduleStatus $scheduleStatus)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $scheduleStatus->update($data);
+        return response()->json($scheduleStatus);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, ScheduleStatus $scheduleStatus)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $scheduleStatus->update($data);
+        return response()->json($scheduleStatus);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(ScheduleStatus $scheduleStatus)
     {
-        //
-
-        return response()->json([]);
+        $scheduleStatus->delete();
+        return response()->noContent();
     }
 }
-
-
-

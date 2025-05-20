@@ -2,61 +2,55 @@
 
 namespace Modules\Customers\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Customers\Models\CustomerStatus;
+use App\Http\Controllers\Controller;
+
 
 class CustomerStatusController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = CustomerStatus::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(CustomerStatus $customerStatus)
+    {
+        return response()->json($customerStatus);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $customerStatus = CustomerStatus::create($data);
+        return response()->json($customerStatus, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, CustomerStatus $customerStatus)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $customerStatus->update($data);
+        return response()->json($customerStatus);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, CustomerStatus $customerStatus)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $customerStatus->update($data);
+        return response()->json($customerStatus);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(CustomerStatus $customerStatus)
     {
-        //
-
-        return response()->json([]);
+        $customerStatus->delete();
+        return response()->noContent();
     }
 }
-
-
-

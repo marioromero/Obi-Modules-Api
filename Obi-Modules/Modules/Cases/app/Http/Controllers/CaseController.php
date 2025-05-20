@@ -2,61 +2,55 @@
 
 namespace Modules\Cases\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Cases\Models\CaseEntity;
+use App\Http\Controllers\Controller;
+
 
 class CaseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = CaseEntity::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(CaseEntity $case)
+    {
+        return response()->json($case);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $case = CaseEntity::create($data);
+        return response()->json($case, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, CaseEntity $case)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $case->update($data);
+        return response()->json($case);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, CaseEntity $case)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $case->update($data);
+        return response()->json($case);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(CaseEntity $case)
     {
-        //
-
-        return response()->json([]);
+        $case->delete();
+        return response()->noContent();
     }
 }
-
-
-

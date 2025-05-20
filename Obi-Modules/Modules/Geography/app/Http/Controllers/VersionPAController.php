@@ -2,61 +2,55 @@
 
 namespace Modules\Geography\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Geography\Models\VersionPA;
+use App\Http\Controllers\Controller;
+
 
 class VersionPAController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = VersionPA::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(VersionPA $versionPA)
+    {
+        return response()->json($versionPA);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $versionPA = VersionPA::create($data);
+        return response()->json($versionPA, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, VersionPA $versionPA)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $versionPA->update($data);
+        return response()->json($versionPA);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, VersionPA $versionPA)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $versionPA->update($data);
+        return response()->json($versionPA);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(VersionPA $versionPA)
     {
-        //
-
-        return response()->json([]);
+        $versionPA->delete();
+        return response()->noContent();
     }
 }
-
-
-

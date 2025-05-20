@@ -2,61 +2,54 @@
 
 namespace Modules\Banks\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Banks\Models\Insurer;
+use App\Http\Controllers\Controller;
 
 class InsurerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = Insurer::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(Insurer $insurer)
+    {
+        return response()->json($insurer);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $insurer = Insurer::create($data);
+        return response()->json($insurer, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, Insurer $insurer)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $insurer->update($data);
+        return response()->json($insurer);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, Insurer $insurer)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $insurer->update($data);
+        return response()->json($insurer);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(Insurer $insurer)
     {
-        //
-
-        return response()->json([]);
+        $insurer->delete();
+        return response()->noContent();
     }
 }
-
-
-

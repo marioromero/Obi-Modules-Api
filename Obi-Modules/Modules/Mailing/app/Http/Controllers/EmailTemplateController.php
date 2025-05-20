@@ -2,61 +2,55 @@
 
 namespace Modules\Mailing\app\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Mailing\Models\EmailTemplate;
+use App\Http\Controllers\Controller;
+
 
 class EmailTemplateController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-
-        return response()->json([]);
+        $data = EmailTemplate::paginate(15);
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function show(EmailTemplate $emailTemplate)
+    {
+        return response()->json($emailTemplate);
+    }
+
     public function store(Request $request)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $emailTemplate = EmailTemplate::create($data);
+        return response()->json($emailTemplate, 201);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function update(Request $request, EmailTemplate $emailTemplate)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $emailTemplate->update($data);
+        return response()->json($emailTemplate);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
+    public function patch(Request $request, EmailTemplate $emailTemplate)
     {
-        //
-
-        return response()->json([]);
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $emailTemplate->update($data);
+        return response()->json($emailTemplate);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+    public function destroy(EmailTemplate $emailTemplate)
     {
-        //
-
-        return response()->json([]);
+        $emailTemplate->delete();
+        return response()->noContent();
     }
 }
-
-
-

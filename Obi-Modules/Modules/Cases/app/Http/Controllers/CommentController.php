@@ -2,6 +2,9 @@
 
 namespace Modules\Cases\app\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Modules\Cases\Models\Comment;
+
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -10,53 +13,69 @@ class CommentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        //
-
-        return response()->json([]);
-    }
+    
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        //
-
-        return response()->json([]);
-    }
+    
 
     /**
      * Show the specified resource.
      */
-    public function show($id)
-    {
-        //
-
-        return response()->json([]);
-    }
+    
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
-    {
-        //
-
-        return response()->json([]);
-    }
+    
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
-    {
-        //
+    
 
-        return response()->json([]);
+    public function index()
+    {
+        $data = Comment::paginate(15);
+        return response()->json($data);
+    }
+
+    public function show(Comment $comment)
+    {
+        return response()->json($comment);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $comment = Comment::create($data);
+        return response()->json($comment, 201);
+    }
+
+    public function update(Request $request, Comment $comment)
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $comment->update($data);
+        return response()->json($comment);
+    }
+
+    public function patch(Request $request, Comment $comment)
+    {
+        $data = $request->validate([
+            'name' => 'sometimes|string',
+        ]);
+        $comment->update($data);
+        return response()->json($comment);
+    }
+
+    public function destroy(Comment $comment)
+    {
+        $comment->delete();
+        return response()->noContent();
     }
 }
-
-
-
