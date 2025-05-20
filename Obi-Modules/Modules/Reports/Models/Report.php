@@ -1,12 +1,14 @@
 <?php
 
 namespace Modules\Reports\Models;
+use Modules\Core\app\Support\Traits\DeletionStrategies;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
+    use DeletionStrategies;
     use HasFactory;
 
     protected $connection = 'reports_db';

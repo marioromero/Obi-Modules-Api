@@ -1,12 +1,14 @@
 <?php
 
 namespace Modules\Geography\Models;
+use Modules\Core\app\Support\Traits\DeletionStrategies;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Province extends Model
 {
+    use DeletionStrategies;
     use HasFactory;
 
     protected $connection = 'geography_db';

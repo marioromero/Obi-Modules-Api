@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Users\Models;
+use Modules\Core\app\Support\Traits\DeletionStrategies;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -8,6 +9,7 @@ use Modules\Geography\Models\Commune;
 
 class User extends Model
 {
+    use DeletionStrategies;
     use HasFactory;
 
     protected $connection = 'users_db';

@@ -1,12 +1,14 @@
 <?php
 
 namespace Modules\Banks\Models;
+use Modules\Core\app\Support\Traits\DeletionStrategies;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class LossAdjuster extends Model
 {
+    use DeletionStrategies;
     use HasFactory;
 
     protected $connection = 'banks_db';

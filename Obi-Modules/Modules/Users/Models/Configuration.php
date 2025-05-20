@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Users\Models;
+use Modules\Core\app\Support\Traits\DeletionStrategies;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -8,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Configuration extends Model
 {
+    use DeletionStrategies;
     use HasFactory;
 
     protected $connection = 'users_db';

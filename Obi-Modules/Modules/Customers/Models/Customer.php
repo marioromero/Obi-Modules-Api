@@ -1,12 +1,14 @@
 <?php
 
 namespace Modules\Customers\Models;
+use Modules\Core\app\Support\Traits\DeletionStrategies;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
+    use DeletionStrategies;
     use HasFactory;
 
     protected $connection = 'customers_db';
