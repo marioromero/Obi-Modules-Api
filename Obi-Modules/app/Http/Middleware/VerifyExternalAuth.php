@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Modules\Core\App\Http\BaseApiController;
 
 class VerifyExternalAuth
 {
@@ -15,30 +16,36 @@ class VerifyExternalAuth
      */
     public function handle($request, Closure $next)
     {
-        // Validar que venga un ID de usuario autenticado
+        $responder = app(BaseApiController::class);
+
         if (!$request->hasHeader('X-User-ID') || !$request->hasHeader('X-User-Role')) {
-            return response()->json(['error' => 'Unauthorized. Missing user headers.'], 401);
+            return $responder->error(
+                'Unauthorized. Missing user headers.',
+                401
+            );
         }
 
-        // (Opcional) validación de una API_KEY interna
         $expectedApiKey = env('TRUSTED_INTERNAL_API_KEY');
 
         if (!$expectedApiKey) {
-            // 500 para alertar de configuración incorrecta
-            abort(500, 'Server misconfiguration: missing TRUSTED_INTERNAL_API_KEY');
+            return $responder->error(
+                'Server misconfiguration: missing TRUSTED_INTERNAL_API_KEY',
+                500
+            );
         }
 
         if ($request->header('X-Internal-Key') !== $expectedApiKey) {
-            return response()->json(['error' => 'Unauthorized source.'], 401);
+            return $responder->error(
+                'Unauthorized source.',
+                401
+            );
         }
 
-        // Cargar "usuario simulado" si lo deseas (para policies futuras)
         $request->merge([
-            'external_user_id' => $request->header('X-User-ID'),
+            'external_user_id'   => $request->header('X-User-ID'),
             'external_user_role' => $request->header('X-User-Role'),
         ]);
 
         return $next($request);
     }
-
 }
