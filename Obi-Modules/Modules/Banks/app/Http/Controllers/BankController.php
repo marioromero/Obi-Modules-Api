@@ -4,21 +4,19 @@ namespace Modules\Banks\app\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Modules\Banks\Models\Bank;
-use App\Http\Controllers\Controller;
+use Modules\Core\App\Http\BaseApiController;
 
-
-class BankController extends Controller
+class BankController extends BaseApiController
 {
-
     public function index()
     {
-        $data = Bank::paginate(15);
-        return response()->json($data);
+        $paginator = Bank::paginate(15);
+        return $this->paginated($paginator, 'Listado de bancos');
     }
 
     public function show(Bank $bank)
     {
-        return response()->json($bank);
+        return $this->success($bank, 'Banco obtenido correctamente');
     }
 
     public function store(Request $request)
@@ -26,8 +24,10 @@ class BankController extends Controller
         $data = $request->validate([
             'name' => 'required|string',
         ]);
+
         $bank = Bank::create($data);
-        return response()->json($bank, 201);
+
+        return $this->success($bank, 'Banco creado correctamente', 201);
     }
 
     public function update(Request $request, Bank $bank)
@@ -35,8 +35,10 @@ class BankController extends Controller
         $data = $request->validate([
             'name' => 'required|string',
         ]);
+
         $bank->update($data);
-        return response()->json($bank);
+
+        return $this->success($bank, 'Banco actualizado correctamente');
     }
 
     public function patch(Request $request, Bank $bank)
@@ -44,13 +46,16 @@ class BankController extends Controller
         $data = $request->validate([
             'name' => 'sometimes|string',
         ]);
+
         $bank->update($data);
-        return response()->json($bank);
+
+        return $this->success($bank, 'Banco parcialmente actualizado');
     }
 
     public function destroy(Bank $bank)
     {
         $bank->delete();
-        return response()->noContent();
+
+        return $this->success(null, 'Banco eliminado correctamente', 204);
     }
 }
