@@ -4,36 +4,35 @@ namespace Modules\Cases\app\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Modules\Cases\Models\Priority;
-
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+
 
 class PriorityController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    
+
 
     /**
      * Store a newly created resource in storage.
      */
-    
+
 
     /**
      * Show the specified resource.
      */
-    
+
 
     /**
      * Update the specified resource in storage.
      */
-    
+
 
     /**
      * Remove the specified resource from storage.
      */
-    
+
 
     public function index()
     {
