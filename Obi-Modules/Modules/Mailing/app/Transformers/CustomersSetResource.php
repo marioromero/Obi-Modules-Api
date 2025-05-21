@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Mailing\Transformers;
+namespace Modules\Mailing\app\Transformers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
