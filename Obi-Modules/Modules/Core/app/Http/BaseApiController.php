@@ -1,10 +1,9 @@
 <?php
 
-// Modules/Core/app/Http/BaseApiController.php
-namespace Modules\Core\Http;
+namespace Modules\Core\app\Http;
 
 use Illuminate\Routing\Controller;
-use Modules\Core\Support\Traits\ApiResponse;
+use Modules\Core\app\Support\Traits\ApiResponse;
 
 class BaseApiController extends Controller
 {

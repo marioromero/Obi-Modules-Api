@@ -1,10 +1,10 @@
 <?php
 
-namespace Modules\Core\Support\Traits;
+namespace Modules\Core\app\Support\Traits;
 
 trait ApiResponse
 {
-    protected function success(mixed $data = null, string $message = 'OK', int $code = 200)
+    public function success(mixed $data = null, string $message = 'OK', int $code = 200)
     {
         return response()->json([
             'success' => true,
@@ -14,7 +14,7 @@ trait ApiResponse
         ], $code);
     }
 
-    protected function error(string $message, int $code = 400, mixed $errors = null)
+    public function error(string $message, int $code = 400, mixed $errors = null)
     {
         return response()->json([
             'success' => false,
@@ -24,7 +24,7 @@ trait ApiResponse
         ], $code);
     }
 
-    protected function paginated($paginator, string $message = 'OK')
+    public function paginated($paginator, string $message = 'OK')
     {
         return response()->json([
             'success' => true,
