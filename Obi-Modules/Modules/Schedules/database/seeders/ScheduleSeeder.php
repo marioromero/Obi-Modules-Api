@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Schedules\Database\Seeders;
+namespace Modules\Schedules\database\seeders;
 
 use Illuminate\Database\Seeder;
 
@@ -14,3 +14,6 @@ class ScheduleSeeder extends Seeder
         // $this->call([]);
     }
 }
+
+
+

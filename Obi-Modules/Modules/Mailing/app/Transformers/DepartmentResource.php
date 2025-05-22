@@ -15,3 +15,4 @@ class DepartmentResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

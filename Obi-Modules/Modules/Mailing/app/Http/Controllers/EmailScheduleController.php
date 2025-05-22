@@ -51,3 +51,4 @@ class EmailScheduleController extends BaseApiController
         return $this->success(null, 'EmailSchedule eliminado correctamente', 204);
     }
 }
+

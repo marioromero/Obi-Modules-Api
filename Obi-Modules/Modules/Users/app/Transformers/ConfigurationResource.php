@@ -15,3 +15,4 @@ class ConfigurationResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

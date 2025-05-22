@@ -15,3 +15,4 @@ class CaseStatusResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

@@ -3,3 +3,4 @@
 
     <p>Module: {!! config('cases.name') !!}</p>
 </x-cases::layouts.master>
+

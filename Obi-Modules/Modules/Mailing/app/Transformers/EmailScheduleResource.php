@@ -15,3 +15,4 @@ class EmailScheduleResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

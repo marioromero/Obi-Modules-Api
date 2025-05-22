@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Mailing\Database\Seeders;
+namespace Modules\Mailing\database\seeders;
 
 use Illuminate\Database\Seeder;
 
@@ -14,3 +14,6 @@ class CustomersSetSeeder extends Seeder
         // $this->call([]);
     }
 }
+
+
+

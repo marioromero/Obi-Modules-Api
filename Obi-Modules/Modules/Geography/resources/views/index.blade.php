@@ -3,3 +3,4 @@
 
     <p>Module: {!! config('geography.name') !!}</p>
 </x-geography::layouts.master>
+

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Cases\Http\Requests;
+namespace Modules\Cases\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,3 +22,4 @@ class StoreCaseStatusRequest extends FormRequest
         return true;
     }
 }
+

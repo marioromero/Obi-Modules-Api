@@ -59,3 +59,4 @@ class BankController extends BaseApiController
         return $this->success(null, 'Banco eliminado correctamente', 204);
     }
 }
+

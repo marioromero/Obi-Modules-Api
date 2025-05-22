@@ -15,3 +15,4 @@ class RegionResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

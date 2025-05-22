@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Reports\Database\Seeders;
+namespace Modules\Reports\database\seeders;
 
 use Illuminate\Database\Seeder;
 
@@ -14,3 +14,6 @@ class ReportsDatabaseSeeder extends Seeder
         // $this->call([]);
     }
 }
+
+
+

@@ -26,3 +26,4 @@ class Configuration extends Model
         return $this->belongsTo(Type::class, 'type_id');
     }
 }
+

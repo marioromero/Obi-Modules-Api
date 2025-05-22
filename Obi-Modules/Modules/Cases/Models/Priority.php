@@ -24,3 +24,4 @@ class Priority extends Model
         return $this->hasMany(CaseEntity::class, 'priority');
     }
 }
+

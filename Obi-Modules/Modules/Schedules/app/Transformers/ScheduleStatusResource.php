@@ -15,3 +15,4 @@ class ScheduleStatusResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

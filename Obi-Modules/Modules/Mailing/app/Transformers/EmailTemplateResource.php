@@ -15,3 +15,4 @@ class EmailTemplateResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

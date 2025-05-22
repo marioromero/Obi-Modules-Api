@@ -27,3 +27,4 @@
         {{-- Vite JS --}}
         {{-- {{ module_vite('build-geography', 'resources/assets/js/app.js') }} --}}
     </body>
+

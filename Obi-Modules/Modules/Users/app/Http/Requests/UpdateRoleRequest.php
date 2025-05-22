@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Users\Http\Requests;
+namespace Modules\Users\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,3 +22,4 @@ class UpdateRoleRequest extends FormRequest
         return true;
     }
 }
+

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Mailing\Http\Requests;
+namespace Modules\Mailing\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,3 +22,4 @@ class UpdateCustomerDetailRequest extends FormRequest
         return true;
     }
 }
+

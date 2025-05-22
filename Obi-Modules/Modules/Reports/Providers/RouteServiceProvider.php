@@ -57,3 +57,4 @@ class RouteServiceProvider extends ServiceProvider
             ->group(module_path($this->moduleNameLower, '/routes/api.php'));
     }
 }
+

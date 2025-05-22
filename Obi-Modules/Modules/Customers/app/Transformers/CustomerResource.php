@@ -15,3 +15,4 @@ class CustomerResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

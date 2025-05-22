@@ -133,3 +133,4 @@ class CasesServiceProvider extends ServiceProvider
         return $paths;
     }
 }
+

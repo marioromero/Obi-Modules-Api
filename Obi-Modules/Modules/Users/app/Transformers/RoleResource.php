@@ -15,3 +15,4 @@ class RoleResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

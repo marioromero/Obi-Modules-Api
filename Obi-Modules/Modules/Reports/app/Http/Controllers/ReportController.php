@@ -49,3 +49,4 @@ class ReportController extends BaseApiController
         return $this->success(null, 'Report eliminado correctamente', 204);
     }
 }
+

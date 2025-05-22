@@ -22,3 +22,4 @@ return new class extends Migration
         Schema::dropIfExists('version_p_a');
     }
 };
+

@@ -52,3 +52,4 @@ class AccidentTypeController extends BaseApiController
         return $this->success(null, 'AccidentType eliminado correctamente', 204);
     }
 }
+

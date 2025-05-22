@@ -3,3 +3,4 @@
 
     <p>Module: {!! config('reports.name') !!}</p>
 </x-reports::layouts.master>
+

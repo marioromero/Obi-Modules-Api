@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Users\Database\Factories;
+namespace Modules\Mailing\database\factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class UserStatusFactoryFactory extends Factory
+class EmailScheduleFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      */
-    protected $model = \Modules\Users\Models\UserStatusFactory::class;
+    protected $model = \Modules\Mailing\Models\EmailSchedule::class;
 
     /**
      * Define the model's default state.
@@ -19,4 +19,17 @@ class UserStatusFactoryFactory extends Factory
         return [];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

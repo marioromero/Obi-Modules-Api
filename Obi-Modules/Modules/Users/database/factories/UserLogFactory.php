@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Cases\Database\Factories;
+namespace Modules\Users\database\factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class CaseStatusFactoryFactory extends Factory
+class UserLogFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      */
-    protected $model = \Modules\Cases\Models\CaseStatusFactory::class;
+    protected $model = \Modules\Users\Models\UserLog::class;
 
     /**
      * Define the model's default state.
@@ -19,4 +19,17 @@ class CaseStatusFactoryFactory extends Factory
         return [];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

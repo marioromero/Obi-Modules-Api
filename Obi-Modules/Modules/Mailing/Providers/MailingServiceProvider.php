@@ -133,3 +133,4 @@ class MailingServiceProvider extends ServiceProvider
         return $paths;
     }
 }
+

@@ -67,3 +67,4 @@ Route::post('configurations', [ConfigurationController::class, 'store']);
 Route::put('configurations/{configuration}', [ConfigurationController::class, 'update']);
 Route::patch('configurations/{configuration}', [ConfigurationController::class, 'patch']);
 Route::delete('configurations/{configuration}', [ConfigurationController::class, 'destroy']);
+

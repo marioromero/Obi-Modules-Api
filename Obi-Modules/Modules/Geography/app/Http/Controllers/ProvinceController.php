@@ -52,3 +52,4 @@ class ProvinceController extends BaseApiController
         return $this->success(null, 'Province eliminado correctamente', 204);
     }
 }
+

@@ -51,3 +51,4 @@ class RegionController extends BaseApiController
         return $this->success(null, 'Region eliminado correctamente', 204);
     }
 }
+

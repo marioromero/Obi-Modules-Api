@@ -133,3 +133,4 @@ class ReportsServiceProvider extends ServiceProvider
         return $paths;
     }
 }
+

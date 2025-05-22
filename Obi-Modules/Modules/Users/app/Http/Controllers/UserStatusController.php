@@ -53,3 +53,4 @@ class UserStatusController extends BaseApiController
         return $this->success(null, 'UserStatus eliminado correctamente', 204);
     }
 }
+

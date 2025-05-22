@@ -40,3 +40,4 @@ class Commune extends Model
         return $this->hasMany(\Modules\Users\Models\User::class, 'commune_id');
     }
 }
+

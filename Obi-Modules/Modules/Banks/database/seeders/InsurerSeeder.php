@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Banks\Database\Seeders;
+namespace Modules\Banks\database\seeders;
 
 use Illuminate\Database\Seeder;
 
@@ -14,3 +14,6 @@ class InsurerSeeder extends Seeder
         // $this->call([]);
     }
 }
+
+
+

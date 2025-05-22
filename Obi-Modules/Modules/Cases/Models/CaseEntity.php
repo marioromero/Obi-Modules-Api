@@ -152,3 +152,4 @@ class CaseEntity extends Model
         return $this->hasMany(\Modules\Schedules\Models\Schedule::class, 'case_id');
     }
 }
+

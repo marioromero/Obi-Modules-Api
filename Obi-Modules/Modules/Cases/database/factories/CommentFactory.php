@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Geography\Database\Factories;
+namespace Modules\Cases\database\factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class RegionFactoryFactory extends Factory
+class CommentFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      */
-    protected $model = \Modules\Geography\Models\RegionFactory::class;
+    protected $model = \Modules\Cases\Models\Comment::class;
 
     /**
      * Define the model's default state.
@@ -19,4 +19,17 @@ class RegionFactoryFactory extends Factory
         return [];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

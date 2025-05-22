@@ -133,3 +133,4 @@ class UsersServiceProvider extends ServiceProvider
         return $paths;
     }
 }
+

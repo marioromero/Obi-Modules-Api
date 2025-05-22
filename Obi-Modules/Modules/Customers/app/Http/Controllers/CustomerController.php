@@ -51,3 +51,4 @@ class CustomerController extends BaseApiController
         return $this->success(null, 'Customer eliminado correctamente', 204);
     }
 }
+

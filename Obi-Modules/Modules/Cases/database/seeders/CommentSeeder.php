@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Cases\Database\Seeders;
+namespace Modules\Cases\database\seeders;
 
 use Illuminate\Database\Seeder;
 
@@ -14,3 +14,6 @@ class CommentSeeder extends Seeder
         // $this->call([]);
     }
 }
+
+
+

@@ -25,3 +25,4 @@ class Department extends Model
         return $this->hasMany(\Modules\Mailing\Models\EmailTemplate::class, 'department_id');
     }
 }
+

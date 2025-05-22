@@ -133,3 +133,4 @@ class SchedulesServiceProvider extends ServiceProvider
         return $paths;
     }
 }
+

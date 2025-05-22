@@ -53,3 +53,4 @@ class UserLogController extends BaseApiController
         return $this->success(null, 'UserLog eliminado correctamente', 204);
     }
 }
+

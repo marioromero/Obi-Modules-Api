@@ -20,3 +20,4 @@ class ServiceResponseDTO
         return new self(false, null, $message, $code);
     }
 }
+

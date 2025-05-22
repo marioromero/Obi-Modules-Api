@@ -24,3 +24,4 @@ class AccidentType extends Model
         return $this->hasMany(CaseEntity::class, 'accident_type_id');
     }
 }
+

@@ -360,3 +360,6 @@ class CommuneSeeder extends Seeder
         ]);
     }
 }
+
+
+

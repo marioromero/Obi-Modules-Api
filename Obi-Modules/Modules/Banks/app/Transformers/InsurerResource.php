@@ -15,3 +15,4 @@ class InsurerResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

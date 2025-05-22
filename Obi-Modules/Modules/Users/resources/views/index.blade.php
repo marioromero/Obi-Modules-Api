@@ -3,3 +3,4 @@
 
     <p>Module: {!! config('users.name') !!}</p>
 </x-users::layouts.master>
+

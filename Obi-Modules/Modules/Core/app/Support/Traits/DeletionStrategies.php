@@ -74,3 +74,4 @@ trait DeletionStrategies
         return $this;
     }
 }
+

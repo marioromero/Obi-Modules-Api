@@ -53,3 +53,4 @@ class CaseController extends BaseApiController
         return $this->success(null, 'Case eliminado correctamente', 204);
     }
 }
+

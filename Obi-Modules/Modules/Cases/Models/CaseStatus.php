@@ -26,3 +26,4 @@ class CaseStatus extends Model
         return $this->hasMany(CaseEntity::class, 'case_status_id');
     }
 }
+

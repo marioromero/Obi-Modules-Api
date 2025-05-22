@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Mailing\Database\Factories;
+namespace Modules\Banks\database\factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class DepartmentFactoryFactory extends Factory
+class InsurerFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      */
-    protected $model = \Modules\Mailing\Models\DepartmentFactory::class;
+    protected $model = \Modules\Banks\Models\Insurer::class;
 
     /**
      * Define the model's default state.
@@ -19,4 +19,17 @@ class DepartmentFactoryFactory extends Factory
         return [];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

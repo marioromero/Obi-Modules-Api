@@ -27,3 +27,4 @@ class Bank extends Model
         return $this->hasMany(Insurer::class, 'bank_id');
     }
 }
+

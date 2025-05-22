@@ -40,3 +40,4 @@ class Region extends Model
         return $this->belongsTo(VersionPA::class, 'version_id');
     }
 }
+

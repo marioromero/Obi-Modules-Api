@@ -52,3 +52,4 @@ class Comment extends Model
         return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
     }
 }
+

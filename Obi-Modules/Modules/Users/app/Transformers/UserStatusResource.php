@@ -15,3 +15,4 @@ class UserStatusResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

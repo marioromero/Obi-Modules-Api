@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Customers\Database\Factories;
+namespace Modules\Geography\database\factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class CustomerStatusFactoryFactory extends Factory
+class CommuneFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      */
-    protected $model = \Modules\Customers\Models\CustomerStatusFactory::class;
+    protected $model = \Modules\Geography\Models\Commune::class;
 
     /**
      * Define the model's default state.
@@ -19,4 +19,17 @@ class CustomerStatusFactoryFactory extends Factory
         return [];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

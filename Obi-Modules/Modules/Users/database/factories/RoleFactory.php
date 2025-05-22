@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Users\Database\Factories;
+namespace Modules\Users\database\factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class RoleFactoryFactory extends Factory
+class RoleFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      */
-    protected $model = \Modules\Users\Models\RoleFactory::class;
+    protected $model = \Modules\Users\Models\Role::class;
 
     /**
      * Define the model's default state.
@@ -19,4 +19,17 @@ class RoleFactoryFactory extends Factory
         return [];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

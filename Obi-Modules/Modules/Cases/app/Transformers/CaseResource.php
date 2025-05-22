@@ -15,3 +15,4 @@ class CaseResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

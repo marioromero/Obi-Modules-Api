@@ -53,3 +53,4 @@ class EventController extends BaseApiController
         return $this->success(null, 'Event eliminado correctamente', 204);
     }
 }
+

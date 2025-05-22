@@ -29,3 +29,4 @@ class VersionPA extends Model
         return $this->hasMany(Region::class, 'version_id');
     }
 }
+

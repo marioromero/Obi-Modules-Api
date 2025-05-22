@@ -3,3 +3,4 @@
 
     <p>Module: {!! config('schedules.name') !!}</p>
 </x-schedules::layouts.master>
+

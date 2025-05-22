@@ -52,3 +52,4 @@ class EmailTemplateController extends BaseApiController
         return $this->success(null, 'EmailTemplate eliminado correctamente', 204);
     }
 }
+

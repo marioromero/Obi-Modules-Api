@@ -15,3 +15,4 @@ class PriorityResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

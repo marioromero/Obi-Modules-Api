@@ -40,3 +40,4 @@ class EmailTemplate extends Model
         return $this->belongsTo(\Modules\Mailing\Models\Department::class, 'department_id');
     }
 }
+

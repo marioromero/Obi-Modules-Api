@@ -49,3 +49,4 @@ Route::post('version-p-as', [VersionPAController::class, 'store']);
 Route::put('version-p-as/{versionPA}', [VersionPAController::class, 'update']);
 Route::patch('version-p-as/{versionPA}', [VersionPAController::class, 'patch']);
 Route::delete('version-p-as/{versionPA}', [VersionPAController::class, 'destroy']);
+

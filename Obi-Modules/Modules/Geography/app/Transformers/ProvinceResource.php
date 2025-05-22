@@ -15,3 +15,4 @@ class ProvinceResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

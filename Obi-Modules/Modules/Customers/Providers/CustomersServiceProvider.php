@@ -133,3 +133,4 @@ class CustomersServiceProvider extends ServiceProvider
         return $paths;
     }
 }
+

@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Geography\Database\Seeders;
+namespace Modules\Geography\database\seeders;
 
 use Illuminate\Database\Seeder;
 
@@ -14,3 +14,6 @@ class GeographyDatabaseSeeder extends Seeder
         // $this->call([]);
     }
 }
+
+
+

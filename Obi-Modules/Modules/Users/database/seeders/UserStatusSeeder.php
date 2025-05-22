@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Users\Database\Seeders;
+namespace Modules\Users\database\seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -16,3 +16,6 @@ class UserStatusSeeder extends Seeder
         ]);
     }
 }
+
+
+

@@ -30,3 +30,4 @@ class LossAdjuster extends Model
         return $this->belongsTo(Insurer::class, 'insurer_id');
     }
 }
+

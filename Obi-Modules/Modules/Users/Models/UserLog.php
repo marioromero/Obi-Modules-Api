@@ -37,3 +37,4 @@ class UserLog extends Model
         return $this->belongsTo(Event::class, 'event_id');
     }
 }
+

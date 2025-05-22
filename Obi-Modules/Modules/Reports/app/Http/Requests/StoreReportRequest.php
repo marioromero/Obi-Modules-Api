@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Reports\Http\Requests;
+namespace Modules\Reports\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,3 +22,4 @@ class StoreReportRequest extends FormRequest
         return true;
     }
 }
+

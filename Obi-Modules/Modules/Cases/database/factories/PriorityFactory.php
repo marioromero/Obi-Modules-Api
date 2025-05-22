@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Schedules\Database\Factories;
+namespace Modules\Cases\database\factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class ScheduleFactoryFactory extends Factory
+class PriorityFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      */
-    protected $model = \Modules\Schedules\Models\ScheduleFactory::class;
+    protected $model = \Modules\Cases\Models\Priority::class;
 
     /**
      * Define the model's default state.
@@ -19,4 +19,17 @@ class ScheduleFactoryFactory extends Factory
         return [];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -22,3 +22,4 @@ Route::post('customer-statuses', [CustomerStatusController::class, 'store']);
 Route::put('customer-statuses/{customerStatus}', [CustomerStatusController::class, 'update']);
 Route::patch('customer-statuses/{customerStatus}', [CustomerStatusController::class, 'patch']);
 Route::delete('customer-statuses/{customerStatus}', [CustomerStatusController::class, 'destroy']);
+

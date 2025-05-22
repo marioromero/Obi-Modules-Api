@@ -22,3 +22,4 @@ Route::post('schedule-statuses', [ScheduleStatusController::class, 'store']);
 Route::put('schedule-statuses/{scheduleStatus}', [ScheduleStatusController::class, 'update']);
 Route::patch('schedule-statuses/{scheduleStatus}', [ScheduleStatusController::class, 'patch']);
 Route::delete('schedule-statuses/{scheduleStatus}', [ScheduleStatusController::class, 'destroy']);
+

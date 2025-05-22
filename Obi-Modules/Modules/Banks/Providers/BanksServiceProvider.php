@@ -133,3 +133,4 @@ class BanksServiceProvider extends ServiceProvider
         return $paths;
     }
 }
+

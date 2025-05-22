@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Geography\Database\Seeders;
+namespace Modules\Geography\database\seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -29,3 +29,6 @@ class RegionSeeder extends Seeder
         ]);
     }
 }
+
+
+

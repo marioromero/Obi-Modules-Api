@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Schedules\Http\Requests;
+namespace Modules\Schedules\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,3 +22,4 @@ class UpdateScheduleStatusRequest extends FormRequest
         return true;
     }
 }
+

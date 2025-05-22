@@ -3,3 +3,4 @@
 
     <p>Module: {!! config('mailing.name') !!}</p>
 </x-mailing::layouts.master>
+

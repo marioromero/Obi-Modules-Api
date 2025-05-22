@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Geography\Http\Requests;
+namespace Modules\Geography\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,3 +22,4 @@ class UpdateProvinceRequest extends FormRequest
         return true;
     }
 }
+

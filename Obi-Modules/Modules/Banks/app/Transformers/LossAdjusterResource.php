@@ -15,3 +15,4 @@ class LossAdjusterResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

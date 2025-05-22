@@ -13,3 +13,4 @@ Route::post('reports', [ReportController::class, 'store']);
 Route::put('reports/{report}', [ReportController::class, 'update']);
 Route::patch('reports/{report}', [ReportController::class, 'patch']);
 Route::delete('reports/{report}', [ReportController::class, 'destroy']);
+

@@ -39,3 +39,4 @@ class EmailSchedule extends Model
         return $this->belongsTo(EmailTemplate::class, 'email_template');
     }
 }
+

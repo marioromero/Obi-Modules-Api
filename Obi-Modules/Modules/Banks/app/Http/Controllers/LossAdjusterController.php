@@ -52,3 +52,4 @@ class LossAdjusterController extends BaseApiController
         return $this->success(null, 'LossAdjuster eliminado correctamente', 204);
     }
 }
+

@@ -9,3 +9,4 @@ class BaseApiController extends Controller
 {
     use ApiResponse;
 }
+

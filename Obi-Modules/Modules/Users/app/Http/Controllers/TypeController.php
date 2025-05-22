@@ -53,3 +53,4 @@ class TypeController extends BaseApiController
         return $this->success(null, 'Type eliminado correctamente', 204);
     }
 }
+

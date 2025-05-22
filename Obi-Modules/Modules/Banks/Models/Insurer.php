@@ -37,3 +37,4 @@ class Insurer extends Model
         return $this->hasMany(LossAdjuster::class, 'insurer_id');
     }
 }
+

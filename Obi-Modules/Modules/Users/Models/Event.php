@@ -25,3 +25,4 @@ class Event extends Model
         return $this->hasMany(UserLog::class, 'event_id');
     }
 }
+

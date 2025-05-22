@@ -52,3 +52,4 @@ class ScheduleStatusController extends BaseApiController
         return $this->success(null, 'ScheduleStatus eliminado correctamente', 204);
     }
 }
+

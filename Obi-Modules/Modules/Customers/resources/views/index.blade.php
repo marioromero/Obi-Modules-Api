@@ -3,3 +3,4 @@
 
     <p>Module: {!! config('customers.name') !!}</p>
 </x-customers::layouts.master>
+

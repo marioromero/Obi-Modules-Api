@@ -53,3 +53,4 @@ class RoleController extends BaseApiController
         return $this->success(null, 'Role eliminado correctamente', 204);
     }
 }
+

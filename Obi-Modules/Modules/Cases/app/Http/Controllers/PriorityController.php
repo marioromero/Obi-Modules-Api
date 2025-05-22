@@ -52,3 +52,4 @@ class PriorityController extends BaseApiController
         return $this->success(null, 'Priority eliminado correctamente', 204);
     }
 }
+

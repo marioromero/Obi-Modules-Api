@@ -25,3 +25,4 @@ class Type extends Model
         return $this->hasMany(Configuration::class, 'type_id');
     }
 }
+

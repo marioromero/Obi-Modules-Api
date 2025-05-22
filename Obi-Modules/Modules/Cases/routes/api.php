@@ -49,3 +49,4 @@ Route::post('cases', [CaseController::class, 'store']);
 Route::put('cases/{case}', [CaseController::class, 'update']);
 Route::patch('cases/{case}', [CaseController::class, 'patch']);
 Route::delete('cases/{case}', [CaseController::class, 'destroy']);
+

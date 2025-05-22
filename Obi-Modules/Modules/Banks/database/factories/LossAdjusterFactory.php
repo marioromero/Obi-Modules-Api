@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Geography\Database\Factories;
+namespace Modules\Banks\database\factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class CountryFactoryFactory extends Factory
+class LossAdjusterFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      */
-    protected $model = \Modules\Geography\Models\CountryFactory::class;
+    protected $model = \Modules\Banks\Models\LossAdjuster::class;
 
     /**
      * Define the model's default state.
@@ -19,4 +19,17 @@ class CountryFactoryFactory extends Factory
         return [];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

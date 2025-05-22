@@ -53,3 +53,4 @@ class ConfigurationController extends BaseApiController
         return $this->success(null, 'Configuration eliminado correctamente', 204);
     }
 }
+

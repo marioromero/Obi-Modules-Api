@@ -27,3 +27,4 @@
         {{-- Vite JS --}}
         {{-- {{ module_vite('build-mailing', 'resources/assets/js/app.js') }} --}}
     </body>
+

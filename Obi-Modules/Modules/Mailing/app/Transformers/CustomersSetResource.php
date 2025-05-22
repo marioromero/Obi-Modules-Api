@@ -15,3 +15,4 @@ class CustomersSetResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

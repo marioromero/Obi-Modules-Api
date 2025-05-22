@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Banks\Http\Requests;
+namespace Modules\Banks\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,3 +22,4 @@ class UpdateBankRequest extends FormRequest
         return true;
     }
 }
+

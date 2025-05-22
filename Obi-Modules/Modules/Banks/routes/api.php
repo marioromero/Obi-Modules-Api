@@ -31,3 +31,4 @@ Route::post('loss-adjusters', [LossAdjusterController::class, 'store']);
 Route::put('loss-adjusters/{lossAdjuster}', [LossAdjusterController::class, 'update']);
 Route::patch('loss-adjusters/{lossAdjuster}', [LossAdjusterController::class, 'patch']);
 Route::delete('loss-adjusters/{lossAdjuster}', [LossAdjusterController::class, 'destroy']);
+

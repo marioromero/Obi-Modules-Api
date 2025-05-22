@@ -15,3 +15,4 @@ class AccidentTypeResource extends JsonResource
         return parent::toArray($request);
     }
 }
+

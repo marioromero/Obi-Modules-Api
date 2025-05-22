@@ -62,3 +62,4 @@ class Customer extends Model
         return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_id');
     }
 }
+

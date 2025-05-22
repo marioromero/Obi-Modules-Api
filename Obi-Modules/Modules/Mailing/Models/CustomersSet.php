@@ -39,3 +39,4 @@ class CustomersSet extends Model
         return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_set_id');
     }
 }
+

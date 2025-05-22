@@ -54,3 +54,4 @@ class Schedule extends Model
         return $this->belongsTo(\Modules\Cases\Models\CaseEntity::class, 'case_id');
     }
 }
+

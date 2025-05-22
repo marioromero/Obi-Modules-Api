@@ -52,3 +52,4 @@ class DepartmentController extends BaseApiController
         return $this->success(null, 'Department eliminado correctamente', 204);
     }
 }
+

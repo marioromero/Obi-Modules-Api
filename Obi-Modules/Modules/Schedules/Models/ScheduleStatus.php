@@ -27,3 +27,4 @@ class ScheduleStatus extends Model
         return $this->hasMany(Schedule::class, 'schedule_state_id');
     }
 }
+

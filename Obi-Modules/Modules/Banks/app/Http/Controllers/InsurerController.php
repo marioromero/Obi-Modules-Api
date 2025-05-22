@@ -51,3 +51,4 @@ class InsurerController extends BaseApiController
         return $this->success(null, 'Insurer eliminado correctamente', 204);
     }
 }
+

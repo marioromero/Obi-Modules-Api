@@ -1,15 +1,15 @@
 <?php
 
-namespace Modules\Banks\Database\Factories;
+namespace Modules\Cases\database\factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class BankFactoryFactory extends Factory
+class AccidentTypeFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      */
-    protected $model = \Modules\Banks\Models\BankFactory::class;
+    protected $model = \Modules\Cases\Models\AccidentType::class;
 
     /**
      * Define the model's default state.
@@ -19,4 +19,17 @@ class BankFactoryFactory extends Factory
         return [];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

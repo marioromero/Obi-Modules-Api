@@ -37,3 +37,4 @@ class CustomerDetail extends Model
         return $this->belongsTo(\Modules\Customers\Models\Customer::class, 'customer_id');
     }
 }
+

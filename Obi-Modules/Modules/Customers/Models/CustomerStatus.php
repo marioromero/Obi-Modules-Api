@@ -25,3 +25,4 @@ class CustomerStatus extends Model
         return $this->hasMany(Customer::class, 'case_status_id');
     }
 }
+

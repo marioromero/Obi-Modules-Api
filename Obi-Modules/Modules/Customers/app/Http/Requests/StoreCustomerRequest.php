@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Customers\Http\Requests;
+namespace Modules\Customers\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,3 +22,4 @@ class StoreCustomerRequest extends FormRequest
         return true;
     }
 }
+

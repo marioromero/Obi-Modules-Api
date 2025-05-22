@@ -52,3 +52,4 @@ class CommuneController extends BaseApiController
         return $this->success(null, 'Commune eliminado correctamente', 204);
     }
 }
+

@@ -15,3 +15,4 @@ class VersionPAResource extends JsonResource
         return parent::toArray($request);
     }
 }
+
