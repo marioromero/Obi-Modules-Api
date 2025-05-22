@@ -147,7 +147,7 @@ return [
             'policies' => ['path' => 'app/Policies', 'generate' => false],
             'provider' => ['path' => 'Providers', 'generate' => true],
             'repository' => ['path' => 'app/Repositories', 'generate' => false],
-            'resource' => ['path' => 'app/Transformers', 'generate' => false],
+          //'resource' => ['path' => 'app/Transformers', 'generate' => false],
             'route-provider' => ['path' => 'Providers', 'generate' => true],
             'rules' => ['path' => 'app/Rules', 'generate' => false],
             'services' => ['path' => 'app/Services', 'generate' => false],
@@ -155,17 +155,19 @@ return [
             'traits' => ['path' => 'app/Traits', 'generate' => false],
 
             // app/Http/
-            'controller' => ['path' => 'app/Http/Controllers', 'generate' => true],
+            'controller' => ['path' => 'app/Http/Controllers', 'namespace' => 'app\\Http\\Controllers', 'generate' => true],
             'filter' => ['path' => 'app/Http/Middleware', 'generate' => false],
-            'request' => ['path' => 'app/Http/Requests', 'generate' => true],
+            'request' => ['path' => 'app/Http/Requests', 'namespace' => 'app\\Http\\Requests', 'generate' => true],
+
+            'resource' => ['path' => 'app/Transformers', 'namespace' => 'app\\Transformers', 'generate'  => true,],
 
             // config/
             'config' => ['path' => 'config', 'generate' => true],
 
             // database/
-            'factory' => ['path' => 'database/factories', 'generate' => true],
+            'factory' => ['path' => 'database/factories', 'namespace' => 'database\\factories', 'generate' => true],
             'migration' => ['path' => 'database/migrations', 'generate' => true],
-            'seeder' => ['path' => 'database/seeders', 'generate' => true],
+            'seeder' => ['path' => 'database/seeders', 'namespace' => 'Database\\Seeders', 'generate' => true],
 
             // lang/
             'lang' => ['path' => 'lang', 'generate' => false],
