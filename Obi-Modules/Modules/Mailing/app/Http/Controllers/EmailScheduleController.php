@@ -1,55 +1,53 @@
 <?php
 
 namespace Modules\Mailing\app\Http\Controllers;
+use Modules\Core\App\Http\BaseApiController;
 
 use Illuminate\Http\Request;
 use Modules\Mailing\Models\EmailSchedule;
 use App\Http\Controllers\Controller;
 
-class EmailScheduleController extends Controller
+class EmailScheduleController extends BaseApiController
 {
 
     public function index()
     {
-        $data = EmailSchedule::paginate(15);
-        return response()->json($data);
+        $paginator = EmailSchedule::paginate(15);
+        return $this->paginated($paginator, 'Listado de email-schedules');
     }
 
     public function show(EmailSchedule $emailSchedule)
     {
-        return response()->json($emailSchedule);
+        return $this->success($emailSchedule, 'EmailSchedule obtenido correctamente');
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-        ]);
+        $data   = $request->validate(['name' => 'required|string']);
         $emailSchedule = EmailSchedule::create($data);
-        return response()->json($emailSchedule, 201);
+
+        return $this->success($emailSchedule, 'EmailSchedule creado correctamente', 201);
     }
 
     public function update(Request $request, EmailSchedule $emailSchedule)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-        ]);
+        $data = $request->validate(['name' => 'required|string']);
         $emailSchedule->update($data);
-        return response()->json($emailSchedule);
+
+        return $this->success($emailSchedule, 'EmailSchedule actualizado correctamente');
     }
 
     public function patch(Request $request, EmailSchedule $emailSchedule)
     {
-        $data = $request->validate([
-            'name' => 'sometimes|string',
-        ]);
+        $data = $request->validate(['name' => 'sometimes|string']);
         $emailSchedule->update($data);
-        return response()->json($emailSchedule);
+
+        return $this->success($emailSchedule, 'EmailSchedule parcialmente actualizado');
     }
 
     public function destroy(EmailSchedule $emailSchedule)
     {
         $emailSchedule->delete();
-        return response()->noContent();
+        return $this->success(null, 'EmailSchedule eliminado correctamente', 204);
     }
 }

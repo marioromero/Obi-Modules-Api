@@ -4,128 +4,167 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class GenerateModuleRest extends Command
 {
-    protected $signature = 'make:module-rest {module} {entities*}';
-    protected $description = 'Añade métodos CRUD con lógica predefinida y rutas REST usando controladores existentes';
+    protected $signature   = 'make:module-rest {module} {entities*}';
+    protected $description = 'Actualiza/crea métodos CRUD (BaseApiController) y añade rutas REST en los controladores de un módulo.';
 
-    public function handle()
+    /* --------------------------------------------------------------------
+     | Elimina **todas** las definiciones de un método en el código dado
+     | (balanceando llaves para soportar try/catch anidados).
+     *-------------------------------------------------------------------*/
+    private static function stripMethod(string $code, string $method): string
     {
-        $module   = $this->argument('module');
-        $entities = $this->argument('entities');
+        $pattern = '/public\s+function\s+' . $method . '\s*\(/i';
+
+        while (preg_match($pattern, $code, $m, PREG_OFFSET_CAPTURE)) {
+            $start = $m[0][1];                       // posición donde empieza "public function ..."
+            $brace = strpos($code, '{', $start);     // llave de apertura
+            if ($brace === false) break;
+
+            $level = 1; $i = $brace + 1;
+            $len   = strlen($code);
+            while ($i < $len && $level > 0) {
+                $ch = $code[$i];
+                if ($ch === '{') $level++;
+                if ($ch === '}') $level--;
+                $i++;
+            }
+            // $i apunta al carácter después de la '}' de cierre
+            $code = substr($code, 0, $start) . substr($code, $i);
+        }
+        return $code;
+    }
+
+    public function handle(): void
+    {
+        $module   = Str::studly($this->argument('module'));
+        $entities = array_map([Str::class, 'studly'], $this->argument('entities'));
 
         foreach ($entities as $entity) {
-            // Ruta plural kebab para el URI
-            $resourceUri    = Str::plural(Str::kebab($entity));
-            // Nombre de parámetro en camelCase para variables y type-hints
-            $paramName      = Str::camel($entity);
-            $controllerPath = base_path("Modules/{$module}/app/Http/Controllers/{$entity}Controller.php");
-            $routesFile     = base_path("Modules/{$module}/routes/api.php");
 
-            // 1) Obtener namespace del modelo
-            $modelPath = base_path("Modules/{$module}/Models/{$entity}.php");
-            if (file_exists($modelPath)) {
-                $modelSrc = file_get_contents($modelPath);
-                if (preg_match('/^namespace\s+([^;]+);/m', $modelSrc, $m)) {
-                    $modelFqn = "{$m[1]}\\{$entity}";
-                } else {
-                    throw new RuntimeException("No pude leer el namespace de {$modelPath}");
-                }
-            } else {
-                $this->warn("❗ Modelo no encontrado: {$modelPath}. Usando namespace genérico.");
-                $modelFqn = "Modules\\{$module}\\Models\\{$entity}";
+            /* ---------------- paths ---------------- */
+            $ctrl = base_path("Modules/{$module}/app/Http/Controllers/{$entity}Controller.php");
+            $mdl  = base_path("Modules/{$module}/Models/{$entity}.php");
+            $web  = base_path("Modules/{$module}/routes/api.php");
+
+            $uri   = Str::plural(Str::kebab($entity));
+            $param = Str::camel($entity);
+
+            $modelNS = "Modules\\{$module}\\Models\\{$entity}";
+            if (is_file($mdl) &&
+                preg_match('/^namespace\s+([^;]+);/m', file_get_contents($mdl), $m)) {
+                $modelNS = "{$m[1]}\\{$entity}";
             }
 
-            // 2) Verificar existencia del controlador
-            if (!file_exists($controllerPath)) {
-                $this->error("Controlador no encontrado: {$controllerPath}");
+            if (! is_file($ctrl)) {
+                $this->error("🚫 Falta controlador: {$ctrl}");
                 continue;
             }
 
-            // 3) Leer y agregar imports de Request y Modelo
-            $content = file_get_contents($controllerPath);
-            $content = preg_replace(
-                '/^namespace\s+[^;]+;$/m',
-                "$0\n\nuse Illuminate\\Http\\Request;\nuse {$modelFqn};",
-                $content,
+            $code = file_get_contents($ctrl);
+
+            /* -------- imports únicos -------- */
+            foreach ([
+                'Illuminate\Http\Request',
+                $modelNS,
+                'Modules\Core\App\Http\BaseApiController',
+            ] as $use) {
+                if (! str_contains($code, "use {$use};")) {
+                    $code = preg_replace('/^namespace\s+[^;]+;$/m', "$0\nuse {$use};", $code, 1);
+                }
+            }
+
+            /* -------- extiende BaseApiController -------- */
+            $code = preg_replace(
+                '/class\s+' . $entity . 'Controller\s+extends\s+[^{\s]+/',
+                "class {$entity}Controller extends BaseApiController",
+                $code,
                 1
             );
 
-            // 4) Eliminar métodos CRUD previos (sin head ni options)
-            foreach (['index','show','store','update','patch','destroy'] as $method) {
-                $pattern = "/public function {$method}\\s*\\([^\\)]*\\)\\s*\\{(?:[^}]*|(?R))*\\}/s";
-                $content = preg_replace($pattern, '', $content);
+            /* -------- limpia traits/imports antiguos -------- */
+            $code = str_replace(
+                ['use ApiResponse;', 'use Modules\\Core\\app\\Support\\Traits\\ApiResponse;', 'use Illuminate\\Support\\Facades\\Log;'],
+                '',
+                $code
+            );
+
+            /* -------- elimina TODAS las versiones previas de cada método -------- */
+            foreach (['index','show','store','update','patch','destroy'] as $m) {
+                $code = self::stripMethod($code, $m);
             }
 
-            // 5) Bloque CRUD simplificado
-            $crud = <<<PHP
+            /* -------- bloque CRUD limpio -------- */
+$crud = <<<PHP
 
     public function index()
     {
-        \$data = {$entity}::paginate(15);
-        return response()->json(\$data);
+        \$paginator = {$entity}::paginate(15);
+        return \$this->paginated(\$paginator, 'Listado de {$uri}');
     }
 
-    public function show({$entity} \${$paramName})
+    public function show({$entity} \${$param})
     {
-        return response()->json(\${$paramName});
+        return \$this->success(\${$param}, '{$entity} obtenido correctamente');
     }
 
     public function store(Request \$request)
     {
-        \$data = \$request->validate([
-            'name' => 'required|string',
-        ]);
-        \${$paramName} = {$entity}::create(\$data);
-        return response()->json(\${$paramName}, 201);
+        \$data   = \$request->validate(['name' => 'required|string']);
+        \${$param} = {$entity}::create(\$data);
+
+        return \$this->success(\${$param}, '{$entity} creado correctamente', 201);
     }
 
-    public function update(Request \$request, {$entity} \${$paramName})
+    public function update(Request \$request, {$entity} \${$param})
     {
-        \$data = \$request->validate([
-            'name' => 'required|string',
-        ]);
-        \${$paramName}->update(\$data);
-        return response()->json(\${$paramName});
+        \$data = \$request->validate(['name' => 'required|string']);
+        \${$param}->update(\$data);
+
+        return \$this->success(\${$param}, '{$entity} actualizado correctamente');
     }
 
-    public function patch(Request \$request, {$entity} \${$paramName})
+    public function patch(Request \$request, {$entity} \${$param})
     {
-        \$data = \$request->validate([
-            'name' => 'sometimes|string',
-        ]);
-        \${$paramName}->update(\$data);
-        return response()->json(\${$paramName});
+        \$data = \$request->validate(['name' => 'sometimes|string']);
+        \${$param}->update(\$data);
+
+        return \$this->success(\${$param}, '{$entity} parcialmente actualizado');
     }
 
-    public function destroy({$entity} \${$paramName})
+    public function destroy({$entity} \${$param})
     {
-        \${$paramName}->delete();
-        return response()->noContent();
+        \${$param}->delete();
+        return \$this->success(null, '{$entity} eliminado correctamente', 204);
     }
 PHP;
-            $content = preg_replace('/}\s*$/', rtrim($crud) . "\n}\n", $content);
-            file_put_contents($controllerPath, $content);
-            $this->info("✔ CRUD actualizado en {$controllerPath}");
 
-            // 6) Agregar rutas (sin head ni options)
-            $nsController = "Modules\\{$module}\\app\\Http\\Controllers";
-            $routes  = "\n// REST para {$entity}\n";
-            $routes .= "use {$nsController}\\{$entity}Controller;\n";
-            $routes .= "Route::get('{$resourceUri}', [{$entity}Controller::class, 'index']);\n";
-            $routes .= "Route::get('{$resourceUri}/{" . $paramName . "}', [{$entity}Controller::class, 'show']);\n";
-            $routes .= "Route::post('{$resourceUri}', [{$entity}Controller::class, 'store']);\n";
-            $routes .= "Route::put('{$resourceUri}/{" . $paramName . "}', [{$entity}Controller::class, 'update']);\n";
-            $routes .= "Route::patch('{$resourceUri}/{" . $paramName . "}', [{$entity}Controller::class, 'patch']);\n";
-            $routes .= "Route::delete('{$resourceUri}/{" . $paramName . "}', [{$entity}Controller::class, 'destroy']);\n";
-            if (!Str::contains(file_get_contents($routesFile), "// REST para {$entity}")) {
-                file_put_contents($routesFile, $routes, FILE_APPEND);
-                $this->info("✔ Rutas agregadas en {$routesFile}");
+            $code = preg_replace('/}\s*$/', rtrim($crud) . "\n}\n", $code);
+            file_put_contents($ctrl, $code);
+            $this->info("✔ CRUD actualizado en {$ctrl}");
+
+            /* -------- rutas REST: añade solo si falta -------- */
+            $marker = "// REST para {$entity}";
+            if (! str_contains(file_get_contents($web), $marker)) {
+                $ns = "Modules\\{$module}\\app\\Http\\Controllers";
+                $add = "\n{$marker}\nuse {$ns}\\{$entity}Controller;\n";
+                foreach ([
+                    ['get',    'index',   ''],
+                    ['get',    'show',    '/{'.$param.'}'],
+                    ['post',   'store',   ''],
+                    ['put',    'update',  '/{'.$param.'}'],
+                    ['patch',  'patch',   '/{'.$param.'}'],
+                    ['delete', 'destroy', '/{'.$param.'}'],
+                ] as [$verb,$met,$suf]) {
+                    $add .= "Route::{$verb}('{$uri}{$suf}', [{$entity}Controller::class, '{$met}']);\n";
+                }
+                file_put_contents($web, $add, FILE_APPEND);
+                $this->info("✔ Rutas REST añadidas en {$web}");
             }
         }
 
-        $this->info("✅ Generación finalizada sin head ni options y sin guiones en nombres de variable.");
+        $this->info("✅ Finalizado: sin métodos duplicados.");
     }
 }

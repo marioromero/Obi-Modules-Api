@@ -1,80 +1,54 @@
 <?php
 
 namespace Modules\Cases\app\Http\Controllers;
+use Modules\Core\App\Http\BaseApiController;
 
 use Illuminate\Http\Request;
 use Modules\Cases\Models\Priority;
 use App\Http\Controllers\Controller;
 
 
-class PriorityController extends Controller
+class PriorityController extends BaseApiController
 {
-    /**
-     * Display a listing of the resource.
-     */
-
-
-    /**
-     * Store a newly created resource in storage.
-     */
-
-
-    /**
-     * Show the specified resource.
-     */
-
-
-    /**
-     * Update the specified resource in storage.
-     */
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
-
-
+    
     public function index()
     {
-        $data = Priority::paginate(15);
-        return response()->json($data);
+        $paginator = Priority::paginate(15);
+        return $this->paginated($paginator, 'Listado de priorities');
     }
 
     public function show(Priority $priority)
     {
-        return response()->json($priority);
+        return $this->success($priority, 'Priority obtenido correctamente');
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-        ]);
+        $data   = $request->validate(['name' => 'required|string']);
         $priority = Priority::create($data);
-        return response()->json($priority, 201);
+
+        return $this->success($priority, 'Priority creado correctamente', 201);
     }
 
     public function update(Request $request, Priority $priority)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-        ]);
+        $data = $request->validate(['name' => 'required|string']);
         $priority->update($data);
-        return response()->json($priority);
+
+        return $this->success($priority, 'Priority actualizado correctamente');
     }
 
     public function patch(Request $request, Priority $priority)
     {
-        $data = $request->validate([
-            'name' => 'sometimes|string',
-        ]);
+        $data = $request->validate(['name' => 'sometimes|string']);
         $priority->update($data);
-        return response()->json($priority);
+
+        return $this->success($priority, 'Priority parcialmente actualizado');
     }
 
     public function destroy(Priority $priority)
     {
         $priority->delete();
-        return response()->noContent();
+        return $this->success(null, 'Priority eliminado correctamente', 204);
     }
 }

@@ -1,55 +1,53 @@
 <?php
 
 namespace Modules\Geography\app\Http\Controllers;
+use Modules\Core\App\Http\BaseApiController;
 
 use Illuminate\Http\Request;
 use Modules\Geography\Models\Region;
 use App\Http\Controllers\Controller;
 
-class RegionController extends Controller
+class RegionController extends BaseApiController
 {
 
     public function index()
     {
-        $data = Region::paginate(15);
-        return response()->json($data);
+        $paginator = Region::paginate(15);
+        return $this->paginated($paginator, 'Listado de regions');
     }
 
     public function show(Region $region)
     {
-        return response()->json($region);
+        return $this->success($region, 'Region obtenido correctamente');
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-        ]);
+        $data   = $request->validate(['name' => 'required|string']);
         $region = Region::create($data);
-        return response()->json($region, 201);
+
+        return $this->success($region, 'Region creado correctamente', 201);
     }
 
     public function update(Request $request, Region $region)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-        ]);
+        $data = $request->validate(['name' => 'required|string']);
         $region->update($data);
-        return response()->json($region);
+
+        return $this->success($region, 'Region actualizado correctamente');
     }
 
     public function patch(Request $request, Region $region)
     {
-        $data = $request->validate([
-            'name' => 'sometimes|string',
-        ]);
+        $data = $request->validate(['name' => 'sometimes|string']);
         $region->update($data);
-        return response()->json($region);
+
+        return $this->success($region, 'Region parcialmente actualizado');
     }
 
     public function destroy(Region $region)
     {
         $region->delete();
-        return response()->noContent();
+        return $this->success(null, 'Region eliminado correctamente', 204);
     }
 }
