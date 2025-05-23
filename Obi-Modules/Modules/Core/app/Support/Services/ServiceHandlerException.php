@@ -9,6 +9,7 @@ use Throwable;
 
 class ServiceHandlerException
 {
+    // $jsonkey es la clave que queremos extraer del servicio externo
     public function fetchJson(string $url, string $jsonKey, string $successMessage): ServiceResponseDTO
     {
         try {
