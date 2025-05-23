@@ -3,66 +3,102 @@
 namespace Modules\Core\app\Services;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Http;
-use Modules\Core\app\Support\DTO\ServiceResponseDTO;
+use Modules\Core\App\Support\Services\ServiceHandlerException;
+use Modules\Core\App\Support\DTO\ServiceResponseDTO;
 
 class MindicadorService
 {
-    //URL base de la API de mindicador.cl
     private string $base;
+    private ServiceHandlerException $handler;
 
-    public function __construct()
+    public function __construct(ServiceHandlerException $handler)
     {
         $this->base = config('services.mindicador.base_uri', 'https://mindicador.cl/api');
+        $this->handler = $handler;
     }
 
-    //UF del día de hoy (última publicación disponible).
     public function getCurrentUf(): ServiceResponseDTO
     {
-        try {
-            $serie = $this->request('uf');
-            return ServiceResponseDTO::ok($serie[0]['valor'], 'UF obtenida correctamente');
-        } catch (\Throwable $e) {
-            return ServiceResponseDTO::fail('Fallo al obtener UF: ' . $e->getMessage(), 503);
+        $url = "{$this->base}/uf";
+        // 1) Llamada genérica
+        $response = $this->handler->fetchJson($url, 'serie', 'UF obtenida correctamente');
+
+        // 2) Si el handler devolvió error (502, 503, SSL, etc.), reenvíalo tal cual
+        if (!$response->success) {
+            return $response;
         }
+
+        // 3) Si no hubo datos en la serie, fallo de negocio 404
+        if (empty($response->data)) {
+            return ServiceResponseDTO::fail(
+                'No hay datos disponibles de UF',
+                404
+            );
+        }
+
+        // 4) Extrae el valor del primer elemento
+        $valor = $response->data[0]['valor'] ?? null;
+
+        // 5) Si por alguna razón falta el campo 'valor'
+        if (is_null($valor)) {
+            return ServiceResponseDTO::fail(
+                'Formato de datos inesperado desde el servicio externo',
+                500
+            );
+        }
+
+        // 6) retorno sólo el float de la UF
+        return ServiceResponseDTO::ok(
+            $valor,
+            'UF actual obtenida correctamente'
+        );
     }
 
-
-    //UF para una fecha concreta (dia-mes-año).
-
+    /**
+     * Obtiene la UF para una fecha específica (dd-mm-aaaa).
+     *
+     * @param \DateTimeInterface|string $date
+     * @return ServiceResponseDTO
+     */
     public function getUfByDate(\DateTimeInterface|string $date): ServiceResponseDTO
     {
-        try {
-            // Normaliza la entrada a Carbon
-            $dt = $date instanceof \DateTimeInterface
-                ? Carbon::instance($date)
-                : Carbon::parse($date);
+        // 1) Convertir a Carbon y formatear como dd-mm-YYYY
+        $dt = $date instanceof \DateTimeInterface
+            ? Carbon::instance($date)
+            : Carbon::parse($date);
+        $ddmmyyyy = $dt->format('d-m-Y');
 
-            // Formato requerido por la API
-            $ddmmyyyy = $dt->format('d-m-Y');
+        // 2) Llamada genérica al handler
+        $url = "{$this->base}/uf/{$ddmmyyyy}";
+        $response = $this->handler->fetchJson($url, 'serie', "UF para el {$ddmmyyyy}");
 
-            $serie = $this->request("uf/{$ddmmyyyy}");
-
-            $valor = $serie[0]['valor'] ?? null;
-
-            if (is_null($valor)) {
-                return ServiceResponseDTO::fail("No hay datos UF para la fecha {$ddmmyyyy}", 404);
-            }
-
-            return ServiceResponseDTO::ok($valor, "UF para el {$ddmmyyyy}");
-        } catch (\Throwable $e) {
-            return ServiceResponseDTO::fail("Error al consultar UF por fecha: " . $e->getMessage(), 503);
+        // 3) Si hubo error de infraestructura, reenvíalo
+        if (!$response->success) {
+            return $response;
         }
+
+        // 4) Si la serie viene vacía, fallo de negocio 404
+        if (empty($response->data)) {
+            return ServiceResponseDTO::fail(
+                "No hay datos de UF para la fecha {$ddmmyyyy}",
+                404
+            );
+        }
+
+        // 5) Extraer el valor del primer elemento
+        $valor = $response->data[0]['valor'] ?? null;
+        if (is_null($valor)) {
+            return ServiceResponseDTO::fail(
+                'Formato inesperado desde el servicio externo',
+                500
+            );
+        }
+
+        // 6) Retornar el valor
+        return ServiceResponseDTO::ok(
+            $valor,
+            "UF para el {$ddmmyyyy}"
+        );
     }
 
-    //Método auxiliar privado
-    //Hace la petición GET y devuelve solo la clave 'serie' del JSON
-    private function request(string $path): array
-    {
-        return Http::acceptJson()
-            ->get("{$this->base}/{$path}")
-            ->throw()
-            ->json('serie');
-    }
 }
-

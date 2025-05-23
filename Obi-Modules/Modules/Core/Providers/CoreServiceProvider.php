@@ -4,6 +4,8 @@ namespace Modules\Core\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
+use Modules\Core\app\Support\Services\ServiceHandlerException;
+use Modules\Core\app\Services\MindicadorService;
 
 /**
  * Service‑provider del módulo Core.
@@ -13,8 +15,8 @@ class CoreServiceProvider extends ServiceProvider
 {
     use PathNamespace;
 
-    protected string $name       = 'Core';
-    protected string $nameLower  = 'core';
+    protected string $name = 'Core';
+    protected string $nameLower = 'core';
 
     /**
      * Registrar servicios (bindings) en el contenedor.
@@ -24,6 +26,8 @@ class CoreServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(ServiceHandlerException::class);
+        $this->app->singleton(MindicadorService::class);
         // Registrar otros providers de Core si los agregas
         // $this->app->register(EventServiceProvider::class);
         // $this->app->register(RouteServiceProvider::class);

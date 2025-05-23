@@ -3,21 +3,26 @@ namespace Modules\Core\app\Support\DTO;
 
 class ServiceResponseDTO
 {
-    public function __construct(
-        public bool $success,
-        public mixed $data = null,
-        public ?string $message = null,
-        public ?int $code = 200,
-    ) {}
+    public bool  $success;
+    public mixed $data;
+    public string $message;
+    public int    $code;
 
-    public static function ok(mixed $data, string $message = 'OK'): self
+    private function __construct(bool $success, mixed $data, string $message, int $code)
     {
-        return new self(true, $data, $message, 200);
+        $this->success = $success;
+        $this->data    = $data;
+        $this->message = $message;
+        $this->code    = $code;
     }
 
-    public static function fail(string $message, int $code = 500): self
+    public static function ok(mixed $data, string $message = 'OK', int $code = 200): self
+    {
+        return new self(true, $data, $message, $code);
+    }
+
+    public static function fail(string $message, int $code = 400): self
     {
         return new self(false, null, $message, $code);
     }
 }
-
