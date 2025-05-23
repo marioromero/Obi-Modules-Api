@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__ . '/../routes/web.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
+        apiPrefix: env('API_GATEWAY_PREFIX', 'api')  // <- ahora lee obi/api
     )
     ->withMiddleware(function (Middleware $middleware) {
         // Alias para usar en rutas puntuales: ->middleware('api-auth')
