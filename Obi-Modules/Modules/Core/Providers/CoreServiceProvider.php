@@ -2,6 +2,7 @@
 
 namespace Modules\Core\Providers;
 
+use App\Console\Commands\StateScaffold;
 use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
 use Modules\Core\app\Support\Services\ServiceHandlerException;
@@ -39,8 +40,11 @@ class CoreServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Ejemplo: publicar configuración o traducciones en el futuro
-        // $this->publishes([...], 'core-config');
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                StateScaffold::class,
+            ]);
+        }
     }
 
     /**
