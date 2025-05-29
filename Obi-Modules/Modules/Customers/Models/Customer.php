@@ -31,6 +31,7 @@ class Customer extends Model
         'case_status_id',
         'commune_id',
         'user_id',
+        'bank_id',
     ];
 
     // Relación de Customer con CustomerStatus (un Customer pertenece a un CustomerStatus)
@@ -60,6 +61,11 @@ class Customer extends Model
     public function customerDetails() // 8️⃣  CustomerDetail → Customer
     {
         return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_id');
+    }
+    // Relación de Customer con Bank (un Customer pertenece a un Bank) [FK externa]
+    public function bank()
+    {
+        return $this->belongsTo(\Modules\Banks\Models\Bank::class, 'bank_id');
     }
 }
 

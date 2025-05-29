@@ -27,6 +27,7 @@ return new class extends Migration
             $table->unsignedBigInteger('case_status_id')->nullable(); // FK to cases_db.case_statuses
             $table->unsignedBigInteger('commune_id')->nullable(); // FK to geography_db.communes
             $table->unsignedBigInteger('user_id')->nullable(); // FK to users_db.users
+            $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
         });
     }
 
