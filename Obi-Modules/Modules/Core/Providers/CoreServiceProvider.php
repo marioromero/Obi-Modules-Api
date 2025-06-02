@@ -3,6 +3,7 @@
 namespace Modules\Core\Providers;
 
 use App\Console\Commands\StateScaffold;
+use App\Console\Commands\WipeAllDatabases;
 use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
 use Modules\Core\app\Support\Services\ServiceHandlerException;
@@ -43,6 +44,7 @@ class CoreServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 StateScaffold::class,
+                WipeAllDatabases::class
             ]);
         }
     }
