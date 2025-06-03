@@ -1,31 +1,32 @@
 <?php
-/**
- * Ejemplo:  config/state-machines/cases.php
- */
 return [
-    // El módulo nWidart donde vive el modelo
     'module'      => 'Cases',
-
-    // Clase Eloquent (dentro de Modules\Cases\Models)
     'model'       => 'CaseEntity',
-
-    // Tabla que recibirá la columna 'state'
     'table'       => 'cases',
-
-    // Subcarpeta donde quedarán los estados concretos
     'namespace'   => 'Traro',
 
-    // Estados de negocio (sin Draft / Closed)
-    'states'      => ['Captured','Denounced','Scheduled','Inspected','Budgeted','Notified'],
+    'states' => [
+        'Ingreso',
+        'Denuncio',
+        'Programacion',
+        'Visita',
+        'Presupuesto',
+        'Liquidacion',
+        'Recaudacion',
+        'Cancelado',
+        'Desistido',
+        'DesistidoSinVisita',
+    ],
 
-    // Mapa “de → [a, b]”.  Draft y Closed siempre existen en Core
     'transitions' => [
-        'Draft'     => ['Captured'],
-        'Captured'  => ['Denounced'],
-        'Denounced' => ['Scheduled'],
-        'Scheduled' => ['Inspected'],
-        'Inspected' => ['Budgeted'],
-        'Budgeted'  => ['Notified'],
-        'Notified'  => ['Closed'],
+        'Draft'            => ['Ingreso'],
+
+        'Ingreso'          => ['Denuncio','Cancelado','Desistido','DesistidoSinVisita'],
+        'Denuncio'         => ['Programacion','Ingreso','Cancelado','Desistido','DesistidoSinVisita'],
+        'Programacion'     => ['Visita','Denuncio','Cancelado','Desistido','DesistidoSinVisita'],
+        'Visita'           => ['Presupuesto','Programacion','Cancelado','Desistido'],
+        'Presupuesto'      => ['Liquidacion','Visita','Cancelado','Desistido'],
+        'Liquidacion'      => ['Recaudacion','Presupuesto','Cancelado','Desistido'],
+        'Recaudacion'      => ['Cancelado','Desistido'],   // ← ajuste solicitado
     ],
 ];

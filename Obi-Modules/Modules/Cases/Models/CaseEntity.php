@@ -1,17 +1,23 @@
 <?php
 
 namespace Modules\Cases\Models;
+use Spatie\ModelStates\HasStates;
 use Modules\Core\app\Support\Traits\DeletionStrategies;
+use Modules\Cases\States\Core\CaseEntityState;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CaseEntity extends Model
 {
+    use HasStates;
     use DeletionStrategies;
     use HasFactory;
 
     protected $connection = 'cases_db';
+    protected $casts = [
+        'state' => CaseEntityState::class,
+    ];
     protected $table = 'cases';
     public $timestamps = false;
 
