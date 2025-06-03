@@ -1,12 +1,16 @@
 <?php
 
 namespace Modules\Cases\Models;
-use Spatie\ModelStates\HasStates;
-use Modules\Core\app\Support\Traits\DeletionStrategies;
-use Modules\Cases\States\Core\CaseEntityState;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Cases\States\Traro\Cancelado;
+use Modules\Cases\States\Traro\Desistido;
+use Modules\Cases\States\Traro\DesistidoSinVisita;
+use Modules\Cases\States\Traro\Recaudacion;
+use Modules\Core\app\Support\Traits\DeletionStrategies;
+use Spatie\ModelStates\HasStates;
+use Modules\Cases\States\Core\CaseEntityState;
 
 class CaseEntity extends Model
 {
@@ -14,148 +18,107 @@ class CaseEntity extends Model
     use DeletionStrategies;
     use HasFactory;
 
+    /* ───────── Configuración básica ───────── */
     protected $connection = 'cases_db';
+    protected $table      = 'cases';
+    public    $timestamps = false;            // usamos created_at manual
+
     protected $casts = [
         'state' => CaseEntityState::class,
     ];
-    protected $table = 'cases';
-    public $timestamps = false;
 
+    /* ───────── Campos rellenables ───────── */
     protected $fillable = [
-        'code',
-        'priority',
-        'claim_number',
-        'created_at',
-        'contestation_date',
-        'date_of_loss',
-        'document_signing_date',
-        'settlement_report_date',
-        'property_type',
-        'claim_tracking_number',
-        'previous_case_number',
-        'agreement',
-        'is_duplicated',
-        'approved_amount',
-        'uf_approved',
-        'consultancy_amount',
-        'amount_owed',
-        'ammount_paid',
-        'estimated_payment_day',
-        'collection_date',
-        'online_collection_date',
-        'payment_status',
-        'description',
-        'rejection_reason',
-        'resolution',
-        'catchment_user_id',
-        'catchment_ok',
-        'catchment_date',
-        'complaint_user_id',
-        'complaint_ok',
-        'complaint_date',
-        'scheduling_user_id',
-        'scheduling_ok',
-        'scheduling_date',
-        'inspection_user_id',
-        'inspection_ok',
-        'inspection_date',
-        'budget_user_id',
-        'budget_ok',
-        'budget_date',
-        'notification_user_id',
-        'notification_ok',
-        'notification_date',
-        'agent_id',
-        'consulant_id',
-        'commune_id',
-        'customer_id',
-        'case_status_id',
-        'accident_type_id',
-        'assigned_user',
-        'created_by',
+        // Identificación
+        'code', 'priority_id',
+
+        // Fechas y datos de siniestro
+        'created_at', 'date_of_loss', 'contestation_date', 'property_type',
+
+        // Montos
+        'approved_amount', 'uf_approved', 'amount_owed', 'amount_paid',
+
+        // Flags genéricos
+        'is_duplicated', 'description', 'resolution',
+
+        // Sub-estados por paso
+        'signature_status', 'denounce_status', 'scheduling_status',
+        'visit_status', 'budget_status', 'decision_result', 'payment_status',
+
+        // Estado global del caso
+        'overall_status',
+
+        // Relaciones externas
+        'customer_id', 'assigned_user', 'agent_id', 'created_by',
     ];
 
-    /** RELACIONES INTERNAS (dentro de Cases) **/
-
-    // Relación de CaseEntity con CaseStatus (un CaseEntity pertenece a un CaseStatus)
-    //No Action
-    public function caseStatus()
+    /* ───────── Helper para calcular overall_status ───────── */
+    public function calculateOverallStatus(): string
     {
-        return $this->belongsTo(CaseStatus::class, 'case_status_id');
+        // Estados terminales (cerrado)
+        if ($this->state->isAny(
+            Cancelado::class,
+            Desistido::class,
+            DesistidoSinVisita::class
+        )) {
+            return 'cerrado';
+        }
+
+        // Pago final completado
+        if ($this->state->is(Recaudacion::class)
+            && $this->payment_status === 'pagado') {
+            return 'cerrado';
+        }
+
+        // Pendientes de pago o impugnación
+        if (in_array($this->payment_status, ['parcialmente_pagado', 'cobranza_online'])
+            || $this->decision_result === 'impugnado'
+            || in_array($this->visit_status, ['en_proceso'])) {
+            return 'con_pendientes';
+        }
+
+        return 'abierto';
     }
 
-    // Relación de CaseEntity con AccidentType (un CaseEntity pertenece a un AccidentType)
-    //No Action
-    public function accidentType()
-    {
-        return $this->belongsTo(AccidentType::class, 'accident_type_id');
-    }
-
-    // Relación de CaseEntity con Priority (un CaseEntity pertenece a una Priority)
-    //No Action
-    public function priorityRelation()
-    {
-        return $this->belongsTo(Priority::class, 'priority');
-    }
-
-    // Relación de CaseEntity con sus propios Comments (un CaseEntity tiene muchos Comments)
-    //Cascade
+    /* ───────── Relaciones internas (módulo Cases) ───────── */
     public function comments()
     {
         return $this->hasMany(Comment::class, 'case_id');
     }
 
-    // Relación de CaseEntity consigo mismo para previous case
     public function previousCase()
     {
-        return $this->belongsTo(CaseEntity::class, 'previous_case_number');
+        return $this->belongsTo(self::class, 'previous_case_number');
     }
 
-    /** RELACIONES EXTERNAS (a otros módulos) **/
-
-    // Relación de CaseEntity con Geography::Commune
-    public function commune()
-    {
-        return $this->belongsTo(\Modules\Geography\Models\Commune::class, 'commune_id');
-    }
-
-    // Relación de CaseEntity con Customers::Customer
+    /* ───────── Relaciones externas ───────── */
     public function customer()
     {
         return $this->belongsTo(\Modules\Customers\Models\Customer::class, 'customer_id');
     }
 
-    // Relación de CaseEntity con Users::User como agente
-    //Set Null
+    public function commune()
+    {
+        return $this->belongsTo(\Modules\Geography\Models\Commune::class, 'commune_id');
+    }
+
     public function agent()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'agent_id');
     }
 
-    // Relación de CaseEntity con Users::User como consultor
-    //Set Null
-    public function consultant()
-    {
-        return $this->belongsTo(\Modules\Users\Models\User::class, 'consulant_id');
-    }
-
-    // Relación de CaseEntity con Users::User como usuario asignado
-    //Set Null
     public function assignedUser()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'assigned_user');
     }
 
-    // Relación de CaseEntity con Users::User como creador
-    //Set Null
     public function creator()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'created_by');
     }
-    //Cascade
-    public function schedules()      // 3️⃣  Schedule → CaseEntity
+
+    public function schedules()
     {
         return $this->hasMany(\Modules\Schedules\Models\Schedule::class, 'case_id');
     }
 }
-
