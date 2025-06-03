@@ -26,11 +26,11 @@ class Bank extends Model
     {
         return $this->hasMany(Insurer::class, 'bank_id');
     }
-    // Relación de Bank con Customer (un Bank tiene muchos Customers)
-    public function customers()
-    {
-        return $this->hasMany(\Modules\Customers\Models\Customer::class, 'bank_id');
-    }
 
+    // Un banco puede tener muchos casos
+    public function cases()
+    {
+        return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'bank_id');
+    }
 }
 

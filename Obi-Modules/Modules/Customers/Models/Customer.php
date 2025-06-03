@@ -62,10 +62,5 @@ class Customer extends Model
     {
         return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_id');
     }
-    // Relación de Customer con Bank (un Customer pertenece a un Bank) [FK externa]
-    public function bank()
-    {
-        return $this->belongsTo(\Modules\Banks\Models\Bank::class, 'bank_id');
-    }
 }
 

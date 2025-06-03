@@ -36,5 +36,11 @@ class Insurer extends Model
     {
         return $this->hasMany(LossAdjuster::class, 'insurer_id');
     }
+
+    // Una aseguradora puede tener muchos casos
+    public function cases()
+    {
+        return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'insurer_id');
+    }
 }
 

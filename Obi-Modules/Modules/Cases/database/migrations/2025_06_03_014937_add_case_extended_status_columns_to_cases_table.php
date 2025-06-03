@@ -22,6 +22,11 @@ return new class extends Migration {
             $table->integer('amount_owed')->nullable()->after('uf_approved');
             $table->integer('amount_paid')->nullable()->after('amount_owed');
 
+            /* Relaciones con banco, aseguradora y liquidadora */
+            $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
+            $table->unsignedBigInteger('insurer_id')->nullable(); // FK to banks_db.insurers
+            $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters
+
             /* Relaciones propias */
             $table->unsignedBigInteger('agent_id')->after('assigned_user');
 

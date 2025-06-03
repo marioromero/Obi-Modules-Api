@@ -29,5 +29,11 @@ class LossAdjuster extends Model
     {
         return $this->belongsTo(Insurer::class, 'insurer_id');
     }
+
+    // Una liquidadora puede tener muchos casos
+    public function cases()
+    {
+        return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'loss_adjuster_id');
+    }
 }
 

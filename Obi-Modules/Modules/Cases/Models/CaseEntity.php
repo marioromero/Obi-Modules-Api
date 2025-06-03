@@ -121,4 +121,22 @@ class CaseEntity extends Model
     {
         return $this->hasMany(\Modules\Schedules\Models\Schedule::class, 'case_id');
     }
+
+    // Relación con Bank
+    public function bank()
+    {
+        return $this->belongsTo(\Modules\Banks\Models\Bank::class, 'bank_id');
+    }
+
+    // Relación con Insurer
+    public function insurer()
+    {
+        return $this->belongsTo(\Modules\Banks\Models\Insurer::class, 'insurer_id');
+    }
+
+    // Relación con LossAdjuster
+    public function lossAdjuster()
+    {
+        return $this->belongsTo(\Modules\Banks\Models\LossAdjuster::class, 'loss_adjuster_id');
+    }
 }
