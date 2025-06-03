@@ -31,7 +31,6 @@ class Customer extends Model
         'case_status_id',
         'commune_id',
         'user_id',
-        'bank_id',
     ];
 
     // Relación de Customer con CustomerStatus (un Customer pertenece a un CustomerStatus)

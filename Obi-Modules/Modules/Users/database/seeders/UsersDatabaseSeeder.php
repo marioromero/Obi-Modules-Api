@@ -11,7 +11,15 @@ class UsersDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // $this->call([]);
+        $this->call([
+            RoleSeeder::class,
+            UserStatusSeeder::class,
+            TypeSeeder::class,
+            ConfigurationSeeder::class,
+            EventSeeder::class,
+            UserSeeder::class,
+            UserLogSeeder::class,
+        ]);
     }
 }
 

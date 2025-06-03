@@ -11,7 +11,14 @@ class CasesDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // $this->call([]);
+        $this->call([
+            AccidentTypeSeeder::class,
+            CaseStatusSeeder::class,
+            PrioritySeeder::class,
+            CaseSeeder::class,
+            CommentSeeder::class,
+        ]);
+
     }
 }
 

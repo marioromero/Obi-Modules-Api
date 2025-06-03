@@ -11,7 +11,13 @@ class MailingDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // $this->call([]);
+         $this->call([
+            DepartmentSeeder::class,
+            EmailTemplateSeeder::class,
+            CustomersSetSeeder::class,
+            CustomerDetailSeeder::class,
+            EmailScheduleSeeder::class,
+        ]);
     }
 }
 
