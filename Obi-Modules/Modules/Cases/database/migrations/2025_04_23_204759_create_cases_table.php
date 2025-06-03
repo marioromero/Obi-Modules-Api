@@ -4,27 +4,28 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     protected $connection = 'cases_db';
 
     public function up(): void
     {
         Schema::create('cases', function (Blueprint $table) {
+            /* --- PK y claves básicas --- */
             $table->id();
             $table->string('code', 12)->unique();
             $table->unsignedBigInteger('priority_id');
             $table->dateTime('created_at');
-            $table->string('property_type', 30);
-            $table->string('state', 40)->default('Draft');        // manejado por Spatie
+            $table->string('state', 40)->default('Draft');
 
-            $table->integer('approved_amount')->nullable();
-            $table->integer('amount_owed')->nullable();
-            $table->integer('amount_paid')->nullable();
+            /* --- Campos transversales mínimos --- */
+            $table->boolean('is_duplicated')->default(false);
+            $table->text('description')->nullable();
+            $table->string('resolution')->nullable();
 
-            $table->unsignedBigInteger('customer_id');            // customers_db
-            $table->unsignedBigInteger('agent_id');               // users_db
-            $table->unsignedBigInteger('created_by');             // users_db
+            /* --- Relaciones genéricas --- */
+            $table->unsignedBigInteger('customer_id');
+            $table->unsignedBigInteger('created_by');
+            $table->unsignedBigInteger('assigned_user');
 
         });
     }
