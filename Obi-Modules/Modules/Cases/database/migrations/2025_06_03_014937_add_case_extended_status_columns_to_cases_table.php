@@ -4,42 +4,66 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     protected $connection = 'cases_db';   // igual que la tabla base
 
     public function up(): void
     {
         Schema::table('cases', function (Blueprint $table) {
 
-            /* ───────── sub-estados por etapa ───────── */
-            $table->enum('signature_status',
-                ['generado','enviado_a_acepta','notificado','contrato_pendiente','mandato_pendiente','documentos firmados']
-            )->default('generado')->after('state');
+            /* ────── Datos core del negocio Traro ────── */
+            $table->date('date_of_loss')->nullable()->after('state');
+            $table->string('property_type', 30)->after('date_of_loss');
+            $table->date('contestation_date')->nullable()->after('property_type');
 
-            $table->enum('visit_status',
-                ['pendiente','en_proceso','realizado']
-            )->default('pendiente')->after('signature_status');
+            /* Montos específicos */
+            $table->integer('approved_amount')->nullable()->after('contestation_date');
+            $table->float('uf_approved', 10, 2)->nullable()->after('approved_amount');
+            $table->integer('amount_owed')->nullable()->after('uf_approved');
+            $table->integer('amount_paid')->nullable()->after('amount_owed');
 
-            $table->enum('budget_status',
-                ['pendiente','en_proceso','realizado']
-            )->default('pendiente')->after('visit_status');
+            /* Relaciones propias */
+            $table->unsignedBigInteger('agent_id')->after('assigned_user');
 
-            /* ───────── resultado de liquidación ───────── */
-            $table->enum('decision_result',
-                ['aprobado','bajo_deducible','rechazado_aseguradora','rechazado_liquidadora','impugnado']
-            )->nullable()->after('budget_status');
+            /* ────── Sub-estados por paso ────── */
+            $table->enum('signature_status', [
+                'generado', 'enviado_a_acepta', 'notificado',
+                'contrato_pendiente', 'mandato_pendiente', 'firmados',
+            ])->default('generado')->after('amount_paid');
 
-            /* ───────── situación de pago ───────── */
-            $table->enum('payment_status',
-                ['pendiente','cobranza','parcialmente_pagado','pagado','cobranza_online']
-            )->default('pendiente')->after('decision_result');
+            $table->enum('denounce_status', ['pendiente', 'en_proceso', 'realizado'])
+                ->default('pendiente')->after('signature_status');
 
-            /* ───────── estado global del caso ───────── */
-            $table->enum('overall_status',
-                ['abierto','con_pendientes','cerrado']
-            )->default('abierto')->after('payment_status');
+            $table->enum('scheduling_status', ['pendiente', 'en_proceso', 'realizado'])
+                ->default('pendiente')->after('denounce_status');
+
+            $table->enum('visit_status', [
+                'pendiente', 'en_proceso', 'realizado',
+            ])->default('pendiente')->after('signature_status');
+
+            $table->enum('budget_status', [
+                'pendiente', 'en_proceso', 'realizado',
+            ])->default('pendiente')->after('visit_status');
+
+            /* Liquidación */
+            $table->enum('decision_result', [
+                'aprobado', 'bajo_deducible',
+                'rechazado_aseguradora', 'rechazado_liquidadora',
+                'impugnado',
+            ])->nullable()->after('budget_status');
+
+            /* Recaudación */
+            $table->enum('payment_status', [
+                'pendiente', 'cobranza', 'parcialmente_pagado',
+                'pagado', 'cobranza_online',
+            ])->default('pendiente')->after('decision_result');
+
+            /* Estado global */
+            $table->enum('overall_status', [
+                'abierto', 'con_pendientes', 'cerrado',
+            ])->default('abierto')->after('payment_status');
         });
+
     }
 
     public function down(): void
