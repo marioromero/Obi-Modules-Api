@@ -28,15 +28,15 @@ return new class extends Migration {
             $table->unsignedBigInteger('assigned_user');
 
             /* ────── Datos core del negocio Traro ────── */
-            $table->date('date_of_loss')->nullable()->after('state');
-            $table->string('property_type', 30)->after('date_of_loss');
-            $table->date('contestation_date')->nullable()->after('property_type');
+            $table->date('date_of_loss')->nullable();
+            $table->string('property_type', 30);
+            $table->date('contestation_date')->nullable();
 
             /* Montos específicos */
-            $table->integer('approved_amount')->nullable()->after('contestation_date');
-            $table->float('uf_approved', 10, 2)->nullable()->after('approved_amount');
-            $table->integer('amount_owed')->nullable()->after('uf_approved');
-            $table->integer('amount_paid')->nullable()->after('amount_owed');
+            $table->integer('approved_amount')->nullable();
+            $table->float('uf_approved', 10, 2)->nullable();
+            $table->integer('amount_owed')->nullable();
+            $table->integer('amount_paid')->nullable();
 
             /* Relaciones con banco, aseguradora y liquidadora */
             $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
@@ -44,45 +44,45 @@ return new class extends Migration {
             $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters
 
             /* Relaciones propias */
-            $table->unsignedBigInteger('agent_id')->after('assigned_user');
+            $table->unsignedBigInteger('agent_id');
 
             /* ────── Sub-estados por paso ────── */
             $table->enum('signature_status', [
                 'generado', 'enviado_a_acepta', 'notificado',
                 'contrato_pendiente', 'mandato_pendiente', 'firmados',
-            ])->default('generado')->after('amount_paid');
+            ])->default('generado');
 
             $table->enum('denounce_status', ['pendiente', 'en_proceso', 'realizado'])
-                ->default('pendiente')->after('signature_status');
+                ->default('pendiente');
 
             $table->enum('scheduling_status', ['pendiente', 'en_proceso', 'realizado'])
-                ->default('pendiente')->after('denounce_status');
+                ->default('pendiente');
 
             $table->enum('visit_status', [
                 'pendiente', 'en_proceso', 'realizado',
-            ])->default('pendiente')->after('signature_status');
+            ])->default('pendiente');
 
             $table->enum('budget_status', [
                 'pendiente', 'en_proceso', 'realizado',
-            ])->default('pendiente')->after('visit_status');
+            ])->default('pendiente');
 
             /* Liquidación */
             $table->enum('decision_result', [
                 'aprobado', 'bajo_deducible',
                 'rechazado_aseguradora', 'rechazado_liquidadora',
                 'impugnado',
-            ])->nullable()->after('budget_status');
+            ])->nullable();
 
             /* Recaudación */
             $table->enum('payment_status', [
                 'pendiente', 'cobranza', 'parcialmente_pagado',
                 'pagado', 'cobranza_online',
-            ])->default('pendiente')->after('decision_result');
+            ])->default('pendiente');
 
             /* Estado global */
             $table->enum('overall_status', [
                 'abierto', 'con_pendientes', 'cerrado',
-            ])->default('abierto')->after('payment_status');
+            ])->default('abierto');
 
         });
     }
