@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'connection' => 'cases_db',
     'module'      => 'Cases',
     'model'       => 'CaseEntity',
     'table'       => 'cases',

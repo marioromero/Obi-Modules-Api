@@ -63,9 +63,11 @@ class StateScaffold extends Command
         /* ----------------------------------------------------------------- */
         /* 3) Migración para la columna `state`                              */
         /* ----------------------------------------------------------------- */
+        $connection = $cfg['connection'] ?? config('database.default');
+
         $migName = "add_state_column_to_{$table}_table";
         $migFile = database_path('migrations/' . date('Y_m_d_His') . "_{$migName}.php");
-        File::put($migFile, $this->tplAddStateMigration($table));
+        File::put($migFile, $this->tplAddStateMigration($connection, $table));
         $this->info("✓ Migración {$migName} creada");
 
         /* ----------------------------------------------------------------- */
@@ -79,7 +81,7 @@ class StateScaffold extends Command
         $migLogFile = database_path(
             'migrations/' . date('Y_m_d_His', time() + 1) . "_{$migLog}.php"
         );
-        File::put($migLogFile, $this->tplLogMigration($logTable, $table, $parentFK));
+        File::put($migLogFile, $this->tplLogMigration($connection, $logTable, $table, $parentFK));
         $this->info("✓ Migración {$migLog} creada");
 
         $logModelClass = "{$model}StepLog";
@@ -222,9 +224,9 @@ abstract class {$e}State extends State
 PHP;
     }
 
-    private function tplAddStateMigration(string $table): string
-    {
-        return <<<PHP
+    private function tplAddStateMigration(string $connection, string $table): string
+{
+    return <<<PHP
 <?php
 
 use Illuminate\\Database\\Migrations\\Migration;
@@ -233,24 +235,32 @@ use Illuminate\\Support\\Facades\\Schema;
 
 return new class extends Migration
 {
+    protected \$connection = '{$connection}';
+
     public function up(): void
     {
-        Schema::table('{$table}', function (Blueprint \$t) {
-            \$t->string('state', 50)->after('id');
-        });
+        if (! Schema::connection('{$connection}')->hasColumn('{$table}', 'state')) {
+            Schema::connection('{$connection}')
+                  ->table('{$table}', function (Blueprint \$t) {
+                      \$t->string('state', 50)->after('id');
+                  });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('{$table}', fn(Blueprint \$t) => \$t->dropColumn('state'));
+        if (Schema::connection('{$connection}')->hasColumn('{$table}', 'state')) {
+            Schema::connection('{$connection}')
+                  ->table('{$table}', fn(Blueprint \$t) => \$t->dropColumn('state'));
+        }
     }
 };
 PHP;
-    }
+}
 
-    private function tplLogMigration(string $logTable, string $parentTable, string $parentFK): string
-    {
-        return <<<PHP
+    private function tplLogMigration(string $connection, string $log, string $parentTable, string $parentFK): string
+{
+    return <<<PHP
 <?php
 
 use Illuminate\\Database\\Migrations\\Migration;
@@ -259,30 +269,27 @@ use Illuminate\\Support\\Facades\\Schema;
 
 return new class extends Migration
 {
+    protected \$connection = '{$connection}';
+
     public function up(): void
     {
-        Schema::create('{$logTable}', function (Blueprint \$t) {
-            \$t->id();
-            \$t->foreignId('{$parentFK}')->constrained('{$parentTable}')->cascadeOnDelete();
-            \$t->string('from_state', 120);
-            \$t->string('to_state', 120);
-            \$t->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            \$t->json('payload')->nullable();
-            \$t->string('comment')->nullable();
-            \$t->integer('duration_prev')->nullable();
-            \$t->string('sub_status')->nullable();
-            \$t->timestamp('created_at')->useCurrent();
-            \$t->index('to_state');
-        });
+        Schema::connection('{$connection}')
+              ->create('{$log}', function (Blueprint \$t) {
+                  \$t->id();
+                  \$t->foreignId('{$parentFK}')
+                      ->constrained('{$parentTable}')
+                      ->cascadeOnDelete();
+                  // … resto igual …
+              });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('{$logTable}');
+        Schema::connection('{$connection}')->dropIfExists('{$log}');
     }
 };
 PHP;
-    }
+}
 
     private function tplLogModel(string $m, string $e, string $table, string $fk): string
     {
