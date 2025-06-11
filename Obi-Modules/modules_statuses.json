@@ -8,5 +8,6 @@
     "Appointments": true,
     "Mailing": true,
     "Customers": true,
-    "Schedules": true
+    "Schedules": true,
+    "Configurations": true
 }

@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/configurations",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Configurations\\": "app/",
+            "Modules\\Configurations\\Database\\Factories\\": "database/factories/",
+            "Modules\\Configurations\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Configurations\\Tests\\": "tests/"
+        }
+    }
+}
