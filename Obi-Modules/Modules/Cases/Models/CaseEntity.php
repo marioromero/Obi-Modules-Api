@@ -32,9 +32,8 @@ class CaseEntity extends Model
         // Identificación
         'code', 'priority_id',
 
-        // Fechas y datos de siniestro
-        'created_at', 'date_of_loss', 'contestation_date', 'property_type',
-
+        // Fechas, datos de siniestro y si existe convenio
+        'created_at', 'agreement_id', 'date_of_loss', 'contestation_date', 'property_type',
         // Montos
         'approved_amount', 'uf_approved', 'amount_owed', 'amount_paid',
 
@@ -138,5 +137,11 @@ class CaseEntity extends Model
     public function lossAdjuster()
     {
         return $this->belongsTo(\Modules\Banks\Models\LossAdjuster::class, 'loss_adjuster_id');
+    }
+
+    //Un caso puede tener un solo convenio (nullable).
+    public function agreement()
+    {
+        return $this->belongsTo(Agreement::class, 'agreement_id');
     }
 }

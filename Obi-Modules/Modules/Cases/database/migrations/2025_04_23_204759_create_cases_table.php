@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('code', 12)->unique();
             $table->unsignedBigInteger('priority_id');
             $table->dateTime('created_at');
+            $table->foreignId('agreement_id')->nullable()->constrained('agreements');
             $table->string('state', 40)->default('Draft');
 
             /* --- Campos transversales mínimos --- */
