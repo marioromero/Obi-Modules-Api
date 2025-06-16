@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Cases\app\Http\Controllers;
+use Modules\Cases\app\Http\Requests\StoreCaseRequest;
 use Modules\Core\App\Http\BaseApiController;
 use Modules\Cases\Models\CaseEntity;
 
@@ -23,10 +24,10 @@ class CaseController extends BaseApiController
         return $this->success($case, 'Case obtenido correctamente');
     }
 
-    public function store(Request $request)
+    public function store(StoreCaseRequest $request)
     {
-        $data   = $request->validate(['name' => 'required|string']);
-        $case = CaseEntity::create($data);
+        // El FormRequest ya hizo la validación y devuelve solo campos permitidos
+        $case = CaseEntity::create($request->validated());
 
         return $this->success($case, 'Case creado correctamente', 201);
     }

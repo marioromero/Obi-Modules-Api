@@ -4,6 +4,7 @@ namespace Modules\Customers\app\Http\Controllers;
 use Modules\Core\App\Http\BaseApiController;
 
 use Illuminate\Http\Request;
+use Modules\Customers\app\Http\Requests\StoreCustomerRequest;
 use Modules\Customers\Models\Customer;
 use App\Http\Controllers\Controller;
 
@@ -21,12 +22,12 @@ class CustomerController extends BaseApiController
         return $this->success($customer, 'Customer obtenido correctamente');
     }
 
-    public function store(Request $request)
+    public function store(StoreCustomerRequest $request)   // ← Form Request
     {
-        $data   = $request->validate(['name' => 'required|string']);
-        $customer = Customer::create($data);
+        // El FormRequest ya hizo la validación y devuelve solo campos permitidos
+        $customer = Customer::create($request->validated());
 
-        return $this->success($customer, 'Customer creado correctamente', 201);
+        return $this->success($customer, 'Cliente creado correctamente', 201);
     }
 
     public function update(Request $request, Customer $customer)
@@ -49,6 +50,20 @@ class CustomerController extends BaseApiController
     {
         $customer->delete();
         return $this->success(null, 'Customer eliminado correctamente', 204);
+    }
+
+    public function search(Request $request)
+    {
+        $dni   = $request->query('dni');
+        $email = $request->query('email');
+
+        $customer = Customer::when($dni,   fn($q) => $q->where('dni',   $dni))
+                            ->when($email, fn($q) => $q->orWhere('email', $email))
+                            ->first();
+
+        return $customer
+            ? $this->success($customer, 'Customer encontrado')
+            : $this->success(null, 'No existe', 204);
     }
 }
 
