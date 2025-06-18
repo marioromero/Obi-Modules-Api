@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->dateTime('created_at');
             $table->foreignId('agreement_id')->nullable()->constrained('agreements');
             $table->string('state', 40)->default('Draft');
+            $table->string('property_address', 255);
 
             /* --- Campos transversales mínimos --- */
             $table->boolean('is_duplicated')->default(false);
