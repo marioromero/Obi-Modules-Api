@@ -33,7 +33,8 @@ class CaseEntity extends Model
         'code', 'priority_id',
 
         // Fechas, datos de siniestro y si existe convenio
-        'created_at', 'agreement_id', 'date_of_loss', 'contestation_date', 'property_type',
+        'created_at', 'agreement_id', 'date_of_loss', 'contestation_date', 'property_type', 'property_address',
+
         // Montos
         'approved_amount', 'uf_approved', 'amount_owed', 'amount_paid',
 
@@ -47,8 +48,8 @@ class CaseEntity extends Model
         // Estado global del caso
         'overall_status',
 
-        // Relaciones externas
-        'customer_id', 'assigned_user', 'agent_id', 'created_by',
+        // Relaciones
+        'customer_id', 'assigned_user', 'agent_id', 'created_by', 'accident_type_id', 'commune_id',
     ];
 
     /* ───────── Helper para calcular overall_status ───────── */
@@ -88,6 +89,17 @@ class CaseEntity extends Model
     public function previousCase()
     {
         return $this->belongsTo(self::class, 'previous_case_number');
+    }
+
+    //Un caso puede tener un solo convenio (nullable).
+    public function agreement()
+    {
+        return $this->belongsTo(Agreement::class, 'agreement_id');
+    }
+
+    public function accidentType()
+    {
+        return $this->belongsTo(AccidentType::class, 'accident_type_id');
     }
 
     /* ───────── Relaciones externas ───────── */
@@ -139,9 +151,4 @@ class CaseEntity extends Model
         return $this->belongsTo(\Modules\Banks\Models\LossAdjuster::class, 'loss_adjuster_id');
     }
 
-    //Un caso puede tener un solo convenio (nullable).
-    public function agreement()
-    {
-        return $this->belongsTo(Agreement::class, 'agreement_id');
-    }
 }

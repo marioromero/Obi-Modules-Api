@@ -18,16 +18,18 @@ return new class extends Migration {
             $table->foreignId('agreement_id')->nullable()->constrained('agreements');
             $table->string('state', 40)->default('Draft');
             $table->string('property_address', 255);
+            $table->foreignId('accident_type_id')->nullable()->constrained('accident_types');
 
             /* --- Campos transversales mínimos --- */
             $table->boolean('is_duplicated')->default(false);
             $table->text('description')->nullable();
             $table->string('resolution')->nullable();
 
-            /* --- Relaciones genéricas --- */
+            /* --- Relaciones externas--- */
             $table->unsignedBigInteger('customer_id');
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('assigned_user');
+            $table->unsignedBigInteger('commune_id');
 
         });
     }
