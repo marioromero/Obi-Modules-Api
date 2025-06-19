@@ -2,6 +2,7 @@
 
 namespace Modules\Core\Providers;
 
+use App\Console\Commands\ProjectReset;
 use App\Console\Commands\StateScaffold;
 use App\Console\Commands\WipeAllDatabases;
 use Illuminate\Support\ServiceProvider;
@@ -44,7 +45,8 @@ class CoreServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 StateScaffold::class,
-                WipeAllDatabases::class
+                WipeAllDatabases::class,
+                ProjectReset::class
             ]);
         }
     }
