@@ -14,38 +14,46 @@ class StoreCaseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            /* ───── PK y claves básicas ───── */
-            'code'           => 'required|string|size:12',
-            'priority_id'    => 'required|integer',
-            'created_at'     => 'required|date',
-            'state'          => 'nullable|string|max:40',
 
-            /* ───── Banderas y textos ───── */
-            'is_duplicated'  => 'boolean',
-            'description'    => 'nullable|string',
-            'resolution'     => 'nullable|string',
+             /* ─────── Relaciones ─────── */
+            'customer_id'          => 'nullable|integer|exists:customers,id',
+            'agreement_id'         => 'nullable|integer|exists:agreements,id',
+            'commune_id'           => 'nullable|integer|exists:communes,id',
+            'accident_type_id'     => 'nullable|integer|exists:accident_types,id',
+            'agent_id'             => 'nullable|integer|exists:users,id',
+            'loss_adjuster_id'     => 'nullable|integer|exists:loss_adjusters,id',
+            'insurer_id'           => 'nullable|integer|exists:insurers,id',
+            'consultant_id'        => 'nullable|integer|exists:users,id',
 
-            /* ───── Relaciones genéricas ───── */
-            'customer_id'    => 'required|integer',
-            'created_by'     => 'required|integer',
-            'assigned_user'  => 'required|integer',
-            'agent_id'       => 'required|integer',
+            /* ─────── Datos generales del siniestro ─────── */
+            'property_address'     => 'required|string|max:255',
+            'property_type'        => 'required|string|in:Casa,Departamento,Otro',
+            'is_duplicated'        => 'required|boolean',
 
-            /* ───── Datos core del negocio ───── */
+            /* ─────── Fechas ─────── */
+            'complaint_date'       => 'nullable|date',
             'date_of_loss'         => 'nullable|date',
-            'property_type'        => 'nullable|string|max:30',
+            'inspection_date'      => 'nullable|date',
+            'budget_sending_date'  => 'nullable|date',
             'contestation_date'    => 'nullable|date',
+            'settlement_report_date' => 'nullable|date',
+            'probable_payment_date'  => 'nullable|date',
+            'collection_date'        => 'nullable|date',
+            'online_collection_date' => 'nullable|date',
 
-            /* Montos específicos */
-            'approved_amount'      => 'nullable|integer',
-            'uf_approved'          => 'nullable|numeric',
-            'amount_owed'          => 'nullable|integer',
-            'amount_paid'          => 'nullable|integer',
+            /* ─────── Identificadores de terceros / externos ─────── */
+            'bank_service_number'  => 'nullable|string|max:50',
+            'accident_number'      => 'nullable|string|max:50',
 
-            /* Relaciones externas (banco / aseguradora / liquidadora) */
-            'bank_id'         => 'nullable|integer',
-            'insurer_id'      => 'nullable|integer',
-            'loss_adjuster_id'=> 'nullable|integer',
+            /* ─────── Montos ─────── */
+            'approved_amount'      => 'nullable|numeric|min:0',
+            'uf_approved'          => 'nullable|numeric|min:0',
+            'advisory_amount'      => 'nullable|numeric|min:0',
+            'amount_paid'          => 'nullable|numeric|min:0',
+            'amount_owed'          => 'nullable|numeric|min:0',
+
+            /* ─────── Estado de pago ─────── */
+            'payment_status'       => 'nullable|string|max:50',
         ];
     }
 }

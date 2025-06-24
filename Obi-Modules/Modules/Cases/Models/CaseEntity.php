@@ -9,12 +9,12 @@ use Modules\Cases\States\Traro\Desistido;
 use Modules\Cases\States\Traro\DesistidoSinVisita;
 use Modules\Cases\States\Traro\Recaudacion;
 use Modules\Core\app\Support\Traits\DeletionStrategies;
-use Spatie\ModelStates\HasStates;
+// use Spatie\ModelStates\HasStates;
 use Modules\Cases\States\Core\CaseEntityState;
 
 class CaseEntity extends Model
 {
-    use HasStates;
+    // use HasStates;
     use DeletionStrategies;
     use HasFactory;
 
@@ -23,33 +23,39 @@ class CaseEntity extends Model
     protected $table      = 'cases';
     public    $timestamps = false;            // usamos created_at manual
 
-    protected $casts = [
+    /* protected $casts = [
         'state' => CaseEntityState::class,
-    ];
+    ]; */
 
     /* ───────── Campos rellenables ───────── */
-    protected $fillable = [
+        protected $fillable = [
         // Identificación
-        'code', 'priority_id',
+        'code', 'priority_id', 'accident_number', 'bank_service_number',
 
         // Fechas, datos de siniestro y si existe convenio
-        'created_at', 'agreement_id', 'date_of_loss', 'contestation_date', 'property_type', 'property_address',
+        'created_at', 'agreement_id', 'budget_sending_date', 'document_signing_date',
+        'date_of_loss', 'contestation_date', 'settlement_report_date', 'probable_payment_date', 'online_collection_date',
+        'property_type', 'property_address', 'inspection_date', 'complaint_date', 'collection_date',
 
         // Montos
-        'approved_amount', 'uf_approved', 'amount_owed', 'amount_paid',
+        'approved_amount', 'uf_approved',
+        'amount_owed', 'amount_paid', 'advisory_amount',
 
         // Flags genéricos
         'is_duplicated', 'description', 'resolution',
 
         // Sub-estados por paso
         'signature_status', 'denounce_status', 'scheduling_status',
-        'visit_status', 'budget_status', 'decision_result', 'payment_status',
+        'visit_status', 'budget_status', 'decision_result',
+        'payment_status',
 
         // Estado global del caso
         'overall_status',
 
         // Relaciones
-        'customer_id', 'assigned_user', 'agent_id', 'created_by', 'accident_type_id', 'commune_id',
+        'customer_id', 'assigned_user', 'agent_id', 'created_by',
+        'accident_type_id', 'commune_id',
+        'bank_id', 'insurer_id', 'loss_adjuster_id', 'consultant_id',
     ];
 
     /* ───────── Helper para calcular overall_status ───────── */
@@ -116,6 +122,11 @@ class CaseEntity extends Model
     public function agent()
     {
         return $this->belongsTo(\Modules\Users\Models\User::class, 'agent_id');
+    }
+
+    public function consultant()
+    {
+        return $this->belongsTo(\Modules\Users\Models\User::class, 'consultant_id');
     }
 
     public function assignedUser()

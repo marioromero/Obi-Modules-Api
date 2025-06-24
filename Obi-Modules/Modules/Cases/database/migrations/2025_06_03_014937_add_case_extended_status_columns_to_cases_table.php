@@ -12,7 +12,7 @@ return new class extends Migration {
         Schema::table('cases', function (Blueprint $table) {
 
             /* ────── Datos core del negocio Traro ────── */
-            $table->date('date_of_loss')->nullable()->after('state');
+            $table->date('date_of_loss')->nullable();
             $table->string('property_type', 30)->after('date_of_loss');
             $table->date('contestation_date')->nullable()->after('property_type');
 
@@ -28,7 +28,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters
 
             /* Relaciones propias */
-            $table->unsignedBigInteger('agent_id')->after('assigned_user');
+            $table->unsignedBigInteger('agent_id')->nullable()->after('assigned_user');
 
             /* ────── Sub-estados por paso ────── */
             $table->enum('signature_status', [
@@ -61,7 +61,7 @@ return new class extends Migration {
             $table->enum('payment_status', [
                 'pendiente', 'cobranza', 'parcialmente_pagado',
                 'pagado', 'cobranza_online',
-            ])->default('pendiente')->after('decision_result');
+            ])->nullable();
 
             /* Estado global */
             $table->enum('overall_status', [
