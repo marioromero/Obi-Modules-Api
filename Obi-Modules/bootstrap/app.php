@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 // Import de excepciones
@@ -25,6 +26,10 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: env('API_GATEWAY_PREFIX', 'api')  // <- ahora lee obi/api
     )
     ->withMiddleware(function (Middleware $middleware) {
+
+        /* ──────────────── CORS PRIMERO ──────────────── */
+        $middleware->prepend(HandleCors::class);       // ← nueva línea
+
         // Alias para usar en rutas puntuales: ->middleware('api-auth')
         $middleware->alias([
             'api-auth', \App\Http\Middleware\VerifyExternalAuth::class
