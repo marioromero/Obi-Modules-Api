@@ -68,7 +68,7 @@ class User extends Model
     }
     public function consultantCases()
     {
-        return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'consulant_id');
+        return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'consultant_id');
     }
     public function assignedCases()
     {
