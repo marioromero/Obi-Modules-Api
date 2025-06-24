@@ -35,7 +35,7 @@ class StoreCustomerRequest extends FormRequest
 
             // Relaciones
             'case_status_id' => ['nullable', 'integer', Rule::exists(CaseStatus::class, 'id')],
-            'commune_id'     => ['required', 'integer', Rule::exists(Commune::class,    'id')],
+            'commune_id'     => ['nullable', 'integer', Rule::exists(Commune::class,    'id')],
             'user_id'        => 'nullable|integer',
         ];
     }
