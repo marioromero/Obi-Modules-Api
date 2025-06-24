@@ -13,6 +13,7 @@ class CaseEntityResource extends JsonResource
         return [
             'code'                   => $this->code,
             'customer_id'            => $this->customer_id,
+            'created_at'             => $this->created_at,
             'bank_id'                => $this->bank_id,
             'property_address'       => $this->property_address,
             'accident_type_id'       => $this->accident_type_id,
