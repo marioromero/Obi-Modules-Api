@@ -11,6 +11,7 @@ class AgreementSeeder extends Seeder
     {
         // Inserta un registro inicial con nombre "CODELCO"
         DB::table('agreements')->insert([
+            ['name' => 'SIN CONVENIO'],
             ['name' => 'CODELCO'],
         ]);
     }
