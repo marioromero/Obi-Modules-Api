@@ -22,7 +22,7 @@ class CaseController extends BaseApiController
         // Envuelve cada modelo en el Resource
         $collection = CaseEntityResource::collection($cases);
 
-        return $this->success($collection, 'Listado de casos completo');
+        return $this->success($collection, 'Listado de casos');
     }
 
     public function show(CaseEntity $case)
@@ -35,7 +35,7 @@ class CaseController extends BaseApiController
         // El FormRequest ya hizo la validación y devuelve solo campos permitidos
         $case = CaseEntity::create($request->validated());
 
-        return $this->success($case, 'Case creado correctamente', 201);
+        return $this->success($case, 'Caso creado correctamente', 201);
     }
 
     public function update(Request $request, CaseEntity $case)
@@ -43,7 +43,7 @@ class CaseController extends BaseApiController
         $data = $request->validate(['name' => 'required|string']);
         $case->update($data);
 
-        return $this->success($case, 'Case actualizado correctamente');
+        return $this->success($case, 'Caso actualizado correctamente');
     }
 
     public function patch(UpdateCaseRequest $request, CaseEntity $case)

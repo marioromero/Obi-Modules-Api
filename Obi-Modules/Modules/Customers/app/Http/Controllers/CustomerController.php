@@ -39,7 +39,7 @@ class CustomerController extends BaseApiController
         $data = $request->validate(['name' => 'required|string']);
         $customer->update($data);
 
-        return $this->success($customer, 'Customer actualizado correctamente');
+        return $this->success($customer, 'Cliente actualizado correctamente');
     }
 
    public function patch(UpdateCustomerRequest $request, Customer $customer)
@@ -66,7 +66,7 @@ class CustomerController extends BaseApiController
                             ->first();
 
         return $customer
-            ? $this->success($customer, 'Customer encontrado')
+            ? $this->success($customer, 'Cliente encontrado')
             : $this->success(null, 'No existe', 204);
     }
 
