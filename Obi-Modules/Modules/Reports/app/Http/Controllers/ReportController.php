@@ -4,7 +4,7 @@ namespace Modules\Reports\app\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Modules\Reports\Models\Report;
-use Modules\Core\App\Http\BaseApiController;
+use Modules\Core\app\Http\BaseApiController;
 
 class ReportController extends BaseApiController
 {

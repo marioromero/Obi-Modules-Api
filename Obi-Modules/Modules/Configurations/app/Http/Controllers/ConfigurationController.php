@@ -1,7 +1,7 @@
 <?php
 
 namespace Modules\Configurations\app\Http\Controllers;
-use Modules\Core\App\Http\BaseApiController;
+use Modules\Core\app\Http\BaseApiController;
 use Modules\Configurations\Models\Configuration;
 use Modules\Configurations\app\Services\UpdateCountries;
 use Illuminate\Validation\Rule;

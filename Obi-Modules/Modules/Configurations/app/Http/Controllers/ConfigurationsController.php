@@ -4,7 +4,7 @@ namespace Modules\Configurations\app\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Modules\Configurations\Models\Configuration;
-use Modules\Core\App\Http\BaseApiController;
+use Modules\Core\app\Http\BaseApiController;
 use Illuminate\Validation\ValidationException;
 
 class ConfigurationsController extends BaseApiController

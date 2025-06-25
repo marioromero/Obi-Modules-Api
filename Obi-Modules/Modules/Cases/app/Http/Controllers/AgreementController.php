@@ -1,7 +1,7 @@
 <?php
 
 namespace Modules\Cases\app\Http\Controllers;
-use Modules\Core\App\Http\BaseApiController;
+use Modules\Core\app\Http\BaseApiController;
 use Modules\Cases\Models\Agreement;
 
 use App\Http\Controllers\Controller;
