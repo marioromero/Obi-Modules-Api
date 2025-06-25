@@ -2,6 +2,7 @@
 
 namespace Modules\Customers\app\Http\Controllers;
 use Modules\Core\app\Http\BaseApiController;
+use Modules\Customers\app\Http\Requests\UpdateCustomerRequest;
 use Modules\Customers\app\Resources\CustomerResource;
 use Illuminate\Http\Request;
 use Modules\Customers\app\Http\Requests\StoreCustomerRequest;
@@ -41,12 +42,12 @@ class CustomerController extends BaseApiController
         return $this->success($customer, 'Customer actualizado correctamente');
     }
 
-    public function patch(Request $request, Customer $customer)
+   public function patch(UpdateCustomerRequest $request, Customer $customer)
     {
-        $data = $request->validate(['name' => 'sometimes|string']);
-        $customer->update($data);
+        $customer->update($request->validated());
 
-        return $this->success($customer, 'Customer parcialmente actualizado');
+        return $this->success($customer,'Cliente actualizado correctamente'
+        );
     }
 
     public function destroy(Customer $customer)

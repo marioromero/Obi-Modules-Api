@@ -11,6 +11,7 @@ class CaseEntityResource extends JsonResource
  public function toArray($request): array
     {
         return [
+            'id'                     => $this->id,
             'code'                   => $this->code,
             'customer_id'            => $this->customer_id,
             'created_at'             => $this->created_at,

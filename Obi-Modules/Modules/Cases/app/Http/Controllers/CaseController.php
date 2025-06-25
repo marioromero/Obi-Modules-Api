@@ -50,7 +50,7 @@ class CaseController extends BaseApiController
     {
         $case->update($request->validated());
 
-        return $this->success($case, 'Caso actualizado correctamente (parcial)');
+        return $this->success($case, 'Caso actualizado correctamente');
     }
 
     public function destroy(CaseEntity $case)

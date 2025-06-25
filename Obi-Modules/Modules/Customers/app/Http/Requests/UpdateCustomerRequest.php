@@ -1,25 +1,46 @@
 <?php
 
-namespace Modules\Customers\app\Http\Requests;
+namespace Modules\Customers\App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCustomerRequest extends FormRequest
 {
-    /**
-     * Get the validation rules that apply to the request.
-     */
-    public function rules(): array
-    {
-        return [];
-    }
-
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
-}
 
+    public function rules(): array
+    {
+        return [
+            'name'           => ['sometimes','string','max:100'],
+            'lastname'       => ['sometimes','string','max:100'],
+            'dni'            => ['sometimes','string','max:15'],
+            'email'          => ['sometimes','email'],
+            'address'        => ['sometimes','string','max:255'],
+            'phone'          => ['sometimes','string','max:20'],
+            'phone2'         => ['sometimes','nullable','string','max:20'],
+            'gender'         => ['sometimes','in:M,F,O'],
+            'marital_status' => ['sometimes','in:Soltero,Casado,Viudo,Divorciado'],
+            'occupation'     => ['sometimes','string','max:100'],
+            'commune_id'     => ['sometimes','nullable','exists:geography_communes,id'],
+        ];
+    }
+
+    /**
+     * Mensajes de error en español para validación.
+     */
+    public function messages(): array
+    {
+        return [
+            '*.required'       => 'El campo :attribute es obligatorio.',
+            '*.string'         => 'El campo :attribute debe ser texto.',
+            '*.max'            => 'El campo :attribute no puede superar :max caracteres.',
+            '*.email'          => 'El campo :attribute debe ser un correo válido.',
+            '*.in'             => 'El campo :attribute contiene un valor no permitido.',
+            '*.nullable'       => 'El campo :attribute puede estar vacío.',
+            '*.exists'         => 'El :attribute seleccionado no existe.',
+        ];
+    }
+}
