@@ -34,6 +34,24 @@ return new class extends Migration {
             $table->boolean('is_duplicated')->default(false); // duplicado?
             $table->text('description')->nullable(); // descripcion
             $table->string('resolution')->nullable(); // resolucion
+            /* ────── Datos core del negocio Traro ────── */
+            $table->date('date_of_loss')->nullable();
+            $table->string('property_type', 30);
+            $table->date('contestation_date')->nullable();
+
+            /* Montos específicos */
+            $table->integer('approved_amount')->nullable();
+            $table->float('uf_approved', 10, 2)->nullable();
+            $table->integer('amount_owed')->nullable();
+            $table->integer('amount_paid')->nullable();
+
+            /* Relaciones con banco, aseguradora y liquidadora */
+            $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
+            $table->unsignedBigInteger('insurer_id')->nullable(); // FK to banks_db.insurers
+            $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters
+
+            /* Relaciones propias */
+            $table->unsignedBigInteger('agent_id')->nullable()->after('assigned_user');
 
             /* --- Relaciones externas--- */
             $table->unsignedBigInteger('customer_id')->nullable(); //cliente
@@ -41,6 +59,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('assigned_user')->nullable(); // usuario asignado
             $table->unsignedBigInteger('commune_id')->nullable(); // comuna
             $table->unsignedBigInteger('consultant_id')->nullable(); // asesor
+
 
         });
     }
