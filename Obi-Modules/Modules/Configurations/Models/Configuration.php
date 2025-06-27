@@ -11,7 +11,7 @@ class Configuration extends Model
 {
     use DeletionStrategies;
     use HasFactory;
-
+    protected $casts = [ 'content' => 'array', ];
     protected $connection = 'configurations_db';
     protected $table      = 'configurations';
     public    $timestamps = false;

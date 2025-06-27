@@ -13,6 +13,11 @@ Route::post('customers', [CustomerController::class, 'store']);
 Route::put('customers/{customer}', [CustomerController::class, 'update']);
 Route::patch('customers/{customer}', [CustomerController::class, 'patch']);
 Route::delete('customers/{customer}', [CustomerController::class, 'destroy']);
+Route::get('customers/search', [CustomerController::class, 'search']);
+// Endpoint: búsqueda por nombre + apellido
+Route::get('customers/search/name', [CustomerController::class, 'customersByName'])->name('customers.search.name');
+// Endpoint: Búsqueda por dni
+Route::get('customers/search/dni', [CustomerController::class, 'customersByDni'])->name('customers.search.dni');
 
 // REST para CustomerStatus
 use Modules\Customers\app\Http\Controllers\CustomerStatusController;

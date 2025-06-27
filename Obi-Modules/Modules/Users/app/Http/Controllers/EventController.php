@@ -1,7 +1,7 @@
 <?php
 
 namespace Modules\Users\app\Http\Controllers;
-use Modules\Core\App\Http\BaseApiController;
+use Modules\Core\app\Http\BaseApiController;
 
 use Illuminate\Http\Request;
 use Modules\Users\Models\Event;

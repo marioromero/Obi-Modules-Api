@@ -1,9 +1,11 @@
 <?php
 
 namespace Modules\Customers\app\Http\Controllers;
-use Modules\Core\App\Http\BaseApiController;
-
+use Modules\Core\app\Http\BaseApiController;
+use Modules\Customers\app\Http\Requests\UpdateCustomerRequest;
+use Modules\Customers\app\Resources\CustomerResource;
 use Illuminate\Http\Request;
+use Modules\Customers\app\Http\Requests\StoreCustomerRequest;
 use Modules\Customers\Models\Customer;
 use App\Http\Controllers\Controller;
 
@@ -12,21 +14,24 @@ class CustomerController extends BaseApiController
  
     public function index()
     {
-        $paginator = Customer::paginate(15);
-        return $this->paginated($paginator, 'Listado de customers');
+        $customers = Customer::all();
+
+        $resources = CustomerResource::collection($customers);
+
+        return $this->success($resources, 'Listado de clientes');
     }
 
     public function show(Customer $customer)
     {
-        return $this->success($customer, 'Customer obtenido correctamente');
+        return $this->success($customer, 'Cliente obtenido correctamente');
     }
 
-    public function store(Request $request)
+    public function store(StoreCustomerRequest $request)   // ← Form Request
     {
-        $data   = $request->validate(['name' => 'required|string']);
-        $customer = Customer::create($data);
+        // El FormRequest ya hizo la validación y devuelve solo campos permitidos
+        $customer = Customer::create($request->validated());
 
-        return $this->success($customer, 'Customer creado correctamente', 201);
+        return $this->success($customer, 'Cliente creado correctamente', 201);
     }
 
     public function update(Request $request, Customer $customer)
@@ -34,21 +39,82 @@ class CustomerController extends BaseApiController
         $data = $request->validate(['name' => 'required|string']);
         $customer->update($data);
 
-        return $this->success($customer, 'Customer actualizado correctamente');
+        return $this->success($customer, 'Cliente actualizado correctamente');
     }
 
-    public function patch(Request $request, Customer $customer)
+   public function patch(UpdateCustomerRequest $request, Customer $customer)
     {
-        $data = $request->validate(['name' => 'sometimes|string']);
-        $customer->update($data);
+        $customer->update($request->validated());
 
-        return $this->success($customer, 'Customer parcialmente actualizado');
+        return $this->success($customer,'Cliente actualizado correctamente'
+        );
     }
 
     public function destroy(Customer $customer)
     {
         $customer->delete();
-        return $this->success(null, 'Customer eliminado correctamente', 204);
+        return $this->success(null,'Cliente eliminado exitosamente',200);
     }
+
+    public function search(Request $request)
+    {
+        $dni   = $request->query('dni');
+        $email = $request->query('email');
+
+        $customer = Customer::when($dni,   fn($q) => $q->where('dni',   $dni))
+                            ->when($email, fn($q) => $q->orWhere('email', $email))
+                            ->first();
+
+        return $customer
+            ? $this->success($customer, 'Cliente encontrado')
+            : $this->success(null, 'No existe', 204);
+    }
+
+    public function customersByName(Request $request)
+    {
+        $request->validate([
+            'q' => 'required|string|min:1|max:100',
+        ]);
+
+        // Normalizamos a minúsculas el término
+        $term = mb_strtolower($request->query('q'), 'UTF-8');
+
+        $results = Customer::query()
+            ->select(['id'])
+            ->selectRaw("CONCAT(name, ' ', lastname) AS text")
+            ->whereRaw(
+                "LOWER(CONCAT(name, ' ', lastname)) LIKE ?",
+                ["%{$term}%"]
+            )
+            ->orderBy('name')
+            ->limit(15)
+            ->get();
+
+        return $this->success($results, 'Clientes encontrados');
+    }
+
+    public function customersByDni(Request $request)
+    {
+        $request->validate([
+            'q' => 'required|string|min:1|max:20',
+        ]);
+
+        // 1) Le quitamos los puntos y espacios al término
+        $raw  = $request->query('q');
+        $term = str_replace(['.', ' '], '', trim($raw));
+        // ahora "20.008.648-1" → "20008648-1"
+
+        // 2) Buscamos en la BD (que almacena e.g. "20008648-1")
+        $results = Customer::query()
+            ->select(['id'])
+            ->selectRaw("CONCAT(dni, ' – ', name, ' ', lastname) AS text")
+            ->where('dni', 'LIKE', "%{$term}%")
+            ->orderBy('dni')
+            ->limit(15)
+            ->get();
+
+        return $this->success($results, 'Clientes encontrados por DNI');
+    }
+
 }
 

@@ -15,6 +15,7 @@ class CasesDatabaseSeeder extends Seeder
             AccidentTypeSeeder::class,
             CaseStatusSeeder::class,
             PrioritySeeder::class,
+            AgreementSeeder::class,
             CaseSeeder::class,
             CommentSeeder::class,
         ]);

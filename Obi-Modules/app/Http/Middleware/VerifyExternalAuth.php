@@ -18,12 +18,12 @@ class VerifyExternalAuth
     {
         $responder = app(BaseApiController::class);
 
-        if (!$request->hasHeader('X-User-ID') || !$request->hasHeader('X-User-Role')) {
+        /* if (!$request->hasHeader('X-User-ID') || !$request->hasHeader('X-User-Role')) {
             return $responder->error(
                 'Unauthorized. Missing user headers.',
                 401
             );
-        }
+        } */
 
         $expectedApiKey = env('TRUSTED_INTERNAL_API_KEY');
 
@@ -41,10 +41,10 @@ class VerifyExternalAuth
             );
         }
 
-        $request->merge([
+        /* $request->merge([
             'external_user_id'   => $request->header('X-User-ID'),
             'external_user_role' => $request->header('X-User-Role'),
-        ]);
+        ]); */
 
         return $next($request);
     }

@@ -50,3 +50,12 @@ Route::put('cases/{case}', [CaseController::class, 'update']);
 Route::patch('cases/{case}', [CaseController::class, 'patch']);
 Route::delete('cases/{case}', [CaseController::class, 'destroy']);
 
+
+// REST para Agreement
+use Modules\Cases\app\Http\Controllers\AgreementController;
+Route::get('agreements', [AgreementController::class, 'index']);
+Route::get('agreements/{agreement}', [AgreementController::class, 'show']);
+Route::post('agreements', [AgreementController::class, 'store']);
+Route::put('agreements/{agreement}', [AgreementController::class, 'update']);
+Route::patch('agreements/{agreement}', [AgreementController::class, 'patch']);
+Route::delete('agreements/{agreement}', [AgreementController::class, 'destroy']);

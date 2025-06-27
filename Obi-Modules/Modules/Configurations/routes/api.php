@@ -23,3 +23,6 @@ Route::post('configurations', [ConfigurationController::class, 'store']);
 Route::put('configurations/{configuration}', [ConfigurationController::class, 'update']);
 Route::patch('configurations/{configuration}', [ConfigurationController::class, 'patch']);
 Route::delete('configurations/{configuration}', [ConfigurationController::class, 'destroy']);
+//Rutas especiales para logica de negocio
+Route::get('configurations/{configuration}/countries', [ConfigurationController::class, 'countries'])->name('configurations.countries');
+Route::patch('configurations/{configuration}/countries', [ConfigurationController::class, 'updateCountries'])->name('configurations.updateCountries');

@@ -10,7 +10,6 @@ class AccidentTypeSeeder extends Seeder
     public function run(): void
     {
         DB::table('accident_types')->insert([
-            ['name' => 'Filtración'],
             ['name' => 'Incendio'],
             ['name' => 'Riesgos de la naturaleza'],
             ['name' => 'Riesgos de la naturaleza (Nevazón)'],

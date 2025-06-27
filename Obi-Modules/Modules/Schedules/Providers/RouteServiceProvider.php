@@ -72,7 +72,7 @@ class RouteServiceProvider extends ServiceProvider
         //        : null
         //)
         // 6) Asegúrate de usar la ruta relativa SIN slash inicial
-        ->group(module_path($this->moduleNameLower, 'Routes/api.php'));
+        ->group(module_path($this->moduleNameLower, 'routes/api.php'));
 }
 }
 

@@ -12,20 +12,54 @@ return new class extends Migration {
         Schema::create('cases', function (Blueprint $table) {
             /* --- PK y claves básicas --- */
             $table->id();
-            $table->string('code', 12)->unique();
-            $table->unsignedBigInteger('priority_id');
-            $table->dateTime('created_at');
-            $table->string('state', 40)->default('Draft');
+            $table->string('code', 12)->nullable(); // codigo (titulo TR1234)
+            $table->unsignedBigInteger('priority_id')->default(1); // prioridad
+            $table->dateTime('created_at')->useCurrent(); // fecha creacion
+            $table->foreignId('agreement_id')->nullable()->constrained('agreements'); // convenio
+            $table->string('property_address', 255); // direccion de la propiedad
+            $table->date('inspection_date')->nullable(); // fecha visita
+            $table->date('document_signing_date')->nullable(); // fecha firma de documentos
+            $table->date('complaint_date')->nullable(); // fecha de denuncio
+            $table->date('collection_date')->nullable(); // fecha cobranza
+            $table->date('budget_sending_date')->nullable(); // fecha envio presupuesto
+            $table->date('settlement_report_date')->nullable(); // fecha informe de liquidacion
+            $table->date('probable_payment_date')->nullable(); // fecha probable de pago
+            $table->date('online_collection_date')->nullable(); // fecha cobranza online
+            $table->integer('accident_number')->nullable(); // numero de siniestro
+            $table->integer('bank_service_number')->nullable(); // numero de atencion
+            $table->integer('advisory_amount')->nullable(); // monto asesoria
+            $table->foreignId('accident_type_id')->nullable()->constrained('accident_types'); // tipo de siniestro
 
             /* --- Campos transversales mínimos --- */
-            $table->boolean('is_duplicated')->default(false);
-            $table->text('description')->nullable();
-            $table->string('resolution')->nullable();
+            $table->boolean('is_duplicated')->default(false); // duplicado?
+            $table->text('description')->nullable(); // descripcion
+            $table->string('resolution')->nullable(); // resolucion
+            /* ────── Datos core del negocio Traro ────── */
+            $table->date('date_of_loss')->nullable();
+            $table->string('property_type', 30);
+            $table->date('contestation_date')->nullable();
 
-            /* --- Relaciones genéricas --- */
-            $table->unsignedBigInteger('customer_id');
-            $table->unsignedBigInteger('created_by');
-            $table->unsignedBigInteger('assigned_user');
+            /* Montos específicos */
+            $table->integer('approved_amount')->nullable();
+            $table->float('uf_approved', 10, 2)->nullable();
+            $table->integer('amount_owed')->nullable();
+            $table->integer('amount_paid')->nullable();
+
+            /* Relaciones con banco, aseguradora y liquidadora */
+            $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
+            $table->unsignedBigInteger('insurer_id')->nullable(); // FK to banks_db.insurers
+            $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters
+
+            /* Relaciones propias */
+            $table->unsignedBigInteger('agent_id')->nullable()->after('assigned_user');
+
+            /* --- Relaciones externas--- */
+            $table->unsignedBigInteger('customer_id')->nullable(); //cliente
+            $table->unsignedBigInteger('created_by')->nullable(); // creado por
+            $table->unsignedBigInteger('assigned_user')->nullable(); // usuario asignado
+            $table->unsignedBigInteger('commune_id')->nullable(); // comuna
+            $table->unsignedBigInteger('consultant_id')->nullable(); // asesor
+
 
             /* ────── Datos core del negocio Traro ────── */
             $table->date('date_of_loss')->nullable();
