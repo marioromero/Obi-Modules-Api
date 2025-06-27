@@ -30,3 +30,6 @@ Homestead.json
 auth.json
 /.idea/laravel-idea.xml
 /.idea/phpunit.xml
+/qodana.yaml
+/.github/workflows/qodana_code_quality.yml
+/.idea/dataSources.xml
