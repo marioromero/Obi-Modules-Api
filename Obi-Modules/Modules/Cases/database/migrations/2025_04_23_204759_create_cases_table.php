@@ -34,22 +34,11 @@ return new class extends Migration {
             $table->boolean('is_duplicated')->default(false); // duplicado?
             $table->text('description')->nullable(); // descripcion
             $table->string('resolution')->nullable(); // resolucion
-            
+
             /* ────── Datos core del negocio Traro ────── */
             $table->date('date_of_loss')->nullable(); //fecha del siniestro
             $table->string('property_type', 30); //tipo de propiedad
             $table->date('contestation_date')->nullable(); //fecha de impugnacion
-
-            /* Montos específicos */
-            $table->integer('approved_amount')->nullable(); //monto aprobado
-            $table->float('uf_approved', 10, 2)->nullable(); //uf aprobado
-            $table->integer('amount_owed')->nullable(); //monto adeudado
-            $table->integer('amount_paid')->nullable(); //monto pagado
-
-            /* Relaciones con banco, aseguradora y liquidadora */
-            $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks banco
-            $table->unsignedBigInteger('insurer_id')->nullable(); // FK to banks_db.insurers aseguradora
-            $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters liquidadora
 
             /* Relaciones propias */
             $table->unsignedBigInteger('agent_id')->nullable(); //captador
@@ -61,12 +50,6 @@ return new class extends Migration {
             $table->unsignedBigInteger('commune_id')->nullable(); // comuna
             $table->unsignedBigInteger('consultant_id')->nullable(); // asesor
 
-
-            /* ────── Datos core del negocio Traro ────── */
-            $table->date('date_of_loss')->nullable();
-            $table->string('property_type', 30);
-            $table->date('contestation_date')->nullable();
-
             /* Montos específicos */
             $table->integer('approved_amount')->nullable();
             $table->float('uf_approved', 10, 2)->nullable();
@@ -77,48 +60,6 @@ return new class extends Migration {
             $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
             $table->unsignedBigInteger('insurer_id')->nullable(); // FK to banks_db.insurers
             $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters
-
-            /* Relaciones propias */
-            $table->unsignedBigInteger('agent_id');
-
-            /* ────── Sub-estados por paso ────── */
-            $table->enum('signature_status', [
-                'generado', 'enviado_a_acepta', 'notificado',
-                'contrato_pendiente', 'mandato_pendiente', 'firmados',
-            ])->default('generado');
-
-            $table->enum('denounce_status', ['pendiente', 'en_proceso', 'realizado'])
-                ->default('pendiente');
-
-            $table->enum('scheduling_status', ['pendiente', 'en_proceso', 'realizado'])
-                ->default('pendiente');
-
-            $table->enum('visit_status', [
-                'pendiente', 'en_proceso', 'realizado',
-            ])->default('pendiente');
-
-            $table->enum('budget_status', [
-                'pendiente', 'en_proceso', 'realizado',
-            ])->default('pendiente');
-
-            /* Liquidación */
-            $table->enum('decision_result', [
-                'aprobado', 'bajo_deducible',
-                'rechazado_aseguradora', 'rechazado_liquidadora',
-                'impugnado',
-            ])->nullable();
-
-            /* Recaudación */
-            $table->enum('payment_status', [
-                'pendiente', 'cobranza', 'parcialmente_pagado',
-                'pagado', 'cobranza_online',
-            ])->default('pendiente');
-
-            /* Estado global */
-            $table->enum('overall_status', [
-                'abierto', 'con_pendientes', 'cerrado',
-            ])->default('abierto');
-
         });
     }
 
