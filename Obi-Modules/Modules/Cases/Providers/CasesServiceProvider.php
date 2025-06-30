@@ -2,7 +2,6 @@
 
 namespace Modules\Cases\Providers;
 
-use App\Observers\CaseEntityObserver;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Modules\Cases\Models\CaseEntity;
@@ -23,7 +22,6 @@ class CasesServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        CaseEntity::observe(CaseEntityObserver::class);
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
