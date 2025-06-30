@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 class ProjectReset extends Command
 {
@@ -18,51 +20,43 @@ class ProjectReset extends Command
      *
      * @var string
      */
-    protected $description = 'Ejecuta wipe, migrate, scaffold de estado, dump-autoload y optimize clear';
+    protected $description = 'Ejecuta wipe, state:scaffold, composer dump-autoload, migrate y optimize:clear';
 
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
+        // Orden corregido y parámetros con nombre para Artisan::call()
         $commands = [
             'db:wipe-all' => [],
-            'migrate:fresh' => [],
-            'state:scaffold' => ['config/state-machines/cases.php'],
+            'state:scaffold' => ['configFile' => 'config/state-machines/cases.php'],
             'composer' => ['dump-autoload'],
+            'migrate:fresh' => [],
             'optimize:clear' => [],
         ];
 
         foreach ($commands as $cmd => $params) {
-            $this->info("🛠️ Ejecutando: $cmd " . implode(' ', $params));
+            // Para el log, usamos array_values para no mostrar las claves en los comandos de Artisan
+            $this->info("🛠️  Ejecutando: $cmd " . implode(' ', array_values($params)));
+
+            $exit = 0;
             if ($cmd === 'composer') {
-                // composer global
-                $process = proc_open(
-                    array_merge(['composer'], $params),
-                    [
-                        1 => ['pipe', 'w'],
-                        2 => ['pipe', 'w'],
-                    ],
-                    $pipes,
-                    base_path(),
-                    null
-                );
-                if (is_resource($process)) {
-                    while (($line = fgets($pipes[1])) !== false) {
-                        $this->line($line);
-                    }
-                    while (($err = fgets($pipes[2])) !== false) {
-                        $this->error($err);
-                    }
-                    $exit = proc_close($process);
-                } else {
-                    $exit = 1;
+                $process = new Process(array_merge(['composer'], $params), base_path());
+                $process->setTimeout(300); // Timeout de 5 minutos
+
+                try {
+                    // Usamos mustRun para que lance excepción si falla
+                    $process->mustRun(function ($type, $buffer) {
+                        $this->line(trim($buffer));
+                    });
+                } catch (ProcessFailedException $exception) {
+                    $this->error($exception->getMessage());
+                    $exit = $exception->getProcess()->getExitCode() ?? 1;
                 }
             } else {
-                $exit = $this->call($cmd, array_combine(
-                    array_map(fn($p) => $p, $params),
-                    $params
-                ));
+                // Llamada simplificada y correcta a los comandos de Artisan
+                $exit = $this->call($cmd, $params);
             }
 
             if ($exit !== 0) {
