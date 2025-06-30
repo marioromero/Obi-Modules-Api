@@ -16,9 +16,9 @@ class StoreCaseRequest extends FormRequest
         return [
 
              /* ─────── Relaciones ─────── */
-            'customer_id'          => 'nullable|integer|exists:customers,id',
+            'customer_id' => 'nullable|integer|exists:customers_db.customers,id',
             'agreement_id'         => 'nullable|integer|exists:agreements,id',
-            'commune_id'           => 'nullable|integer|exists:communes,id',
+            'commune_id'           => 'nullable|integer|exists:geography_db.communes,id',
             'accident_type_id'     => 'nullable|integer|exists:accident_types,id',
             'agent_id'             => 'nullable|integer|exists:users,id',
             'loss_adjuster_id'     => 'nullable|integer|exists:loss_adjusters,id',

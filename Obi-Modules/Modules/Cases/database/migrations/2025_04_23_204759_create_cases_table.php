@@ -34,24 +34,25 @@ return new class extends Migration {
             $table->boolean('is_duplicated')->default(false); // duplicado?
             $table->text('description')->nullable(); // descripcion
             $table->string('resolution')->nullable(); // resolucion
+            
             /* ────── Datos core del negocio Traro ────── */
-            $table->date('date_of_loss')->nullable();
-            $table->string('property_type', 30);
-            $table->date('contestation_date')->nullable();
+            $table->date('date_of_loss')->nullable(); //fecha del siniestro
+            $table->string('property_type', 30); //tipo de propiedad
+            $table->date('contestation_date')->nullable(); //fecha de impugnacion
 
             /* Montos específicos */
-            $table->integer('approved_amount')->nullable();
-            $table->float('uf_approved', 10, 2)->nullable();
-            $table->integer('amount_owed')->nullable();
-            $table->integer('amount_paid')->nullable();
+            $table->integer('approved_amount')->nullable(); //monto aprobado
+            $table->float('uf_approved', 10, 2)->nullable(); //uf aprobado
+            $table->integer('amount_owed')->nullable(); //monto adeudado
+            $table->integer('amount_paid')->nullable(); //monto pagado
 
             /* Relaciones con banco, aseguradora y liquidadora */
-            $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
-            $table->unsignedBigInteger('insurer_id')->nullable(); // FK to banks_db.insurers
-            $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters
+            $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks banco
+            $table->unsignedBigInteger('insurer_id')->nullable(); // FK to banks_db.insurers aseguradora
+            $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters liquidadora
 
             /* Relaciones propias */
-            $table->unsignedBigInteger('agent_id')->nullable()->after('assigned_user');
+            $table->unsignedBigInteger('agent_id')->nullable(); //captador
 
             /* --- Relaciones externas--- */
             $table->unsignedBigInteger('customer_id')->nullable(); //cliente
