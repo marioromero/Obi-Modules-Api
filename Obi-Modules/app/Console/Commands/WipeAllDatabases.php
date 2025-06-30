@@ -21,6 +21,7 @@ class WipeAllDatabases extends Command
             'reports_db',
             'schedules_db',
             'mailing_db',
+            'configurations_db',
         ];
 
         foreach ($connections as $connection) {
