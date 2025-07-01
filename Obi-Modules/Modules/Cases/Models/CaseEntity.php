@@ -1,6 +1,10 @@
 <?php
 
 namespace Modules\Cases\Models;
+use Illuminate\Support\Facades\DB;
+use Spatie\ModelStates\HasStates;
+use Modules\Cases\States\Core\CaseEntityState;
+use Modules\Cases\Models\CaseEntityStepLog;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -8,6 +12,12 @@ use Modules\Core\app\Support\Traits\DeletionStrategies;
 
 class CaseEntity extends Model
 {
+    protected $casts = [
+        'state' => CaseEntityState::class
+    ];
+
+    use HasStates;
+
     use DeletionStrategies;
     use HasFactory;
 
@@ -116,4 +126,141 @@ class CaseEntity extends Model
         return $this->belongsTo(\Modules\Banks\Models\LossAdjuster::class, 'loss_adjuster_id');
     }
 
+
+    public function stepLogs()
+    {
+        return $this->hasMany(CaseEntityStepLog::class, 'case_id');
+    }
+
+/**
+ * Transiciona un sub-estado correspondiente al estado global actual.
+ *
+ * @param string $newValue Nuevo valor para la columna de sub-estado.
+ * @param string|null $comments Comentarios opcionales para registrar en el log
+ * @return $this El objeto del modelo actualizado
+ * @throws \InvalidArgumentException
+ * @throws \RuntimeException
+ */
+public function transitionSubstate(string $newValue, ?string $comments = null): self
+{
+    // 1) Cargar config y fallback
+    $cfg = config('modules.Cases.CaseEntity_states');
+    if (! is_array($cfg)
+        || ! isset($cfg['sub_states'], $cfg['auto_transitions'], $cfg['overall_status'])
+    ) {
+        $path = module_path('Cases', 'Config/CaseEntity_states.php');
+        if (! file_exists($path)) {
+            throw new \RuntimeException("No se encontró archivo de config: {$path}");
+        }
+        $cfg = require $path;
+    }
+
+    $subStates = $cfg['sub_states'];
+    $autoTrans = $cfg['auto_transitions'];
+    $overall   = $cfg['overall_status'];
+    // namespace desde config, o fallback al inyectado
+    $namespace = $cfg['namespace'] ?? 'Traro';
+
+    // Obtener el estado global actual automáticamente
+    $currentState = class_basename($this->state);
+    $key = $currentState;
+
+    // 2) Validaciones
+    if (! isset($subStates[$key])) {
+        throw new \InvalidArgumentException("Estado actual '$key' no tiene sub-estados definidos");
+    }
+    $info = $subStates[$key];
+    if (! in_array($newValue, $info['values'], true)) {
+        throw new \InvalidArgumentException("Valor '$newValue' no válido para sub-estado de {$key} (columna: {$info['column']})");
+    }
+
+    // Refrescar modelo para asegurar que tenemos el valor previo real en BD
+    $this->refresh();
+
+    // 3) Transacción atómica
+    DB::transaction(function() use (
+        $key, $newValue, $info, $subStates, $comments,
+        $autoTrans, $overall, $namespace, $currentState
+    ) {
+        // a) Capturar sub-estado anterior
+        $col      = $info['column'];
+        $oldValue = $this->{$col};
+
+        // b) Actualizar columna de sub-estado
+        $this->{$col} = $newValue;
+        $this->saveQuietly();
+
+        // c) Log de sub-estado
+        CaseEntityStepLog::create([
+            'case_id'   => $this->id,
+            'from_state'    => $currentState,
+            'to_state'      => $currentState,
+            'from_sub'      => $oldValue,
+            'to_sub'        => $newValue,
+            'type'          => 'sub_state',
+            'user_id'       => auth()->id() ?? 0,
+            'payload'       => json_encode([$col => $newValue]),
+            'comments'      => $comments,
+        ]);
+
+        // d) Ajustar overall_status
+        $pending = $overall['triggers']['pending']['sub_states'] ?? [];
+        $closed  = $overall['triggers']['closed']['sub_states'] ?? [];
+        if (in_array($newValue, $pending, true)) {
+            $this->{$overall['column']} = 'con pendientes';
+            $this->saveQuietly();
+        } elseif (in_array($newValue, $closed, true)) {
+            $this->{$overall['column']} = 'cerrado';
+            $this->saveQuietly();
+        } else {
+            // Si no está en ningún trigger, restaurar al estado default
+            $this->{$overall['column']} = $overall['default'];
+            $this->saveQuietly();
+        }
+
+        // e) Auto-transición global si es final
+        if ($newValue === $info['final'] && isset($autoTrans[$key])) {
+            $nextKey     = $autoTrans[$key];
+            $nextInfo    = $subStates[$nextKey] ?? [];
+            $nextDefault = $nextInfo['default'] ?? null;
+
+            // overall a pendientes
+            $this->{$overall['column']} = 'con pendientes';
+            $this->saveQuietly();
+
+            $class = 'Modules\Cases\States\Traro\\' . $nextKey;
+            $this->state->transitionTo($class);
+        }
+    });
+
+    // Refrescar el modelo para devolver la versión actualizada
+    $this->refresh();
+    return $this;
+}
+/**
+ * Realiza una transición de estado global con comentarios opcionales
+ *
+ * @param string $stateClass La clase de estado destino
+ * @param string|null $comments Comentarios opcionales para el log
+ * @return $this
+ */
+public function transitionToWithComments(string $stateClass, ?string $comments = null): self
+{
+    // Realizar la transición normal
+    $this->state->transitionTo($stateClass);
+
+    // Si hay comentarios, actualizar el último log
+    if ($comments !== null) {
+        $lastLog = $this->stepLogs()
+            ->where('type', 'state')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastLog) {
+            $lastLog->update(['comments' => $comments]);
+        }
+    }
+
+    return $this->refresh();
+}
 }

@@ -5,7 +5,8 @@
     "keywords": [],
     "priority": 50,
     "providers": [
-        "Modules\\Cases\\Providers\\CasesServiceProvider"
+        "Modules\\Cases\\Providers\\CasesServiceProvider",
+        "Modules\\Cases\\Providers\\ConfigServiceProvider"
     ],
     "files": []
 }

@@ -1,6 +1,8 @@
 <?php
 
 namespace Modules\Cases\Providers;
+use Spatie\ModelStates\Events\StateChanged;
+use Modules\Cases\Listeners\LogCaseEntityStateTransition;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -11,7 +13,11 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array<string, array<int, string>>
      */
-    protected $listen = [];
+        protected $listen = [
+        StateChanged::class => [
+            LogCaseEntityStateTransition::class,
+        ],
+    ];
 
     /**
      * Indicates if events should be discovered.
