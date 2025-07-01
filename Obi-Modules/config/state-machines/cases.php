@@ -1,5 +1,12 @@
 <?php
 
+/*
+ * $case->state->transitionTo(Denuncio::class);
+ * $case->transitionToWithComments(Denuncio::class, "El cliente envió la documentación completa");
+ * $case->transitionSubstate("enviado a acepta");
+ * $case->transitionSubstate("firmados", "Cliente firmó todos los documentos el día 30/06");
+ */
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -39,9 +46,9 @@ return [
         'Liquidacion' => ['Recaudacion', 'Presupuesto', 'Cancelado', 'Desistido'],
         'Recaudacion' => ['Cancelado', 'Desistido'],
         // Los pasos de cierre (sin columna enum propia) se listan también aquí para permitir la transición global
-        'Cancelado' => [],
-        'Desistido' => [],
-        'DesistidoSinVisita' => [],
+        'Cancelado' => [ 'Ingreso', 'Denuncio', 'Programacion', 'Visita', 'Presupuesto', 'Liquidacion', 'Recaudacion'],
+        'Desistido' => [ 'Ingreso', 'Denuncio', 'Programacion', 'Visita', 'Presupuesto', 'Liquidacion', 'Recaudacion'],
+        'DesistidoSinVisita' => [ 'Ingreso', 'Denuncio', 'Programacion', 'Presupuesto', 'Liquidacion', 'Recaudacion'],
     ],
 
     /*
