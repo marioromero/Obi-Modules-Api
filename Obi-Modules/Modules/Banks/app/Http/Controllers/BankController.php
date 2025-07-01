@@ -5,13 +5,14 @@ namespace Modules\Banks\app\Http\Controllers;
 use Illuminate\Http\Request;
 use Modules\Banks\Models\Bank;
 use Modules\Core\app\Http\BaseApiController;
+use Modules\Banks\app\Http\Requests\StoreBankRequest;
 
 class BankController extends BaseApiController
 {
     public function index()
     {
-        $paginator = Bank::paginate(15);
-        return $this->paginated($paginator, 'Listado de bancos');
+        $banks = Bank::all();
+        return $this->success($banks, 'Listado de bancos');
     }
 
     public function show(Bank $bank)
@@ -19,14 +20,9 @@ class BankController extends BaseApiController
         return $this->success($bank, 'Banco obtenido correctamente');
     }
 
-    public function store(Request $request)
+    public function store(StoreBankRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-        ]);
-
-        $bank = Bank::create($data);
-
+        $bank = Bank::create($request->validated());
         return $this->success($bank, 'Banco creado correctamente', 201);
     }
 
@@ -55,8 +51,7 @@ class BankController extends BaseApiController
     public function destroy(Bank $bank)
     {
         $bank->delete();
-
-        return $this->success(null, 'Banco eliminado correctamente', 204);
+        return $this->success(null, 'Banco eliminado correctamente', 200);
     }
 }
 
