@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Cases\Providers;
+use Modules\Cases\Observers\CaseEntitySubstateObserver;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +23,8 @@ class CasesServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        CaseEntity::observe(CaseEntitySubstateObserver::class);
+
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();

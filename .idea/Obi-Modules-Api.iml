@@ -13,6 +13,34 @@
       <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/tests" isTestSource="true" packagePrefix="Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/tests/Feature" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/tests/Unit" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Banks/app" isTestSource="false" packagePrefix="Modules\Banks\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Banks/database/factories" isTestSource="false" packagePrefix="Modules\Banks\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Banks/database/seeders" isTestSource="false" packagePrefix="Modules\Banks\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Banks/tests" isTestSource="true" packagePrefix="Modules\Banks\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Cases/app" isTestSource="false" packagePrefix="Modules\Cases\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Cases/database/factories" isTestSource="false" packagePrefix="Modules\Cases\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Cases/database/seeders" isTestSource="false" packagePrefix="Modules\Cases\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Cases/tests" isTestSource="true" packagePrefix="Modules\Cases\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Customers/app" isTestSource="false" packagePrefix="Modules\Customers\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Customers/database/factories" isTestSource="false" packagePrefix="Modules\Customers\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Customers/database/seeders" isTestSource="false" packagePrefix="Modules\Customers\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Customers/tests" isTestSource="true" packagePrefix="Modules\Customers\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Geography/app" isTestSource="false" packagePrefix="Modules\Geography\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Geography/database/factories" isTestSource="false" packagePrefix="Modules\Geography\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Geography/database/seeders" isTestSource="false" packagePrefix="Modules\Geography\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Geography/tests" isTestSource="true" packagePrefix="Modules\Geography\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Mailing/app" isTestSource="false" packagePrefix="Modules\Mailing\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Mailing/database/factories" isTestSource="false" packagePrefix="Modules\Mailing\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Mailing/database/seeders" isTestSource="false" packagePrefix="Modules\Mailing\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Mailing/tests" isTestSource="true" packagePrefix="Modules\Mailing\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Reports/app" isTestSource="false" packagePrefix="Modules\Reports\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Reports/database/factories" isTestSource="false" packagePrefix="Modules\Reports\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Reports/database/seeders" isTestSource="false" packagePrefix="Modules\Reports\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Reports/tests" isTestSource="true" packagePrefix="Modules\Reports\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Schedules/app" isTestSource="false" packagePrefix="Modules\Schedules\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Schedules/database/factories" isTestSource="false" packagePrefix="Modules\Schedules\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Schedules/database/seeders" isTestSource="false" packagePrefix="Modules\Schedules\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/Obi-Modules/Modules/Schedules/tests" isTestSource="true" packagePrefix="Modules\Schedules\Tests\" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
