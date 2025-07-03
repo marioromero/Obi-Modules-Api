@@ -13,8 +13,9 @@ class AccidentTypeController extends BaseApiController
     
     public function index()
     {
-        $paginator = AccidentType::paginate(15);
-        return $this->paginated($paginator, 'Listado de accident-types');
+        $types = AccidentType::all();
+
+        return $this->success($types, 'Listado de tipos de siniestro completo');
     }
 
     public function show(AccidentType $accidentType)
@@ -24,10 +25,11 @@ class AccidentTypeController extends BaseApiController
 
     public function store(Request $request)
     {
-        $data   = $request->validate(['name' => 'required|string']);
-        $accidentType = AccidentType::create($data);
-
-        return $this->success($accidentType, 'AccidentType creado correctamente', 201);
+        $data = $request->validate([
+            'name' => 'required|string|max:60',
+        ]);
+        $type = AccidentType::create($data);
+        return $this->success($type, 'Tipo de siniestro creado correctamente', 201);
     }
 
     public function update(Request $request, AccidentType $accidentType)
@@ -49,7 +51,8 @@ class AccidentTypeController extends BaseApiController
     public function destroy(AccidentType $accidentType)
     {
         $accidentType->delete();
-        return $this->success(null, 'AccidentType eliminado correctamente', 204);
+
+        return $this->success(null, 'Tipo de siniestro eliminado correctamente', 200);
     }
 }
 
