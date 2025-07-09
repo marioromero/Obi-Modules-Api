@@ -12,8 +12,8 @@ class ConfigServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(
-            module_path('Cases', 'Config/CaseEntity_states.php'),
-            'modules.Cases.CaseEntity_states'
+            module_path('Cases', 'config/CaseEntity_states.php'),
+            'Modules.Cases.CaseEntity_states'
         );
     }
 

@@ -9,10 +9,10 @@ use Modules\Cases\Models\CaseEntityStepLog;
 class LogCaseEntityStateTransition
 {
     private static $subStates = array (
-  'Ingreso' => 
+  'Ingreso' =>
   array (
     'column' => 'signature_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'generado',
       1 => 'enviado a acepta',
@@ -24,10 +24,10 @@ class LogCaseEntityStateTransition
     'default' => 'generado',
     'final' => 'firmados',
   ),
-  'Denuncio' => 
+  'Denuncio' =>
   array (
     'column' => 'denounce_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'en proceso',
@@ -36,10 +36,10 @@ class LogCaseEntityStateTransition
     'default' => 'pendiente',
     'final' => 'realizado',
   ),
-  'Programacion' => 
+  'Programacion' =>
   array (
     'column' => 'scheduling_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'en proceso',
@@ -48,10 +48,10 @@ class LogCaseEntityStateTransition
     'default' => 'pendiente',
     'final' => 'realizado',
   ),
-  'Visita' => 
+  'Visita' =>
   array (
     'column' => 'visit_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'en proceso',
@@ -60,10 +60,10 @@ class LogCaseEntityStateTransition
     'default' => 'pendiente',
     'final' => 'realizado',
   ),
-  'Presupuesto' => 
+  'Presupuesto' =>
   array (
     'column' => 'budget_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'en proceso',
@@ -72,10 +72,10 @@ class LogCaseEntityStateTransition
     'default' => 'pendiente',
     'final' => 'realizado',
   ),
-  'Liquidacion' => 
+  'Liquidacion' =>
   array (
     'column' => 'decision_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'en espera',
       1 => 'aprobado',
@@ -87,10 +87,10 @@ class LogCaseEntityStateTransition
     'default' => 'en espera',
     'final' => 'impugnado',
   ),
-  'Recaudacion' => 
+  'Recaudacion' =>
   array (
     'column' => 'payment_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'cobranza',
@@ -120,7 +120,7 @@ class LogCaseEntityStateTransition
         $toState   = class_basename($event->finalState);
 
         // 3) Cargar configuración
-        $cfg           = config('modules.Cases.CaseEntity_states');
+        $cfg           = config('Modules.Cases.CaseEntity_states');
         $statesList    = $cfg['states'];
         $closingSteps  = $cfg['closing_steps'];
         $overallCol    = $cfg['overall_status']['column'];

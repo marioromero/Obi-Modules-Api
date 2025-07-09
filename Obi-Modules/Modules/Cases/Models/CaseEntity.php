@@ -144,7 +144,7 @@ class CaseEntity extends Model
 public function transitionSubstate(string $newValue, ?string $comments = null): self
 {
     // 1) Cargar config y fallback
-    $cfg = config('modules.Cases.CaseEntity_states');
+    $cfg = config('Modules.Cases.CaseEntity_states');
     if (! is_array($cfg)
         || ! isset($cfg['sub_states'], $cfg['auto_transitions'], $cfg['overall_status'])
     ) {
