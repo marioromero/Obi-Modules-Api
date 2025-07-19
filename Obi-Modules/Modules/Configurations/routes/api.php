@@ -1,9 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Configurations\app\Http\Controllers\ConfigurationsController;
 
-Route::apiResource('configurations', ConfigurationsController::class)
+Route::apiResource('configurations', ConfigurationController::class)
      ->names('configurations');
 
 // REST para Type

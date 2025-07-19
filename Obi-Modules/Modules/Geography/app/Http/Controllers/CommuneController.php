@@ -11,10 +11,10 @@ use App\Http\Controllers\Controller;
 class CommuneController extends BaseApiController
 {
 
-    public function index()
+     public function index()
     {
-        $paginator = Commune::paginate(15);
-        return $this->paginated($paginator, 'Listado de communes');
+        $communes = Commune::all();                   
+        return $this->success($communes, 'Listado de comunas');
     }
 
     public function show(Commune $commune)

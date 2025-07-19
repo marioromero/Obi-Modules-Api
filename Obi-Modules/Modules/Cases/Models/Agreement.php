@@ -11,6 +11,9 @@ class Agreement extends Model
     use DeletionStrategies;
     use HasFactory;
 
+    protected $connection = 'cases_db';
+    protected $table = 'agreements';
+
     // ❌ Desactiva timestamps
     public $timestamps = false;
 

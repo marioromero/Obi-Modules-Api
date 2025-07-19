@@ -10,10 +10,10 @@ use Illuminate\Http\Request;
 class AgreementController extends BaseApiController
 {
     
-    public function index()
+     public function index()
     {
-        $paginator = Agreement::paginate(15);
-        return $this->paginated($paginator, 'Listado de agreements');
+        $agreements = Agreement::all();
+        return $this->success($agreements, 'Listado de convenios');
     }
 
     public function show(Agreement $agreement)
