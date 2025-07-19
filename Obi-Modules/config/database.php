@@ -50,6 +50,17 @@ return [
             ]) : [],
         ],
 
+        'traro_db' => [
+            'driver'   => 'mysql',               // MariaDB usa el mismo driver
+            'host'     => env('TRARO_DB_HOST', 'tusitioexpress.cl'),
+            'port'     => env('TRARO_DB_PORT', 3306),
+            'database' => env('TRARO_DB_DATABASE', 'grupoint_traro_QA'),
+            'username' => env('TRARO_DB_USERNAME', 'grupoint_traro'),
+            'password' => env('TRARO_DB_PASSWORD', 'traro$2025'),
+            'charset'  => 'utf8mb4',
+            'collation'=> 'utf8mb4_unicode_ci',
+        ],
+
         'geography_db' => [
             'driver' => env('GEOGRAPHY_DB_CONNECTION', 'mariadb'),
             'host' => env('GEOGRAPHY_DB_HOST', '127.0.0.1'),

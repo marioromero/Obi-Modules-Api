@@ -10,9 +10,11 @@ use Modules\Users\app\Http\Controllers\UserController;
 Route::get('users', [UserController::class, 'index']);
 Route::get('users/{user}', [UserController::class, 'show']);
 Route::post('users', [UserController::class, 'store']);
-Route::put('users/{user}', [UserController::class, 'update']);
-Route::patch('users/{user}', [UserController::class, 'patch']);
+//Route::put('users/{user}', [UserController::class, 'update']);
+Route::patch('users/{user}', [UserController::class, 'update']);
+//Route::patch('users/{user}', [UserController::class, 'patch']);
 Route::delete('users/{user}', [UserController::class, 'destroy']);
+Route::patch('users/{user}/disable', [UserController::class, 'disable']);
 
 // REST para Role
 use Modules\Users\app\Http\Controllers\RoleController;
