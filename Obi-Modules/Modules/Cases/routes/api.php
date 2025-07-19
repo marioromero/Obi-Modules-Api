@@ -51,7 +51,9 @@ Route::patch('cases/{case}', [CaseController::class, 'patch']);
 Route::delete('cases/{case}', [CaseController::class, 'destroy']);
 // Nuevo endpoint: casos recientes por agente
 Route::get('cases/agent/{idejecutivo}/recent',[CaseController::class, 'recentByAgent'])->whereNumber('agent');
-
+Route::get('cases/{case}/transitions', [CaseController::class, 'transitions']);
+Route::post('cases/{case}/transition',  [CaseController::class, 'transition']);
+Route::get('customers/{customerId}/cases', [CaseController::class, 'byCustomer'])->name('cases.byCustomer');
 
 // REST para Agreement
 use Modules\Cases\app\Http\Controllers\AgreementController;

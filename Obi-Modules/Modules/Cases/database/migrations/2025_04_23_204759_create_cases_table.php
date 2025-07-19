@@ -13,6 +13,7 @@ return new class extends Migration {
             /* --- PK y claves básicas --- */
             $table->id();
             $table->string('code', 12)->nullable(); // codigo (titulo TR1234)
+             $table->boolean('sent_to_acepta')->default(false); // Enviado a acepta?
             $table->unsignedBigInteger('priority_id')->default(1); // prioridad
             $table->dateTime('created_at')->useCurrent(); // fecha creacion
             $table->foreignId('agreement_id')->nullable()->constrained('agreements'); // convenio

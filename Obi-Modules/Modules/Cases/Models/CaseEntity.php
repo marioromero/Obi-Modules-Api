@@ -30,7 +30,7 @@ class CaseEntity extends Model
     /* ───────── Campos rellenables ───────── */
         protected $fillable = [
         // Identificación
-        'code', 'priority_id', 'accident_number', 'bank_service_number',
+        'code', 'priority_id', 'sent_to_acepta', 'accident_number', 'bank_service_number',
 
         // Fechas, datos de siniestro y si existe convenio
         'created_at', 'agreement_id', 'budget_sending_date', 'document_signing_date',
@@ -263,4 +263,28 @@ public function transitionToWithComments(string $stateClass, ?string $comments =
 
     return $this->refresh();
 }
+     /**
+     * Genera el código TR<n> justo antes del INSERT.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $case): void {
+
+            if ($case->code) {
+                return;        // ya viene seteado
+            }
+
+            DB::connection('cases_db')->transaction(function () use ($case) {
+
+                $max = DB::connection('cases_db')  // << conexión explícita
+                         ->table('cases')
+                         ->where('code', 'like', 'TR%')
+                         ->lockForUpdate()
+                         ->max(DB::raw('CAST(SUBSTRING(code,3) AS UNSIGNED)'));
+
+                $next       = ($max ?? 0) + 1;
+                $case->code = 'TR' . $next;
+            });
+        });
+    }
 }

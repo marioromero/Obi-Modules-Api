@@ -16,14 +16,17 @@ class StoreCaseRequest extends FormRequest
         return [
 
              /* ─────── Relaciones ─────── */
-            'customer_id' => 'nullable|integer|exists:customers_db.customers,id',
-            'agreement_id'         => 'nullable|integer|exists:agreements,id',
+            'customer_id'          => 'nullable|integer|exists:customers_db.customers,id',
+            'agreement_id'         => 'nullable|integer|exists:cases_db.agreements,id',
             'commune_id'           => 'nullable|integer|exists:geography_db.communes,id',
-            'accident_type_id'     => 'nullable|integer|exists:accident_types,id',
-            'agent_id'             => 'nullable|integer|exists:users,id',
-            'loss_adjuster_id'     => 'nullable|integer|exists:loss_adjusters,id',
-            'insurer_id'           => 'nullable|integer|exists:insurers,id',
-            'consultant_id'        => 'nullable|integer|exists:users,id',
+            'accident_type_id'     => 'nullable|integer|exists:cases_db.accident_types,id',
+            'agent_id'             => 'nullable|integer|exists:traro_db.users,id',
+            'loss_adjuster_id'     => 'nullable|integer|exists:banks_db.loss_adjusters,id',
+            'insurer_id'           => 'nullable|integer|exists:banks_db.insurers,id',
+            'consultant_id'        => 'nullable|integer|exists:traro_db.users,id',
+            'bank_id'              => 'nullable|integer|exists:banks_db.banks,id',
+            'assigned_user'        => 'nullable|integer|exists:traro_db.users,id',
+            'created_by'           => 'nullable|integer|exists:traro_db.users,id',
 
             /* ─────── Datos generales del siniestro ─────── */
             'property_address'     => 'required|string|max:255',
