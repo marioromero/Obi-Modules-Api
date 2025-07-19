@@ -8,22 +8,27 @@ use Illuminate\Http\Request;
 use Modules\Customers\app\Http\Requests\StoreCustomerRequest;
 use Modules\Customers\Models\Customer;
 use App\Http\Controllers\Controller;
+use Modules\Customers\Models\CustomerDetail;
 
 class CustomerController extends BaseApiController
 {
  
     public function index()
     {
+        // 1) Trae todos los registros y todos sus atributos visibles
         $customers = Customer::all();
 
-        $resources = CustomerResource::collection($customers);
-
-        return $this->success($resources, 'Listado de clientes');
+        // 2) Devuelve la data sin pasarla por el Resource
+        return $this->success($customers, 'Listado de clientes');
     }
-
-    public function show(Customer $customer)
+    public function show(int $id)
     {
-        return $this->success($customer, 'Cliente obtenido correctamente');
+        $customer = CustomerDetail::findOrFail($id);    // ← lee la vista
+
+        return $this->success(
+            $customer,
+            'Cliente obtenido correctamente'
+        );
     }
 
     public function store(StoreCustomerRequest $request)   // ← Form Request
@@ -34,20 +39,12 @@ class CustomerController extends BaseApiController
         return $this->success($customer, 'Cliente creado correctamente', 201);
     }
 
-    public function update(Request $request, Customer $customer)
+    public function update(UpdateCustomerRequest $request, Customer $customer)
     {
-        $data = $request->validate(['name' => 'required|string']);
-        $customer->update($data);
+        // `validated()` trae sólo los campos realmente enviados
+        $customer->fill($request->validated())->save();
 
         return $this->success($customer, 'Cliente actualizado correctamente');
-    }
-
-   public function patch(UpdateCustomerRequest $request, Customer $customer)
-    {
-        $customer->update($request->validated());
-
-        return $this->success($customer,'Cliente actualizado correctamente'
-        );
     }
 
     public function destroy(Customer $customer)

@@ -24,7 +24,7 @@ class UpdateCustomerRequest extends FormRequest
             'gender'         => ['sometimes','in:M,F,O'],
             'marital_status' => ['sometimes','in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo'],
             'occupation'     => ['sometimes','string','max:100'],
-            'commune_id'     => ['sometimes','nullable','exists:geography_communes,id'],
+            'commune_id'     => ['sometimes','nullable','exists:geography_db.communes,id'],
         ];
     }
 
