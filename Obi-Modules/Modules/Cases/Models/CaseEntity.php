@@ -141,7 +141,31 @@ class CaseEntity extends Model
  * @throws \InvalidArgumentException
  * @throws \RuntimeException
  */
-public function transitionSubstate(string $newValue, ?string $comments = null): self
+
+/**
+ * Transiciona a un nuevo estado
+ *
+ * @param string $stateClass Clase del estado destino
+ * @param int|null $userId ID del usuario que realiza la acción
+ * @param string|null $comments Comentarios opcionales
+ * @return $this
+ */
+public function transitionTo(string $stateClass, ?int $userId = null, ?string $comments = null): self
+{
+    // Crear objeto con datos adicionales para el evento
+    $transitionProps = [
+        'user_id' => $userId,
+        'comments' => $comments
+    ];
+
+    // Pasar datos al evento mediante el segundo parámetro
+    $this->state->transitionTo($stateClass, ['transitionProps' => $transitionProps]);
+
+    return $this->refresh();
+}
+
+
+public function transitionSubstate(string $newValue, ?int $userId = 0, ?string $comments = null): self
 {
     // 1) Cargar config y fallback
     $cfg = config('Modules.Cases.CaseEntity_states');
@@ -179,7 +203,7 @@ public function transitionSubstate(string $newValue, ?string $comments = null): 
 
     // 3) Transacción atómica
     DB::transaction(function() use (
-        $key, $newValue, $info, $subStates, $comments,
+        $key, $newValue, $info, $subStates, $comments, $userId,
         $autoTrans, $overall, $namespace, $currentState
     ) {
         // a) Capturar sub-estado anterior
@@ -198,7 +222,7 @@ public function transitionSubstate(string $newValue, ?string $comments = null): 
             'from_sub'      => $oldValue,
             'to_sub'        => $newValue,
             'type'          => 'sub_state',
-            'user_id'       => auth()->id() ?? 0,
+            'user_id'       => $userId ?? 0,
             'payload'       => json_encode([$col => $newValue]),
             'comments'      => $comments,
         ]);
@@ -244,7 +268,7 @@ public function transitionSubstate(string $newValue, ?string $comments = null): 
  * @param string|null $comments Comentarios opcionales para el log
  * @return $this
  */
-public function transitionToWithComments(string $stateClass, ?string $comments = null): self
+public function transitionToWithComments(string $stateClass, ?string $comments = null, ?int $userId): self
 {
     // Realizar la transición normal
     $this->state->transitionTo($stateClass);
@@ -257,10 +281,9 @@ public function transitionToWithComments(string $stateClass, ?string $comments =
             ->first();
 
         if ($lastLog) {
-            $lastLog->update(['comments' => $comments]);
+            $lastLog->update(['comments' => $comments, 'user_id' => $userId]);
         }
     }
-
     return $this->refresh();
 }
      /**

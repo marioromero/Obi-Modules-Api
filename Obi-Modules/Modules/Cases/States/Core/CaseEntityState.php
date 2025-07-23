@@ -13,7 +13,7 @@ abstract class CaseEntityState extends State
     public static function config(): StateConfig
     {
         // 1) Intentar cargar config desde Laravel
-        $cfg = config('modules.Cases.CaseEntity_states');
+        $cfg = config('Modules.Cases.CaseEntity_states');
 
         // 2) Fallback a archivo si aún no está mergeado
         if (! is_array($cfg)) {

@@ -212,9 +212,9 @@ class LogCaseEntityStateTransition
             'from_sub'    => $fromSubLogged,
             'to_sub'      => $toSub,
             'type'        => 'state',
-            'user_id'     => auth()->id(),
+            'user_id'     => $event->transitionProps['user_id'] ?? null,
             'payload'     => json_encode($entity->getChanges()),
-            'comments'    => null,
+            'comments'    => $event->transitionProps['comments'] ?? null,
         ]);
     }
 }
