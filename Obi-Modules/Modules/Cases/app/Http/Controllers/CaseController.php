@@ -90,8 +90,11 @@ class CaseController extends BaseApiController
 
     public function recentByAgent(int $agentId)
     {
-        /* 1) Verificar que el agente exista */
-        $agent = User::find($agentId);
+        /* 1) Verificar que el agente exista en la BD de Traro  */
+        $agent = User::on('traro_db')           // ← usa la conexión traro_db
+                     ->where('role_id', 2)      //   ejecutivos / captadores
+                     ->find($agentId);
+
         if (! $agent) {
             return $this->error(
                 "No existe ningún ejecutivo/a con ID {$agentId}",
@@ -99,13 +102,13 @@ class CaseController extends BaseApiController
             );
         }
 
-        /* 2) Casos de los últimos 6 meses sacados de la vista */
+        /* 2) Casos de los últimos 6 meses (vista v_cases_details) */
         $sixMonthsAgo = Carbon::now()->subMonths(6);
 
         $cases = CaseDetail::where('agent_id', $agentId)
-            ->where('created_at', '>=', $sixMonthsAgo)
-            ->orderByDesc('created_at')
-            ->get();
+                           ->where('created_at', '>=', $sixMonthsAgo)
+                           ->orderByDesc('created_at')
+                           ->get();
 
         /* 3) Sin resultados */
         if ($cases->isEmpty()) {
@@ -115,7 +118,7 @@ class CaseController extends BaseApiController
             );
         }
 
-        /* 4) Lista con customer_name, customer_dni, customer_address incluidos */
+        /* 4) Respuesta con datos enriquecidos */
         return $this->success(
             $cases,
             "Casos de los últimos 6 meses para el ejecutivo/a '{$agent->name}'"
