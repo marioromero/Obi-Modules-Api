@@ -14,6 +14,7 @@ class CaseEntityResource extends JsonResource
             'id'               => $this->id,
             'code'             => $this->code,
             'state'            => $this->state,
+            'active_notifications' => $this->active_notifications,
 
             /* ────────── Cliente (IDs + nombres) ────────── */
             'customer_id'          => $this->customer_id,

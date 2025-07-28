@@ -34,6 +34,7 @@ return new class extends Migration
             cf.numero_notificaciones_documentos_enviados,
             cf.numero_notificaciones_documento_pendiente,
             cf.notificacion_documento_firmado,
+            cf.active_notifications,
 
             /* ───── Último cambio de estado ───── */
             csl.last_state_change_user_id,
