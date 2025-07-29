@@ -20,13 +20,6 @@ class Bank extends Model
         'is_visible',
     ];
 
-    // Relación de Bank con Insurer (un Bank tiene muchos Insurers)
-    //Cascade
-    public function insurers()
-    {
-        return $this->hasMany(Insurer::class, 'bank_id');
-    }
-
     // Un banco puede tener muchos casos
     public function cases()
     {

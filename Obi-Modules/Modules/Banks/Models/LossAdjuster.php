@@ -18,17 +18,7 @@ class LossAdjuster extends Model
     protected $fillable = [
         'name',
         'is_visible',
-        'insurer_id',
     ];
-
-    /** RELACIONES INTERNAS **/
-
-    // Relación de LossAdjuster con Insurer (un LossAdjuster pertenece a un Insurer)
-    //Cascade
-    public function insurer()
-    {
-        return $this->belongsTo(Insurer::class, 'insurer_id');
-    }
 
     // Una liquidadora puede tener muchos casos
     public function cases()
