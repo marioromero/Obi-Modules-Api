@@ -2,8 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::apiResource('configurations', ConfigurationController::class)
-     ->names('configurations');
+//Route::apiResource('configurations', ConfigurationController::class)
+  //   ->names('configurations');
 
 // REST para Type
 use Modules\Configurations\app\Http\Controllers\TypeController;

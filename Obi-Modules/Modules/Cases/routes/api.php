@@ -43,6 +43,7 @@ Route::delete('priorities/{priority}', [PriorityController::class, 'destroy']);
 
 // REST para Case
 use Modules\Cases\app\Http\Controllers\CaseController;
+use Modules\Cases\app\Http\Controllers\CaseSubstateController;
 Route::get('cases', [CaseController::class, 'index']);
 Route::get('cases/{case}', [CaseController::class, 'show']);
 Route::post('cases', [CaseController::class, 'store']);
@@ -51,8 +52,11 @@ Route::patch('cases/{case}', [CaseController::class, 'patch']);
 Route::delete('cases/{case}', [CaseController::class, 'destroy']);
 // Nuevo endpoint: casos recientes por agente
 Route::get('cases/agent/{idejecutivo}/recent',[CaseController::class, 'recentByAgent'])->whereNumber('agent');
+// Rutas para transicionar estados
 Route::get('cases/{case}/transitions', [CaseController::class, 'transitions']);
 Route::post('cases/{case}/transition',  [CaseController::class, 'transition']);
+// Rutas para transicionar Sub-Estados
+Route::post('cases/{case}/substate',[CaseSubstateController::class, 'update']);
 Route::get('customers/{customerId}/cases', [CaseController::class, 'byCustomer'])->name('cases.byCustomer');
 
 // REST para Agreement
