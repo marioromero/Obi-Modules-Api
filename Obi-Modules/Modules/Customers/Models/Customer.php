@@ -2,7 +2,7 @@
 
 namespace Modules\Customers\Models;
 use Modules\Core\app\Support\Traits\DeletionStrategies;
-
+use Modules\Customers\Models\Tag as TagModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,6 +33,10 @@ class Customer extends Model
         'user_id',
     ];
 
+    protected $casts = [
+        'tags'      => 'array',
+    ];
+
     // Relación de Customer con CustomerStatus (un Customer pertenece a un CustomerStatus)
     //No Action
     public function customerStatus()
@@ -60,6 +64,24 @@ class Customer extends Model
     public function customerDetails() // 8️⃣  CustomerDetail → Customer
     {
         return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_id');
+    }
+/**
+     * Boot: antes de crear, añade las etiquetas activas con enabled=false
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $customer) {
+            if (is_null($customer->tags)) {
+                $customer->tags = TagModel::where('is_active', true)
+                    ->get(['name', 'color'])     
+                    ->map(fn ($tag) => [
+                        'name'    => $tag->name,
+                        'color'   => $tag->color,
+                        'enabled' => false,
+                    ])
+                    ->toArray();
+            }
+        });
     }
 }
 

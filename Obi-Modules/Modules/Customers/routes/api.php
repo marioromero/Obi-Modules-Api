@@ -28,3 +28,14 @@ Route::put('customer-statuses/{customerStatus}', [CustomerStatusController::clas
 Route::patch('customer-statuses/{customerStatus}', [CustomerStatusController::class, 'patch']);
 Route::delete('customer-statuses/{customerStatus}', [CustomerStatusController::class, 'destroy']);
 
+
+// REST para Tag
+use Modules\Customers\app\Http\Controllers\TagController;
+Route::get('tags', [TagController::class, 'index']);
+Route::get('tags/{tag}', [TagController::class, 'show']);
+Route::post('tags', [TagController::class, 'store']);
+Route::put('tags/{tag}', [TagController::class, 'update']);
+Route::patch('tags/{tag}', [TagController::class, 'patch']);
+Route::delete('tags/{tag}', [TagController::class, 'destroy']);
+Route::get   ('customers/{customer}/tags',[TagController::class, 'customerTags']);
+Route::patch ('customers/{customer}/tags/name/{name}',[TagController::class, 'toggleByName']); 

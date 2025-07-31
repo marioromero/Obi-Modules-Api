@@ -26,7 +26,9 @@ return new class extends Migration
             $table->string('occupation', 100)->nullable();
             $table->unsignedBigInteger('case_status_id')->nullable(); // FK to cases_db.case_statuses
             $table->unsignedBigInteger('commune_id')->nullable(); // FK to geography_db.communes
-            $table->unsignedBigInteger('user_id')->nullable(); // FK to users_db.users
+            $table->unsignedBigInteger('user_id')->nullable(); // FK to users_db.users // Nuevas columnas
+            $table->json('tags')->nullable(); // Etiquetas de usuario
+            $table->longText('comments')->nullable(); // Comentarios de clientes
         });
     }
 

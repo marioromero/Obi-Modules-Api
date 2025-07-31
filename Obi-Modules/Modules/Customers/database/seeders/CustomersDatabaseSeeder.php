@@ -14,6 +14,7 @@ class CustomersDatabaseSeeder extends Seeder
         $this->call([
             CustomerStatusSeeder::class,
             CustomerSeeder::class,
+            TagSeeder::class,
         ]);
     }
 }
