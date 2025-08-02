@@ -22,6 +22,9 @@ class CustomerResource extends JsonResource
             'gender'        => $this->gender,
             'marital_status'=> $this->marital_status,
             'occupation'    => $this->occupation,
+            'nationality'    => $this->nationality,
+            'tags'          => $this->tags,
+            'comments'      => $this->comments,
 
             // ── FK (por si las necesitas) ──
             'commune_id'       => $this->commune_id,

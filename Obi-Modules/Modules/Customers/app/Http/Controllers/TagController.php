@@ -1,7 +1,7 @@
 <?php
 
 namespace Modules\Customers\app\Http\Controllers;
-use Modules\Core\App\Http\BaseApiController;
+use Modules\Core\app\Http\BaseApiController;
 use Modules\Customers\Models\Customer;
 use Modules\Customers\Models\Tag;
 
@@ -53,9 +53,14 @@ class TagController extends BaseApiController
     }
 
     // Estado de tags por cliente
-    public function customerTags(Customer $customer)
+    public function customerTags(int $customerId)       
     {
-        return $this->success($customer->tags ?? [], 'Listado de tags del cliente');
+        $customer = Customer::findOrFail($customerId);
+
+        return $this->success(
+            collect($customer->tags ?? [])->values(),
+            'Listado de tags del cliente'
+        );
     }
 
     public function toggleByName(Request $request, Customer $customer, string $name)
@@ -64,27 +69,35 @@ class TagController extends BaseApiController
             'enabled' => ['required', 'boolean'],
         ]);
 
-        $tags  = collect($customer->tags ?? []);
-        $index = $tags->search(fn ($t) => $t['name'] === $name);
+        // 1) Obtiene el JSON como colección
+        $tagsCol = collect($customer->tags ?? []);
+
+        // 2) Lo pasa a array para poder modificar directamente
+        $tags = $tagsCol->toArray();
+
+        // 3) Busca el índice por nombre
+        $index = array_search($name, array_column($tags, 'name'), true);
 
         if ($index === false) {
-            // Si el tag aún no está en el JSON, lo agrega obteniendo su color real
+            // Tag no existe en el JSON → lo agrega con su color real
             $color = Tag::where('name', $name)->value('color') ?? '#000000';
 
-            $tags->push([
+            $tags[] = [
                 'name'    => $name,
                 'color'   => $color,
                 'enabled' => $data['enabled'],
-            ]);
+            ];
         } else {
-            // Ya existe → solo cambia enabled
+            // Tag existe → actualiza enabled
             $tags[$index]['enabled'] = $data['enabled'];
         }
 
-        $customer->tags = $tags->values()->toArray();
+        // 4) Guarda el array (Eloquent lo serializa a JSON)
+        $customer->tags = array_values($tags);
         $customer->save();
 
         return $this->success($customer->tags, 'Tag actualizado correctamente');
     }
+
 
 }

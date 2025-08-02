@@ -32,6 +32,8 @@ class StoreCustomerRequest extends FormRequest
             'gender'         => 'nullable|in:M,F',
             'marital_status' => 'required|in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo',
             'occupation'     => 'required|string|max:255',
+            'nationality'    => 'required|in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña',
+            'comments'       => ['nullable', 'string'],
 
             // Relaciones
             'case_status_id' => ['nullable', 'integer', Rule::exists(CaseStatus::class, 'id')],
@@ -53,7 +55,9 @@ class StoreCustomerRequest extends FormRequest
             'phone.required'          => 'El teléfono es obligatorio.',
             'marital_status.required' => 'El estado civil es obligatorio.',
             'occupation.required'     => 'La ocupación es obligatoria.',
+            'nationality.required'    => 'La nacionalidad es obligatoria.',     
             'commune_id.required'     => 'Debe seleccionar una comuna.',
+            'comments.string' => 'Los comentarios deben ser texto.',
 
             // Formato y longitud
             'name.regex'              => 'El nombre solo puede contener letras y espacios.',

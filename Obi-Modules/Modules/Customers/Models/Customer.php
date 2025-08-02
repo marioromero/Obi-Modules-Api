@@ -28,13 +28,16 @@ class Customer extends Model
         'gender',
         'marital_status',
         'occupation',
+        'nationality',
         'case_status_id',
         'commune_id',
         'user_id',
+        'tags',
+        'comments',
     ];
 
     protected $casts = [
-        'tags'      => 'array',
+        'tags' => 'array',   // JSON ⇄ array automáticamente
     ];
 
     // Relación de Customer con CustomerStatus (un Customer pertenece a un CustomerStatus)

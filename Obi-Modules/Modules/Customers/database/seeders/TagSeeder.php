@@ -10,7 +10,7 @@ class TagSeeder extends Seeder
     public function run(): void
     {
         DB::table('tags')->insert([
-            ['name' => 'Problemático', 'color' => '#E53E3E', 'is_active' => true],
+            ['name' => 'Problematico', 'color' => '#E53E3E', 'is_active' => true],
             ['name' => 'Deudor',       'color' => '#DD6B20', 'is_active' => true],
             ['name' => 'Limitaciones', 'color' => '#38A169', 'is_active' => true],
         ]);

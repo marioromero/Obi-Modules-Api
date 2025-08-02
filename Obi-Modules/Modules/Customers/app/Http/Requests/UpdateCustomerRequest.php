@@ -24,7 +24,10 @@ class UpdateCustomerRequest extends FormRequest
             'gender'         => ['sometimes','in:M,F,O'],
             'marital_status' => ['sometimes','in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo'],
             'occupation'     => ['sometimes','string','max:100'],
+            'nationality'    => ['sometimes','in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña'],
             'commune_id'     => ['sometimes','nullable','exists:geography_db.communes,id'],
+            'comments'       => ['sometimes', 'nullable', 'string'],
+            'tags'           => ['sometimes', 'array'],
         ];
     }
 
@@ -41,6 +44,8 @@ class UpdateCustomerRequest extends FormRequest
             '*.in'             => 'El campo :attribute contiene un valor no permitido.',
             '*.nullable'       => 'El campo :attribute puede estar vacío.',
             '*.exists'         => 'El :attribute seleccionado no existe.',
+            'comments.string' => 'Los comentarios deben ser texto.',
+            'tags.array'      => 'El campo tags debe ser un arreglo JSON.',
         ];
     }
 }
