@@ -45,10 +45,10 @@ return [
 
     // Sub-estados por cada estado global
     'sub_states'       => array (
-  'Ingreso' => 
+  'Ingreso' =>
   array (
     'column' => 'signature_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'generado',
       1 => 'enviado a acepta',
@@ -60,10 +60,10 @@ return [
     'default' => 'generado',
     'final' => 'firmados',
   ),
-  'Denuncio' => 
+  'Denuncio' =>
   array (
     'column' => 'denounce_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'en proceso',
@@ -72,10 +72,10 @@ return [
     'default' => 'pendiente',
     'final' => 'realizado',
   ),
-  'Programacion' => 
+  'Programacion' =>
   array (
     'column' => 'scheduling_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'en proceso',
@@ -84,10 +84,10 @@ return [
     'default' => 'pendiente',
     'final' => 'realizado',
   ),
-  'Visita' => 
+  'Visita' =>
   array (
     'column' => 'visit_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'en proceso',
@@ -96,10 +96,10 @@ return [
     'default' => 'pendiente',
     'final' => 'realizado',
   ),
-  'Presupuesto' => 
+  'Presupuesto' =>
   array (
     'column' => 'budget_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'en proceso',
@@ -108,10 +108,10 @@ return [
     'default' => 'pendiente',
     'final' => 'realizado',
   ),
-  'Liquidacion' => 
+  'Liquidacion' =>
   array (
     'column' => 'decision_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'en espera',
       1 => 'aprobado',
@@ -121,12 +121,12 @@ return [
       5 => 'impugnado',
     ),
     'default' => 'en espera',
-    'final' => 'impugnado',
+    'final' => 'aprobado',
   ),
-  'Recaudacion' => 
+  'Recaudacion' =>
   array (
     'column' => 'payment_status',
-    'values' => 
+    'values' =>
     array (
       0 => 'pendiente',
       1 => 'cobranza',
@@ -159,24 +159,24 @@ return [
     // Configuración de overall_status y sus triggers
     'overall_status'   => array (
   'column' => 'overall_status',
-  'values' => 
+  'values' =>
   array (
     0 => 'en proceso',
     1 => 'con pendientes',
     2 => 'cerrado',
   ),
   'default' => 'en proceso',
-  'triggers' => 
+  'triggers' =>
   array (
-    'closed' => 
+    'closed' =>
     array (
-      'states' => 
+      'states' =>
       array (
         0 => 'Cancelado',
         1 => 'Desistido',
         2 => 'DesistidoSinVisita',
       ),
-      'sub_states' => 
+      'sub_states' =>
       array (
         0 => 'bajo deducible',
         1 => 'rechazado aseguradora',
@@ -184,9 +184,9 @@ return [
         3 => 'pagado',
       ),
     ),
-    'pending' => 
+    'pending' =>
     array (
-      'sub_states' => 
+      'sub_states' =>
       array (
         0 => 'pendiente',
       ),

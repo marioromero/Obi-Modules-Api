@@ -54,62 +54,75 @@ return [
     /*
     |--------------------------------------------------------------------------
     | Sub-estados por cada estado global (sub_states)
+
     |--------------------------------------------------------------------------
     */
     'sub_states' => [
         'Ingreso' => [
             'column' => 'signature_status',
             'values' => [
-                'generado',
-                'enviado a acepta',
-                'notificado',
-                'contrato pendiente',
-                'mandato pendiente',
-                'firmados',
+                'generado', //anaranjado
+                'enviado a acepta', // azul
+                'notificado', // azul
+                'contrato pendiente', // anaranjado
+                'mandato pendiente', // anaranjado
+                'firmados', //verde
             ],
             'default' => 'generado',
             'final' => 'firmados',
         ],
         'Denuncio' => [
             'column' => 'denounce_status',
-            'values' => ['pendiente', 'en proceso', 'realizado'],
+            'values' => ['pendiente', //anaranjado
+                'en proceso', // azul
+                'realizado'], // verde
             'default' => 'pendiente',
-            'final' => 'realizado',
+            'final' => 'realizado', // verde
         ],
         'Programacion' => [
             'column' => 'scheduling_status',
-            'values' => ['pendiente', 'en proceso', 'realizado'],
+            'values' => ['pendiente', // anaranjado
+                'en proceso', // azul
+                'realizado'], // verde
             'default' => 'pendiente',
-            'final' => 'realizado',
+            'final' => 'realizado', // verde
         ],
         'Visita' => [
             'column' => 'visit_status',
-            'values' => ['pendiente', 'en proceso', 'realizado'],
+            'values' => ['pendiente', // anaranjado
+                'en proceso', // azul
+                'realizado'], // verde
             'default' => 'pendiente',
-            'final' => 'realizado',
+            'final' => 'realizado', // verde
         ],
         'Presupuesto' => [
             'column' => 'budget_status',
-            'values' => ['pendiente', 'en proceso', 'realizado'],
+            'values' => ['pendiente', // anaranjado
+                'en proceso', //azul
+                'realizado'], // verde
             'default' => 'pendiente',
-            'final' => 'realizado',
+            'final' => 'realizado', // verde
         ],
         'Liquidacion' => [
             'column' => 'decision_status',
             'values' => [
-                'en espera',
-                'aprobado',
-                'bajo deducible',
-                'rechazado aseguradora',
-                'rechazado liquidadora',
-                'impugnado',
+                'en espera',  // anaranjado
+                'aprobado',  // verde
+                'bajo deducible', // rojo
+                'rechazado aseguradora', // rojo
+                'rechazado liquidadora', // rojo
+                'impugnado', // rojo
             ],
             'default' => 'en espera',
-            'final' => 'impugnado',
+            'final' => 'aprobado',
         ],
         'Recaudacion' => [
             'column' => 'payment_status',
-            'values' => ['pendiente', 'cobranza', 'parcialmente pagado', 'pagado', 'cobranza online'],
+            'values' => ['pendiente',  // anaranjado
+                'cobranza',  // azul
+                'parcialmente pagado', // anaranjado
+                'pagado',  // verde
+                'cobranza online'], // rojo
             'default' => 'pendiente',
             'final' => 'pagado',
         ],
