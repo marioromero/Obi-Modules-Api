@@ -32,7 +32,7 @@ class StoreCustomerRequest extends FormRequest
             'gender'         => 'nullable|in:M,F',
             'marital_status' => 'required|in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo',
             'occupation'     => 'required|string|max:255',
-            'nationality'    => 'required|in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña',
+            'nationality'    => 'nullable|in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña',
             'comments'       => ['nullable', 'string'],
 
             // Relaciones

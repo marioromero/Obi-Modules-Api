@@ -33,37 +33,37 @@ class UpdateCaseRequest extends FormRequest
             'created_by'           => 'sometimes|nullable|integer|exists:traro_db.users,id',
             'loss_adjuster_id'     => 'sometimes|nullable|integer|exists:banks_db.loss_adjusters,id',
             'insurer_id'           => 'sometimes|nullable|integer|exists:banks_db.insurers,id',
-            'sent_to_acepta'       => 'sometimes|boolean',
+            'sent_to_acepta'       => 'sometimes|nullable|boolean',
 
             /* ─────── Datos generales ─────── */
-            'property_address'     => 'sometimes|string|max:255',
-            'property_type'        => 'sometimes|string|in:Casa,Departamento,Otro',
-            'is_duplicated'        => 'sometimes|boolean',
+            'property_address'     => 'sometimes|nullable|string|max:255',
+            'property_type'        => 'sometimes|nullable|string|in:Casa,Departamento,Otro',
+            'is_duplicated'        => 'sometimes|nullable|boolean',
 
             /* ─────── Fechas ─────── */
-            'complaint_date'         => 'sometimes|date',
-            'date_of_loss'           => 'sometimes|date',
-            'inspection_date'        => 'sometimes|date',
-            'budget_sending_date'    => 'sometimes|date',
-            'contestation_date'      => 'sometimes|date',
-            'settlement_report_date' => 'sometimes|date',
-            'probable_payment_date'  => 'sometimes|date',
-            'collection_date'        => 'sometimes|date',
-            'online_collection_date' => 'sometimes|date',
+            'complaint_date'         => 'sometimes|nullable|date',
+            'date_of_loss'           => 'sometimes|nullable|date',
+            'inspection_date'        => 'sometimes|nullable|date',
+            'budget_sending_date'    => 'sometimes|nullable|date',
+            'contestation_date'      => 'sometimes|nullable|date',
+            'settlement_report_date' => 'sometimes|nullable|date',
+            'probable_payment_date'  => 'sometimes|nullable|date',
+            'collection_date'        => 'sometimes|nullable|date',
+            'online_collection_date' => 'sometimes|nullable|date',
 
             /* ─────── Identificadores externos ─────── */
-            'bank_service_number'  => 'sometimes|string|max:50',
-            'accident_number'      => 'sometimes|string|max:50',
+            'bank_service_number'  => 'sometimes|nullable|string|max:50',
+            'accident_number'      => 'sometimes|nullable|string|max:50',
 
             /* ─────── Montos ─────── */
-            'approved_amount'      => 'sometimes|numeric|min:0',
-            'uf_approved'          => 'sometimes|numeric|min:0',
-            'advisory_amount'      => 'sometimes|numeric|min:0',
-            'amount_paid'          => 'sometimes|numeric|min:0',
-            'amount_owed'          => 'sometimes|numeric|min:0',
+            'approved_amount'      => 'sometimes|nullable|numeric|min:0',
+            'uf_approved'          => 'sometimes|nullable|numeric|min:0',
+            'advisory_amount'      => 'sometimes|nullable|numeric|min:0',
+            'amount_paid'          => 'sometimes|nullable|numeric|min:0',
+            'amount_owed'          => 'sometimes|nullable|numeric|min:0',
 
             /* ─────── Estado de pago ─────── */
-            'payment_status'       => 'sometimes|string|max:50',
+            'payment_status'       => 'sometimes|nullable|string|max:50',
         ];
     }
 
@@ -109,7 +109,7 @@ class UpdateCaseRequest extends FormRequest
             'property_address' => 'dirección de la propiedad',
             'property_type'    => 'tipo de propiedad',
             'is_duplicated'    => 'duplicado',
-            'sent_to_acepta' => 'enviado a Acepta',
+            'sent_to_acepta'   => 'enviado a Acepta',
 
             // Fechas
             'complaint_date'         => 'fecha de denuncio',
