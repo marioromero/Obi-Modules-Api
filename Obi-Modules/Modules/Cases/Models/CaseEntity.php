@@ -13,7 +13,20 @@ use Modules\Core\app\Support\Traits\DeletionStrategies;
 class CaseEntity extends Model
 {
     protected $casts = [
-        'state' => CaseEntityState::class
+            'state' => CaseEntityState::class,
+            // fechas paso 6  (formato ISO string <-> Carbon)
+            'probable_payment_date'  => 'date:Y-m-d',
+            'collection_date'        => 'date:Y-m-d',
+            'online_collection_date' => 'date:Y-m-d',
+
+            // montos enteros
+            'amount_paid'  => 'integer',
+            'amount_owed'  => 'integer',
+
+            // montos existentes
+            'approved_amount' => 'integer',
+            'advisory_amount' => 'integer',
+            'uf_approved'     => 'float',
     ];
 
     use HasStates;
@@ -42,7 +55,7 @@ class CaseEntity extends Model
         'amount_owed', 'amount_paid', 'advisory_amount',
 
         // Flags genéricos
-        'is_duplicated', 'description', 'resolution',
+        'is_duplicated', 'description', 'resolution', 'payment_status',
 
         // Relaciones
         'customer_id', 'assigned_user', 'agent_id', 'created_by',

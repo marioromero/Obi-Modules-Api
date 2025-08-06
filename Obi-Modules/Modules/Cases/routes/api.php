@@ -44,8 +44,12 @@ Route::delete('priorities/{priority}', [PriorityController::class, 'destroy']);
 // REST para Case
 use Modules\Cases\app\Http\Controllers\CaseController;
 use Modules\Cases\app\Http\Controllers\CaseSubstateController;
+
+// Ruta para stats de metricas para casos
+Route::get('cases/stats', [CaseController::class, 'stats']);
+
 Route::get('cases', [CaseController::class, 'index']);
-Route::get('cases/{case}', [CaseController::class, 'show']);
+Route::get('cases/{case}', [CaseController::class, 'show'])->whereNumber('case');;
 Route::post('cases', [CaseController::class, 'store']);
 Route::put('cases/{case}', [CaseController::class, 'update']);
 Route::patch('cases/{case}', [CaseController::class, 'patch']);
