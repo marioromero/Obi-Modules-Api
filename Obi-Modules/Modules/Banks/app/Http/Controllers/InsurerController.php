@@ -12,8 +12,8 @@ class InsurerController extends BaseApiController
     
     public function index()
     {
-        $paginator = Insurer::paginate(15);
-        return $this->paginated($paginator, 'Listado de insurers');
+        $insurers = Insurer::all();
+        return $this->success($insurers, 'Listado de aseguradoras');
     }
 
     public function show(Insurer $insurer)

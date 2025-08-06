@@ -13,8 +13,8 @@ class LossAdjusterController extends BaseApiController
     
     public function index()
     {
-        $paginator = LossAdjuster::paginate(15);
-        return $this->paginated($paginator, 'Listado de loss-adjusters');
+        $lossAdjusters = LossAdjuster::all();
+        return $this->success($lossAdjusters, 'Listado de liquidadoras');
     }
 
     public function show(LossAdjuster $lossAdjuster)
