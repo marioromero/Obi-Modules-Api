@@ -3,8 +3,8 @@
 namespace Modules\Cases\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;                // conexión traro_db
 use Modules\Cases\Models\CaseEntity;
+use Modules\Users\Models\TraroUser; // conexión traro_db
 
 class CaseEntityStepLog extends Model
 {
@@ -37,7 +37,7 @@ class CaseEntityStepLog extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id')
+        return $this->belongsTo(TraroUser::class, 'user_id')
                     ->select('id', 'name');
     }
 }
