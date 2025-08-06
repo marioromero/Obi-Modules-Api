@@ -13,9 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Modules\Customers\Models\Customer;
 use Modules\Users\Models\User;
-
 use Illuminate\Http\Request;
-
 use App\Http\Controllers\Controller;
 
 
@@ -195,13 +193,60 @@ public function transitions(CaseEntity $case)
      * =============================================================== */
     public function transition(TransitionCaseRequest $req, CaseEntity $case)
     {
-        $updated = app(CaseTransitionService::class)->transition(
-            $case,
-            $req->input('next_state'),
-            $req->input('comments')
-        );
+        // Lee el user_id del body (o de un header si lo prefieres)
+        $userId = $req->input('user_id', null);
+
+        $updated = app(CaseTransitionService::class)
+            ->transition(
+                $case,
+                $req->input('next_state'),
+                $req->input('comments'),
+                $userId               // ◀ aquí pasas el user_id
+            );
 
         return $this->success($updated, 'Transición realizada satisfactoriamente');
     }
+
+
+    /**
+     * Endpoint: estadísticas globales de casos
+     */
+    public function stats(): \Illuminate\Http\JsonResponse
+    {
+        $now                = Carbon::now();
+        $startCurrentMonth  = $now->copy()->startOfMonth();
+        $startLastThirty    = $now->copy()->subDays(30);
+        $prevMonth          = $now->copy()->subMonth();
+        $startPreviousMonth = $prevMonth->copy()->startOfMonth();
+        $endPreviousMonth   = $prevMonth->copy()->endOfMonth();
+        $todayDay           = $now->day;
+
+        $metrics = [
+            'cases_created_current_month'              => CaseEntity::whereBetween('created_at', [$startCurrentMonth, $now])->count(),
+            'cases_created_last_thirty_days'           => CaseEntity::where('created_at', '>=', $startLastThirty)->count(),
+            'cases_created_previous_month'             => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $endPreviousMonth])->count(),
+            'cases_created_to_date_current_month'      => CaseEntity::whereBetween('created_at', [$startCurrentMonth, $now])->count(),
+            'cases_created_to_date_previous_month'     => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $prevMonth->copy()->day($todayDay)])->count(),
+            'closed_cases'                             => CaseEntity::where('overall_status', 'cerrado')->count(),
+            'cases_paid_in_collection'                 => CaseEntity::where('state', 'like', '%Recaudacion%')
+                                                                  ->where('payment_status', 'pagado')
+                                                                  ->count(),
+            'cases_in_closing_steps'                   => CaseEntity::where(function($q) {
+                                                                foreach (['Cancelado','Desistido','DesistidoSinVisita'] as $step) {
+                                                                    $q->orWhere('state','like', "%{$step}%");
+                                                                }
+                                                            })->count(),
+            'cases_pending_collection'                 => CaseEntity::where('state', 'like', '%Recaudacion%')
+                                                                  ->where('payment_status', '!=', 'pagado')
+                                                                  ->count(),
+        ];
+
+        return $this->success(
+            [$metrics],
+            'Estadisticas para métricas de casos'
+        );
+    }
+
+
 }
 

@@ -11,23 +11,25 @@ class CaseTransitionService
     /**
      * Valida y ejecuta transición usando transitionToWithComments().
      *
-     * @throws ValidationException si la transición es ilegal
-     *                             o faltan campos al avanzar.
+     * @param  CaseEntity  $case
+     * @param  string      $nextState  FQN de la clase de estado destino
+     * @param  string|null $comments
+     * @param  int|null    $userId     ID del usuario que dispara la transición
+     * @throws ValidationException      Si la transición es ilegal o faltan campos al avanzar
+     * @return CaseEntity               Modelo actualizado
      */
     public function transition(
         CaseEntity $case,
         string     $nextState,
-        ?string    $comments = null
-    ): CaseEntity
-    {
-        $current = class_basename($case->state);  // p.ej. "Ingreso"
+        ?string    $comments = null,
+        ?int       $userId   = null
+    ): CaseEntity {
+        $current = class_basename($case->state);  // e.g. "Ingreso"
 
-        /* 1️⃣  Verificar que el salto esté permitido (ida o vuelta) */
+        /* 1️⃣ Verificar que el salto esté permitido */
         $map = config('modules.Cases.CaseEntity_states.transitions', []);
-
-        // obtener array destino cuyo origen coincide por basename
         $allowed = collect($map)
-            ->first(fn ($tos, $fromFqn) =>
+            ->first(fn($tos, $fromFqn) =>
                 class_basename($fromFqn) === $current
             ) ?? [];
 
@@ -38,12 +40,12 @@ class CaseTransitionService
             ]);
         }
 
-        /* 2️⃣  Si es avance, chequear campos de TODOS los pasos previos */
-        $order      = config('modules.Cases.CaseEntity_states.states');   // lista ordenada
+        /* 2️⃣ Si es avance, chequear campos de pasos previos */
+        $order      = config('modules.Cases.CaseEntity_states.states', []);
         $idxCurrent = array_search($current, $order, true);
         $idxNext    = array_search(class_basename($nextState), $order, true);
 
-        if ($idxNext > $idxCurrent) {                // SOLO al avanzar
+        if ($idxNext > $idxCurrent) {
             $reqCfg  = config('modules.Cases.CaseEntity_required', []);
             $steps   = array_slice($order, 0, $idxCurrent + 1);
             $missing = [];
@@ -63,9 +65,13 @@ class CaseTransitionService
             }
         }
 
-        /* 3️⃣  Ejecutar helper existente y devolver modelo actualizado */
+        /* 3️⃣ Ejecutar helper y devolver modelo actualizado */
         return $case
-            ->transitionToWithComments($nextState, $comments)
+            ->transitionToWithComments(
+                $nextState,
+                $comments,
+                $userId    // ahora pasamos el ID de usuario
+            )
             ->refresh();
     }
 }
