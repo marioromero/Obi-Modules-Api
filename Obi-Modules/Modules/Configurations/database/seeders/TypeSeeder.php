@@ -16,6 +16,7 @@ class TypeSeeder extends Seeder
             ['name' => 'User_filters'],
             ['name' => 'Global_geography'],
             ['name' => 'Global_settings'],
+            ['name' => 'User_responsabilities'],
         ]);
     }
 }

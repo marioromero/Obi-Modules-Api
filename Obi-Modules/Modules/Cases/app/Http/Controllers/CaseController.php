@@ -154,39 +154,76 @@ class CaseController extends BaseApiController
             );
         }
 
-/** Devuelve arrays next / prev para habilitar botones */
-public function transitions(CaseEntity $case)
-{
-    /* ---------------- Configuración de la máquina ---------------- */
-    $order    = config('modules.Cases.CaseEntity_states.states');        // lista ordenada
-    $map      = config('modules.Cases.CaseEntity_states.transitions');   // matriz FQN → FQN[]
+    public function officeByUser(Request $request)
+    {
+        /* 1️⃣  Leer user_id (puede no venir) */
+        $userId = $request->query('user_id');          // string|null
+        $isNumeric = is_numeric($userId);
+        if (!$isNumeric) { $userId = null; }
 
-    /* ---------------- Estado actual ------------------------------ */
-    $currentFqn  = $case->state::class;
-    $currentBase = class_basename($currentFqn);
-    $idxCurrent  = array_search($currentBase, $order, true);
+        /* 2️⃣  Expresiones comunes */
+        $orderExpr = $userId
+            ? "(consultant_id = {$userId}) DESC, id ASC"
+            : "id ASC";                                // sin prioridad si no hay user
 
-    /* ---------------- Destinos permitidos ------------------------ */
-    $allowedFqn = $map[$currentFqn] ?? [];
-    $allowed    = array_map('class_basename', $allowedFqn);              // basenames
+        $twoMonthsAgo = Carbon::now()->subMonths(2);
 
-    /* ---------------- Clasificar en next / prev ------------------ */
-    $next = [];
-    $prev = [];
-    foreach ($allowed as $state) {
-        $idx = array_search($state, $order, true);
-        if ($idx === false) {
-            continue; // estado no listado en 'states'
-        }
-        if ($idx > $idxCurrent) {
-            $next[] = $state;          // va hacia adelante
-        } elseif ($idx < $idxCurrent) {
-            $prev[] = $state;          // va hacia atrás
-        }
+        /* 3️⃣  Casos pendientes de acción (Visita pendiente / en proceso) */
+        $pendingActionCases = CaseEntity::query()
+            ->where('visit_status', '!=', 'realizado')               // pendiente o en proceso
+            ->orderByRaw($orderExpr)
+            ->get();
+
+        /* 4️⃣  Casos visitados recientemente (Visita realizada ≤ 2 meses) */
+        $recentlyVisitedCases = CaseEntity::query()
+            ->where('visit_status', 'realizado')
+            ->whereDate('document_signing_date', '>=', $twoMonthsAgo)
+            ->orderByRaw($orderExpr)
+            ->get();
+
+        /* 5️⃣  Respuesta estándar */
+        return $this->success(
+            [
+                'pendingActionCases'   => $pendingActionCases,
+                'recentlyVisitedCases' => $recentlyVisitedCases,
+            ],
+            'Listado de casos (pendientes y visitados) para oficina'
+        );
     }
 
-    return $this->success(['next' => $next, 'prev' => $prev]);
-}
+    /** Devuelve arrays next / prev para habilitar botones */
+    public function transitions(CaseEntity $case)
+    {
+        /* ---------------- Configuración de la máquina ---------------- */
+        $order    = config('modules.Cases.CaseEntity_states.states');        // lista ordenada
+        $map      = config('modules.Cases.CaseEntity_states.transitions');   // matriz FQN → FQN[]
+
+        /* ---------------- Estado actual ------------------------------ */
+        $currentFqn  = $case->state::class;
+        $currentBase = class_basename($currentFqn);
+        $idxCurrent  = array_search($currentBase, $order, true);
+
+        /* ---------------- Destinos permitidos ------------------------ */
+        $allowedFqn = $map[$currentFqn] ?? [];
+        $allowed    = array_map('class_basename', $allowedFqn);              // basenames
+
+        /* ---------------- Clasificar en next / prev ------------------ */
+        $next = [];
+        $prev = [];
+        foreach ($allowed as $state) {
+            $idx = array_search($state, $order, true);
+            if ($idx === false) {
+                continue; // estado no listado en 'states'
+            }
+            if ($idx > $idxCurrent) {
+                $next[] = $state;          // va hacia adelante
+            } elseif ($idx < $idxCurrent) {
+                $prev[] = $state;          // va hacia atrás
+            }
+        }
+
+        return $this->success(['next' => $next, 'prev' => $prev]);
+    }
 
     /* =============================================================== *
      *              NUEVO  ▸  Ejecutar transición                      *

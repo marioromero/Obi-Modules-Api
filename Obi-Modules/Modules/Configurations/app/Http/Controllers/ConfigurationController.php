@@ -52,36 +52,59 @@ class ConfigurationController extends BaseApiController
         $configuration->delete();
         return $this->success(null, 'Configuration eliminado correctamente', 204);
     }
-/** Devuelve los gentilicios femeninos definidos en la config */
-    public function countries(Configuration $configuration)
+
+    /* ───────────────  Países  (type_id = 2)  ─────────────── */
+
+    /** Devuelve los países configurados */
+    public function countries()
     {
-        // ➊ Asegúrate de castear 'content' a array (ya sea vía cast o decode)
+        $configuration = Configuration::where('type_id', 2)->firstOrFail();   // Global_geography
         $ids = $configuration->content['countries'] ?? [];
 
-        // ➋ Trae solo esos países y solo las columnas necesarias
         $countries = Country::whereIn('id', $ids)
-            ->get(['id', 'demonym_female']);
+                            ->get(['id', 'demonym_female']);
 
         return $this->success($countries, 'Countries from configuration');
     }
-    public function updateCountries(
-            Request          $request,
-            Configuration    $configuration,
-            UpdateCountries  $service,
-        ) {
-            // ➊ Valida que llegue un array y que cada id exista en geography.countries
-            $data = $request->validate([
-                'countries'   => ['required', 'array'],
-                'countries.*' => [
-                    'integer',
-                    Rule::exists('geography_db.countries', 'id'),
-                ],
-            ]);
 
-            // ➋ Llama al Service para actualizar
-            $config = $service($configuration, $data['countries']);
+    /** Actualiza la lista de países */
+    public function updateCountries(Request $request, UpdateCountries $service)
+    {
+        $data = $request->validate([
+            'countries'   => ['required', 'array'],
+            'countries.*' => ['integer', Rule::exists('geography_db.countries', 'id')],
+        ]);
 
-            // ➌ Responde con wrapper success (200)
-            return $this->success($config, 'Countries list updated');
-        }
+        $configuration = Configuration::where('type_id', 2)->firstOrFail();
+        $config        = $service($configuration, $data['countries']);
+
+        return $this->success($config, 'Countries list updated');
+    }
+
+    /* ───────  Responsabilidades de usuario (type_id = 4)  ─────── */
+
+    public function getUserResponsibilities()
+    {
+        $configuration = Configuration::where('type_id', 4)->firstOrFail();
+        return $this->success(
+            $configuration->content,
+            'Responsabilidades de usuarios obtenidas correctamente'
+        );
+    }
+
+    public function updateUserResponsibilities(Request $request)
+    {
+        $configuration = Configuration::where('type_id', 4)->firstOrFail();
+
+        $configuration->content = array_merge(
+            $configuration->content ?? [],
+            $request->all()
+        );
+        $configuration->save();
+
+        return $this->success(
+            $configuration,
+            'Responsabilidades de usuarios actualizadas correctamente'
+        );
+    }
 }

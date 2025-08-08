@@ -62,6 +62,7 @@ Route::post('cases/{case}/transition',  [CaseController::class, 'transition']);
 // Rutas para transicionar Sub-Estados
 Route::post('cases/{case}/substate',[CaseSubstateController::class, 'update']);
 Route::get('customers/{customerId}/cases', [CaseController::class, 'byCustomer'])->name('cases.byCustomer');
+Route::get('cases/officebyuser', [CaseController::class, 'officeByUser']);
 
 // REST para Agreement
 use Modules\Cases\app\Http\Controllers\AgreementController;

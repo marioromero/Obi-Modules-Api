@@ -17,11 +17,14 @@ Route::delete('types/{type}', [TypeController::class, 'destroy']);
 // REST para Configuration
 use Modules\Configurations\app\Http\Controllers\ConfigurationController;
 Route::get('configurations', [ConfigurationController::class, 'index']);
-Route::get('configurations/{configuration}', [ConfigurationController::class, 'show']);
+Route::get('configurations/{configuration}', [ConfigurationController::class, 'show'])->whereNumber('configuration');
 Route::post('configurations', [ConfigurationController::class, 'store']);
-Route::put('configurations/{configuration}', [ConfigurationController::class, 'update']);
-Route::patch('configurations/{configuration}', [ConfigurationController::class, 'patch']);
-Route::delete('configurations/{configuration}', [ConfigurationController::class, 'destroy']);
+Route::put('configurations/{configuration}', [ConfigurationController::class, 'update'])->whereNumber('configuration');
+Route::patch('configurations/{configuration}', [ConfigurationController::class, 'patch'])->whereNumber('configuration');
+Route::delete('configurations/{configuration}', [ConfigurationController::class, 'destroy'])->whereNumber('configuration');
 //Rutas especiales para logica de negocio
-Route::get('configurations/{configuration}/countries', [ConfigurationController::class, 'countries'])->name('configurations.countries');
-Route::patch('configurations/{configuration}/countries', [ConfigurationController::class, 'updateCountries'])->name('configurations.updateCountries');
+Route::get   ('configurations/countries', [ConfigurationController::class, 'countries']);
+Route::patch ('configurations/countries', [ConfigurationController::class, 'updateCountries']);
+//Rutas para la configuracion de responsabilidades de usuarios
+Route::get   ('configurations/responsibilities',  [ConfigurationController::class, 'getUserResponsibilities']);
+Route::patch ('configurations/responsibilities',  [ConfigurationController::class, 'updateUserResponsibilities']);
