@@ -61,5 +61,73 @@ class ConfigurationSeeder extends Seeder
             ['type_id' => 4],
             ['content' => json_encode($userResponsibilities, JSON_UNESCAPED_UNICODE)]
         );
+
+        // 5) Columns_by_rol
+        $columnsByRolTypeId = DB::table('types')->where('name', 'Columns_by_rol')->value('id');
+
+        if ($columnsByRolTypeId) {
+            $columnsByRole = [
+                // 1 = Administrador
+                '1' => [
+                    'code','customer_name','customer_dni','state','accident_type_name',
+                    'created_at','commune_name','property_address','bank_name',
+                    'document_signing_date','approved_amount',
+                    'assigned_user_name','consultant_name','agent_name',
+                    'payment_status','amount_owed','amount_paid','advisory_amount',
+                    'probable_payment_date','overall_status','sent_to_acepta',
+                    'signature_status','created_by_name'
+                ],
+
+                // 2 = Ejecutivo
+                '2' => [
+                    'code','customer_name','customer_dni','state','accident_type_name',
+                    'created_at','commune_name','property_address','bank_name',
+                    'document_signing_date','approved_amount',
+                    'assigned_user_name','signature_status','denounce_status',
+                    'scheduling_status','visit_status','budget_status','decision_status',
+                    'payment_status','inspection_date','budget_sending_date',
+                    'settlement_report_date','contestation_date','probable_payment_date',
+                    'accident_number','bank_service_number'
+                ],
+
+                // 3 = Coordinador
+                '3' => [
+                    'code','customer_name','customer_dni','state','accident_type_name',
+                    'created_at','commune_name','property_address','bank_name',
+                    'document_signing_date','approved_amount',
+                    'assigned_user_name','agent_name','consultant_name',
+                    'scheduling_status','visit_status','inspection_date','property_type',
+                    'budget_status','budget_sending_date','settlement_report_date',
+                    'overall_status'
+                ],
+
+                // 4 = Administrativo
+                '4' => [
+                    'code','customer_name','customer_dni','state','accident_type_name',
+                    'created_at','commune_name','property_address','bank_name',
+                    'document_signing_date','approved_amount',
+                    'sent_to_acepta','signature_status','bank_service_number',
+                    'accident_number','complaint_date','collection_date',
+                    'online_collection_date','payment_status','amount_owed',
+                    'amount_paid','is_duplicated'
+                ],
+
+                // 5 = Asesor
+                '5' => [
+                    'code','customer_name','customer_dni','state','accident_type_name',
+                    'created_at','commune_name','property_address','bank_name',
+                    'document_signing_date','approved_amount',
+                    'inspection_date','visit_status','budget_status','decision_status',
+                    'settlement_report_date','date_of_loss','contestation_date',
+                    'insurer_name','loss_adjuster_name','property_type',
+                    'uf_approved','advisory_amount'
+                ],
+            ];
+
+            DB::table('configurations')->updateOrInsert(
+                ['type_id' => $columnsByRolTypeId],
+                ['content' => json_encode($columnsByRole, JSON_UNESCAPED_UNICODE)]
+            );
+        }
     }
 }

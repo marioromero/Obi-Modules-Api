@@ -20,6 +20,7 @@ class Configuration extends Model
         'content',
         'type_id',
     ];
+
     //No Action
     public function type()             //Type ↔ Configuration
     {

@@ -113,5 +113,58 @@ class CustomerController extends BaseApiController
         return $this->success($results, 'Clientes encontrados por DNI');
     }
 
+    public function getTagsByDniUser(Request $request)
+    {
+        /* 1) Validar */
+        $request->validate([
+            'dni' => 'required|string',
+        ]);
+
+        // Normalizar DNI (sin puntos ni espacios)
+        $dni = preg_replace('/[.\s]/', '', (string) $request->query('dni'));
+
+        /* 2) Traer solo lo necesario */
+        $customer = Customer::query()
+            ->select(['tags', 'comments'])
+            ->where('dni', $dni)
+            ->first();
+
+        if (! $customer) {
+            return $this->success(null, 'No existe', 204);
+        }
+
+        // Helper: si parece JSON ({ o [) decodifica; si no, deja el string
+        $maybeJson = function ($value) {
+            if (!is_string($value)) return $value;
+            $t = trim($value);
+            if ($t === '' || strtolower($t) === 'null') return null;
+            $first = $t[0] ?? '';
+            if ($first !== '{' && $first !== '[') {
+                return $value; // texto plano
+            }
+            $decoded = json_decode($t, true);
+            return (json_last_error() === JSON_ERROR_NONE) ? $decoded : $value;
+        };
+
+        $tags     = $maybeJson($customer->tags);      // si tags es JSON, array; si es texto, string
+        $comments = $maybeJson($customer->comments);  // LONGTEXT: te lo devuelve como string
+
+        return $this->success(
+            ['tags' => $tags, 'comments' => $comments],
+            'Tags y comentarios obtenidos'
+        );
+    }
+
+    public function findByDni(string $dni)
+        {
+            // Normaliza: quita puntos y espacios para comparar con lo almacenado
+            $dni = str_replace(['.', ' '], '', trim($dni));
+
+            $customer = Customer::where('dni', $dni)->first();
+
+            return $customer
+                ? $this->success($customer, 'Cliente encontrado')
+                : $this->success(null, 'No existe', 204);
+        }
 }
 

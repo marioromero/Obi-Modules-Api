@@ -17,6 +17,7 @@ class TypeSeeder extends Seeder
             ['name' => 'Global_geography'],
             ['name' => 'Global_settings'],
             ['name' => 'User_responsabilities'],
+            ['name' => 'Columns_by_rol'],
         ]);
     }
 }

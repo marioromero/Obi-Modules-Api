@@ -10,11 +10,14 @@ use Modules\Cases\Models\CaseDetail;
 use Modules\Core\app\Http\BaseApiController;
 use Modules\Cases\Models\CaseEntity;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
+use Modules\Configurations\Models\Configuration;
+use Illuminate\Support\Facades\DB;
+use Modules\Users\Models\TraroUser;
 use Illuminate\Support\Facades\Log;
 use Modules\Customers\Models\Customer;
 use Modules\Users\Models\User;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 
 
 class CaseController extends BaseApiController
@@ -154,42 +157,198 @@ class CaseController extends BaseApiController
             );
         }
 
-    public function officeByUser(Request $request)
-    {
-        /* 1️⃣  Leer user_id (puede no venir) */
-        $userId = $request->query('user_id');          // string|null
-        $isNumeric = is_numeric($userId);
-        if (!$isNumeric) { $userId = null; }
-
-        /* 2️⃣  Expresiones comunes */
-        $orderExpr = $userId
-            ? "(consultant_id = {$userId}) DESC, id ASC"
-            : "id ASC";                                // sin prioridad si no hay user
-
-        $twoMonthsAgo = Carbon::now()->subMonths(2);
-
-        /* 3️⃣  Casos pendientes de acción (Visita pendiente / en proceso) */
-        $pendingActionCases = CaseEntity::query()
-            ->where('visit_status', '!=', 'realizado')               // pendiente o en proceso
-            ->orderByRaw($orderExpr)
-            ->get();
-
-        /* 4️⃣  Casos visitados recientemente (Visita realizada ≤ 2 meses) */
-        $recentlyVisitedCases = CaseEntity::query()
-            ->where('visit_status', 'realizado')
-            ->whereDate('document_signing_date', '>=', $twoMonthsAgo)
-            ->orderByRaw($orderExpr)
-            ->get();
-
-        /* 5️⃣  Respuesta estándar */
-        return $this->success(
-            [
-                'pendingActionCases'   => $pendingActionCases,
-                'recentlyVisitedCases' => $recentlyVisitedCases,
-            ],
-            'Listado de casos (pendientes y visitados) para oficina'
-        );
+       public function officeByUser(Request $request)
+{
+    /* 1) Validación: user_id requerido y usuario existente */
+    $data = $request->validate([
+        'user_id' => ['required','integer','min:1'],
+    ]);
+    $user = TraroUser::find($data['user_id']);
+    if (! $user) {
+        throw ValidationException::withMessages(['user_id' => 'usuario no encontrado']);
     }
+    $userId  = (int) $user->id;
+    $roleId  = (int) $user->role_id;
+
+    /* 2) Pasos visibles según rol */
+    $stepsByRole = [
+        5 => ['Visita','Presupuesto','Liquidación'], // Asesor
+        3 => ['Programación'],                       // Coordinador
+        4 => ['Denuncio','Recaudación'],            // Administrativo
+        // 2 (Ejecutivo) y 1 (Administrador): sin pasos por ahora
+    ];
+    $visibleSteps = $stepsByRole[$roleId] ?? [];
+
+    /* 3) Ventana de "resueltos" (2 meses) y base */
+    $twoMonthsAgo = Carbon::now()->subMonthsNoOverflow(2)->toDateString();
+    $base = DB::connection('cases_db')->table('v_cases_details');
+
+    /* 4) Cargar Columns_by_rol para proyección por paso */
+    $configConn = (new Configuration)->getConnectionName() ?: config('database.default');
+    $typeId = DB::connection($configConn)->table('types')->where('name','Columns_by_rol')->value('id');
+    if (! $typeId) {
+        throw ValidationException::withMessages(['config' => "No existe el type 'Columns_by_rol'."]);
+    }
+    $cfg   = Configuration::where('type_id',$typeId)->firstOrFail();
+    $cont  = $cfg->content ?? [];
+
+    $colsRole4 = (isset($cont['4']) && is_array($cont['4'])) ? $cont['4'] : []; // Administrativo
+    $colsRole5 = (isset($cont['5']) && is_array($cont['5'])) ? $cont['5'] : []; // Asesor
+
+    // Rol base de columnas por paso
+    $roleColsByStep = [
+        'Denuncio'     => $colsRole4,
+        'Programación' => $colsRole4,
+        'Visita'       => $colsRole5,
+        'Presupuesto'  => $colsRole5,
+        'Liquidación'  => $colsRole5,
+        'Recaudación'  => $colsRole4,
+    ];
+
+    // Columnas obligatorias por paso (pendientes / resueltos)
+    $forcePending = [
+        'Denuncio'     => ['denounce_status'],
+        'Programación' => ['scheduling_status'],
+        'Visita'       => ['visit_status'],
+        'Presupuesto'  => ['budget_status'],
+        'Liquidación'  => [],
+        'Recaudación'  => ['payment_status'],
+    ];
+    $forceResolved = [
+        'Denuncio'     => ['denounce_status','complaint_date'],
+        'Programación' => ['scheduling_status','inspection_date'],
+        // 👇 Cambio aquí: usar document_signing_date en Visita (no inspection_date)
+        'Visita'       => ['visit_status','document_signing_date'],
+        'Presupuesto'  => ['budget_status','budget_sending_date'],
+        'Liquidación'  => ['settlement_report_date'],
+        'Recaudación'  => ['payment_status','collection_date','online_collection_date'],
+    ];
+
+    // Helper: proyecta id + (cols rol ∪ forzadas)
+    $project = function ($rows, array $roleCols, array $forcedCols) {
+        $cols = array_values(array_unique(array_merge($roleCols, $forcedCols)));
+        return collect($rows)->map(function ($row) use ($cols) {
+            $rec = ['id' => $row->id];
+            foreach ($cols as $c) {
+                $rec[$c] = property_exists($row, $c) ? $row->{$c} : null;
+            }
+            return $rec;
+        })->values();
+    };
+
+    $offices = [];
+
+    /* --------- Denuncio --------- */
+    if (in_array('Denuncio', $visibleSteps, true)) {
+        $cols = $roleColsByStep['Denuncio'];
+        $pending = (clone $base)
+            ->whereIn('denounce_status', ['pendiente','en proceso'])
+            ->orderBy('id','asc')->get();
+        $resolved = (clone $base)
+            ->where('denounce_status','realizado')
+            ->whereDate('complaint_date','>=',$twoMonthsAgo)
+            ->orderBy('id','asc')->get();
+        $offices['Denuncio'] = [
+            'pendingActionCases'    => $project($pending, $cols, $forcePending['Denuncio']),
+            'recentlyResolvedCases' => $project($resolved, $cols, $forceResolved['Denuncio']),
+        ];
+    }
+
+    /* --------- Programación --------- */
+    if (in_array('Programación', $visibleSteps, true)) {
+        $cols = $roleColsByStep['Programación'];
+        $pending = (clone $base)
+            ->whereIn('scheduling_status', ['pendiente','en proceso'])
+            ->orderBy('id','asc')->get();
+        $resolved = (clone $base)
+            ->where('scheduling_status','realizado')
+            ->whereDate('inspection_date','>=',$twoMonthsAgo)
+            ->orderBy('id','asc')->get();
+        $offices['Programación'] = [
+            'pendingActionCases'    => $project($pending, $cols, $forcePending['Programación']),
+            'recentlyResolvedCases' => $project($resolved, $cols, $forceResolved['Programación']),
+        ];
+    }
+
+    /* --------- Visita (cambio: usa document_signing_date en resueltos) --------- */
+    if (in_array('Visita', $visibleSteps, true)) {
+        $cols = $roleColsByStep['Visita'];
+
+        $qPend = (clone $base)->whereIn('visit_status', ['pendiente','en proceso']);
+        $qRes  = (clone $base)->where('visit_status','realizado')
+                              ->whereDate('document_signing_date','>=',$twoMonthsAgo); // ← cambio
+
+        if ($userId) {
+            $qPend->orderByRaw('(consultant_id = ?) DESC, id ASC', [$userId]);
+            $qRes ->orderByRaw('(consultant_id = ?) DESC, id ASC', [$userId]);
+        } else {
+            $qPend->orderBy('id','asc');
+            $qRes ->orderBy('id','asc');
+        }
+
+        $offices['Visita'] = [
+            'pendingActionCases'    => $project($qPend->get(), $cols, $forcePending['Visita']),
+            'recentlyResolvedCases' => $project($qRes->get(),  $cols, $forceResolved['Visita']),
+        ];
+    }
+
+    /* --------- Presupuesto --------- */
+    if (in_array('Presupuesto', $visibleSteps, true)) {
+        $cols = $roleColsByStep['Presupuesto'];
+        $pending = (clone $base)
+            ->whereIn('budget_status', ['pendiente','en proceso'])
+            ->orderBy('id','asc')->get();
+        $resolved = (clone $base)
+            ->where('budget_status','realizado')
+            ->whereDate('budget_sending_date','>=',$twoMonthsAgo)
+            ->orderBy('id','asc')->get();
+        $offices['Presupuesto'] = [
+            'pendingActionCases'    => $project($pending, $cols, $forcePending['Presupuesto']),
+            'recentlyResolvedCases' => $project($resolved, $cols, $forceResolved['Presupuesto']),
+        ];
+    }
+
+    /* --------- Liquidación --------- */
+    if (in_array('Liquidación', $visibleSteps, true)) {
+        $cols = $roleColsByStep['Liquidación'];
+        $pending = (clone $base)
+            ->whereNull('settlement_report_date')
+            ->orderBy('id','asc')->get();
+        $resolved = (clone $base)
+            ->whereNotNull('settlement_report_date')
+            ->whereDate('settlement_report_date','>=',$twoMonthsAgo)
+            ->orderBy('id','asc')->get();
+        $offices['Liquidación'] = [
+            'pendingActionCases'    => $project($pending, $cols, $forcePending['Liquidación']),
+            'recentlyResolvedCases' => $project($resolved, $cols, $forceResolved['Liquidación']),
+        ];
+    }
+
+    /* --------- Recaudación --------- */
+    if (in_array('Recaudación', $visibleSteps, true)) {
+        $cols = $roleColsByStep['Recaudación'];
+        $pending = (clone $base)
+            ->whereIn('payment_status', ['pendiente','cobranza','parcialmente pagado'])
+            ->orderBy('id','asc')->get();
+        $resolved = (clone $base)
+            ->where(function ($q) use ($twoMonthsAgo) {
+                $q->where(function ($qq) use ($twoMonthsAgo) {
+                    $qq->where('payment_status','pagado')
+                       ->whereDate('collection_date','>=',$twoMonthsAgo);
+                })->orWhere(function ($qq) use ($twoMonthsAgo) {
+                    $qq->where('payment_status','cobranza online')
+                       ->whereDate('online_collection_date','>=',$twoMonthsAgo);
+                });
+            })
+            ->orderBy('id','asc')->get();
+        $offices['Recaudación'] = [
+            'pendingActionCases'    => $project($pending, $cols, $forcePending['Recaudación']),
+            'recentlyResolvedCases' => $project($resolved, $cols, $forceResolved['Recaudación']),
+        ];
+    }
+
+    return $this->success(['offices' => $offices], 'Oficina: casos por paso (pendientes y resueltos)');
+}
 
     /** Devuelve arrays next / prev para habilitar botones */
     public function transitions(CaseEntity $case)

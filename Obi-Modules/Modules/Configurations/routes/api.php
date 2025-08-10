@@ -28,3 +28,4 @@ Route::patch ('configurations/countries', [ConfigurationController::class, 'upda
 //Rutas para la configuracion de responsabilidades de usuarios
 Route::get   ('configurations/responsibilities',  [ConfigurationController::class, 'getUserResponsibilities']);
 Route::patch ('configurations/responsibilities',  [ConfigurationController::class, 'updateUserResponsibilities']);
+Route::get('configurations/columns-cases-by-role', [ConfigurationController::class, 'getColumnsAndCasesByRole']);
