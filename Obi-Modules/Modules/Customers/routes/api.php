@@ -22,6 +22,7 @@ Route::get('customers/search/dni', [CustomerController::class, 'customersByDni']
 Route::get('customers/get-tags-by-dni-user', [CustomerController::class, 'getTagsByDniUser']);
 // Filtrar usuarios por dni
 Route::get('customers/by-dni/{dni}', [CustomerController::class,'findByDni']);
+Route::get('customers/verify-existing-customer', [CustomerController::class, 'verifyExistingCustomer'])->name('customers.verify-existing-customer');
 
 // REST para CustomerStatus
 use Modules\Customers\app\Http\Controllers\CustomerStatusController;

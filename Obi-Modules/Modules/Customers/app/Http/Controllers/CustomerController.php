@@ -166,5 +166,25 @@ class CustomerController extends BaseApiController
                 ? $this->success($customer, 'Cliente encontrado')
                 : $this->success(null, 'No existe', 204);
         }
+
+    public function verifyExistingCustomer(Request $request)
+    {
+        $raw = (string) ($request->query('dni') ?? $request->input('dni') ?? '');
+        $dni = str_replace(['.', ' '], '', trim($raw));
+        if ($dni !== '' && str_contains($dni, '-')) {
+            [$num, $dv] = explode('-', $dni, 2);
+            $dni = preg_replace('/\D/', '', $num) . '-' . strtoupper($dv);
+        }
+
+        $customer = $dni === '' ? null : Customer::query()->where('dni', $dni)->first();
+
+        if ($customer) {
+            $fullName = trim(($customer->name ?? '') . ' ' . ($customer->lastname ?? ''));
+            return $this->success(1, "El RUT del cliente ya se encuentra registrado a nombre de: {$fullName}.", 200);
+        }
+
+        return $this->success(0, '', 200);
+    }
+
 }
 
