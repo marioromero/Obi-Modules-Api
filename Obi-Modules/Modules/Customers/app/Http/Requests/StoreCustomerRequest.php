@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Modules\Core\app\Rules\ValidatedRut;
 use Modules\Geography\Models\Commune;
-use Modules\Cases\Models\CaseStatus;
+use Modules\Users\Models\User;
 
 class StoreCustomerRequest extends FormRequest
 {
@@ -15,14 +15,20 @@ class StoreCustomerRequest extends FormRequest
         return true;
     }
 
-/* ──────── REGLAS ──────── */
+    /* ──────── REGLAS ──────── */
     public function rules(): array
     {
         return [
             // Datos personales
             'name'           => 'required|string|max:254|regex:/^[\pL\s\-’]+$/u',
             'lastname'       => 'required|string|max:254|regex:/^[\pL\s\-’]+$/u',
-            'dni'            => ['required', 'string', 'regex:/^\d{7,8}-[0-9kK]{1}$/', new ValidatedRut],
+            'dni'            => [
+                'required',
+                'string',
+                'regex:/^\d{7,8}-[0-9kK]{1}$/',
+                new ValidatedRut,
+                Rule::unique('customers_db.customers', 'dni'),  // ← único
+            ],
             'username'       => 'nullable|string|max:50',
             'password'       => 'nullable|string|max:255',
             'email'          => 'required|email|max:255',
@@ -36,9 +42,8 @@ class StoreCustomerRequest extends FormRequest
             'comments'       => ['nullable', 'string'],
 
             // Relaciones
-            'case_status_id' => ['nullable', 'integer', Rule::exists(CaseStatus::class, 'id')],
-            'commune_id'     => ['nullable', 'integer', Rule::exists(Commune::class,    'id')],
-            'user_id'        => 'nullable|integer',
+            'commune_id'     => ['nullable', 'integer', Rule::exists(Commune::class, 'id')],
+            'assigned_agent' => ['nullable', 'integer', Rule::exists(User::class, 'id')], // antes user_id
         ];
     }
 
@@ -55,9 +60,6 @@ class StoreCustomerRequest extends FormRequest
             'phone.required'          => 'El teléfono es obligatorio.',
             'marital_status.required' => 'El estado civil es obligatorio.',
             'occupation.required'     => 'La ocupación es obligatoria.',
-            'nationality.required'    => 'La nacionalidad es obligatoria.',     
-            'commune_id.required'     => 'Debe seleccionar una comuna.',
-            'comments.string' => 'Los comentarios deben ser texto.',
 
             // Formato y longitud
             'name.regex'              => 'El nombre solo puede contener letras y espacios.',
@@ -67,14 +69,17 @@ class StoreCustomerRequest extends FormRequest
             'phone2.regex'            => 'El teléfono 2 debe tener de 9 a 11 dígitos.',
             'email.email'             => 'El correo no tiene un formato válido.',
 
-            // Regla personalizada
+            // Reglas personalizadas
+            'dni.unique'              => 'El RUT ya está registrado.',
             'dni.validated_rut'       => 'El RUT no es válido.',
 
             // In list / Exists
             'gender.in'               => 'El género seleccionado no es válido.',
             'marital_status.in'       => 'El estado civil seleccionado no es válido.',
+            'nationality.in'          => 'La nacionalidad seleccionada no es válida.',
             'commune_id.exists'       => 'La comuna seleccionada no existe.',
-            'case_status_id.exists'   => 'El estado del caso seleccionado no existe.',
+            'assigned_agent.exists'   => 'El usuario asignado no existe.',
+            'comments.string'         => 'Los comentarios deben ser texto.',
         ];
     }
 }

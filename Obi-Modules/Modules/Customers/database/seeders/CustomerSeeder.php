@@ -25,9 +25,8 @@ class CustomerSeeder extends Seeder
             'gender' => 'M',
             'marital_status' => 'Single',
             'occupation' => 'Developer',
-            'case_status_id' => null,
             'commune_id' => null,
-            'user_id' => null,
+            'assigned_agent' => 1,
         ]);
     }
 }

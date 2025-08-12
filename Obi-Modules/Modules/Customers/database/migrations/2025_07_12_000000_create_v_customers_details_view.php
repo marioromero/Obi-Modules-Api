@@ -23,8 +23,7 @@ return new class extends Migration
 
             /* ── nombres legibles ─────────────────── */
             cm.name  AS commune_name,
-            u.name   AS user_name,
-            cs.name  AS case_status_name
+            u.name   AS user_name                       -- nombre del agente asignado
 
         FROM {$customersDb}.customers               c
 
@@ -32,18 +31,16 @@ return new class extends Migration
         LEFT JOIN {$geographyDb}.communes cm
                ON cm.id = c.commune_id
 
-        /* usuario creador / responsable (traro_db) */
+        /* agente asignado (traro_db) */
         LEFT JOIN {$traroDb}.users u
-               ON u.id = c.user_id
-
-        /* status de cliente (en la misma BD cases_db, si aplica) */
-        LEFT JOIN grupoint_obi_cases_qa.case_statuses cs
-               ON cs.id = c.case_status_id;
+               ON u.id = c.assigned_agent;
         SQL);
     }
 
     public function down(): void
     {
+        // Si prefieres, puedes usar un DROP VIEW explícito:
+        // DB::connection($this->connection)->statement('DROP VIEW IF EXISTS v_customers_details');
         Schema::connection($this->connection)->dropIfExists('v_customers_details');
     }
 };

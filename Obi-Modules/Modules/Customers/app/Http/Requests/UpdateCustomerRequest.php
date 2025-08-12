@@ -1,8 +1,9 @@
 <?php
 
-namespace Modules\Customers\App\Http\Requests;
+namespace Modules\Customers\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateCustomerRequest extends FormRequest
 {
@@ -16,7 +17,14 @@ class UpdateCustomerRequest extends FormRequest
         return [
             'name'           => ['sometimes','string','max:100'],
             'lastname'       => ['sometimes','string','max:100'],
-            'dni'            => ['sometimes','string','max:15'],
+
+            // DNI único, ignorando el registro actual (id auto-detectado)
+            'dni'            => [
+                'sometimes','string','max:15',
+                Rule::unique('customers_db.customers', 'dni')
+                    ->ignore($this->currentCustomerId()),
+            ],
+
             'email'          => ['sometimes','email'],
             'address'        => ['sometimes','string','max:255'],
             'phone'          => ['sometimes','string','max:20'],
@@ -26,24 +34,33 @@ class UpdateCustomerRequest extends FormRequest
             'occupation'     => ['sometimes','string','max:100'],
             'nationality'    => ['sometimes','in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña'],
             'commune_id'     => ['sometimes','nullable','exists:geography_db.communes,id'],
-            'comments'       => ['sometimes', 'nullable', 'string'],
-            'tags'           => ['sometimes', 'array'],
+            'assigned_agent' => ['sometimes','nullable','exists:users_db.users,id'],
+            'comments'       => ['sometimes','nullable','string'],
+            'tags'           => ['sometimes','array'],
         ];
     }
 
-    /**
-     * Mensajes de error en español para validación.
-     */
+    private function currentCustomerId(): ?int
+    {
+        $v = $this->route('customer')    // puede ser modelo o id
+          ?? $this->route('id')
+          ?? $this->input('id')
+          ?? $this->input('customer_id');
+
+        return is_object($v) ? ($v->id ?? null) : $v;
+    }
+
     public function messages(): array
     {
         return [
-            '*.required'       => 'El campo :attribute es obligatorio.',
-            '*.string'         => 'El campo :attribute debe ser texto.',
-            '*.max'            => 'El campo :attribute no puede superar :max caracteres.',
-            '*.email'          => 'El campo :attribute debe ser un correo válido.',
-            '*.in'             => 'El campo :attribute contiene un valor no permitido.',
-            '*.nullable'       => 'El campo :attribute puede estar vacío.',
-            '*.exists'         => 'El :attribute seleccionado no existe.',
+            '*.required'      => 'El campo :attribute es obligatorio.',
+            '*.string'        => 'El campo :attribute debe ser texto.',
+            '*.max'           => 'El campo :attribute no puede superar :max caracteres.',
+            '*.email'         => 'El campo :attribute debe ser un correo válido.',
+            '*.in'            => 'El campo :attribute contiene un valor no permitido.',
+            '*.nullable'      => 'El campo :attribute puede estar vacío.',
+            '*.exists'        => 'El :attribute seleccionado no existe.',
+            'dni.unique'      => 'El RUT ya está registrado por otro cliente.',
             'comments.string' => 'Los comentarios deben ser texto.',
             'tags.array'      => 'El campo tags debe ser un arreglo JSON.',
         ];
