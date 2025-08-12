@@ -116,7 +116,7 @@ class ConfigurationSeeder extends Seeder
                 '5' => [
                     'code','customer_name','customer_dni','state','accident_type_name',
                     'created_at','commune_name','property_address','bank_name',
-                    'document_signing_date','approved_amount',
+                    'document_signing_date','consultant_id', 'consultant_name', 'approved_amount',
                     'inspection_date','visit_status','budget_status','decision_status',
                     'settlement_report_date','date_of_loss','contestation_date',
                     'insurer_name','loss_adjuster_name','property_type',
