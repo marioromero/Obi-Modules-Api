@@ -186,5 +186,55 @@ class CustomerController extends BaseApiController
         return $this->success(0, '', 200);
     }
 
+    public function showCustomerByDni(Request $request)
+    {
+        $request->validate([
+            'dni' => 'required|string|min:2|max:20',
+        ]);
+
+        // Normalizar: sin puntos/espacios, DV en minúscula y con guion
+        $normalize = function (string $rut): ?string {
+            $rut = str_replace(['.', ' '], '', trim($rut));
+
+            if ($rut === '') {
+                return null;
+            }
+
+            if (str_contains($rut, '-')) {
+                [$num, $dv] = explode('-', $rut, 2);
+            } else {
+                // si viene sin guion, último char es el DV
+                $num = substr($rut, 0, -1);
+                $dv  = substr($rut, -1);
+            }
+
+            $num = preg_replace('/\D+/', '', $num ?? '');
+            $dv  = strtolower($dv ?? '');
+
+            if ($num === '' || $dv === '') {
+                return null;
+            }
+
+            return $num . '-' . $dv;
+        };
+
+        $normalized = $normalize($request->query('dni'));
+        if (!$normalized) {
+            return $this->success(null, 'DNI inválido', 422); // conserva tu helper/contrato
+        }
+
+        // Búsqueda EXACTA por DNI normalizado
+        $customer = Customer::query()
+            ->where('dni', $normalized)
+            ->first();
+
+        if (!$customer) {
+            return $this->success(null, 'No existe', 204);
+        }
+
+        // Devuelve el objeto completo (según atributos visibles del modelo)
+        return $this->success($customer, 'Cliente encontrado', 200);
+    }
+
 }
 

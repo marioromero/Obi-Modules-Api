@@ -21,8 +21,11 @@ Route::get('customers/search/dni', [CustomerController::class, 'customersByDni']
 // Endpoint para devolver tags y comentarios de cliente segun dni
 Route::get('customers/get-tags-by-dni-user', [CustomerController::class, 'getTagsByDniUser']);
 // Filtrar usuarios por dni
-Route::get('customers/by-dni/{dni}', [CustomerController::class,'findByDni']);
+//Route::get('customers/by-dni/{dni}', [CustomerController::class,'findByDni']);
 Route::get('customers/verify-existing-customer', [CustomerController::class, 'verifyExistingCustomer'])->name('customers.verify-existing-customer');
+// Buscar usuario por DNI y devolver objeto CUSTOMER completo para modulo de contrato
+Route::get('/customers/by-dni', [CustomerController::class, 'showCustomerByDni'])->name('customers.showCustomerByDni');
+
 
 // REST para CustomerStatus
 use Modules\Customers\app\Http\Controllers\CustomerStatusController;
