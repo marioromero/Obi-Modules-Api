@@ -184,9 +184,7 @@ class ConfigurationController extends BaseApiController
    public function getColumnsAndCasesByRole(Request $request)
     {
         // 1) Validar role_id
-        $data = $request->validate([
-            'role_id' => 'required|integer|min:1',
-        ]);
+        $data    = $request->validate(['role_id' => 'required|integer|min:1']);
         $roleKey = (string) $data['role_id'];
 
         // 2) Conexión donde viven types/configurations (la del modelo Configuration)
@@ -204,7 +202,7 @@ class ConfigurationController extends BaseApiController
             ]);
         }
 
-        // 4) Traer configuración y columnas para el rol (usar el modelo para respetar su conexión/casts)
+        // 4) Traer configuración y columnas para el rol
         $configRow = Configuration::where('type_id', $typeId)->firstOrFail();
         $content   = $configRow->content ?? [];
         $columns   = (isset($content[$roleKey]) && is_array($content[$roleKey])) ? $content[$roleKey] : [];
@@ -215,32 +213,40 @@ class ConfigurationController extends BaseApiController
             ]);
         }
 
-        // 5) Ventana: últimos 2 meses por document_signing_date (no nulos)
-        $from = now()->subMonthsNoOverflow(2)->toDateString();
-        $to   = now()->toDateString();
+        // 5) Query base: TODOS los casos desde la vista (sin filtro por fechas)
+        $query = DB::connection('cases_db')->table('v_cases_details');
 
-        // 6) Query a la vista en cases_db: ordenar más nuevos primero
-        $rows = DB::connection('cases_db')
-            ->table('v_cases_details')
-            ->whereBetween('document_signing_date', [$from, $to])
-            ->orderByDesc('document_signing_date')
+        // 6) Orden especial para rol "asesor":
+        //    - Primero los casos del solicitante (consultant_id == user)
+        //    - Luego el resto
+        //    Ajusta '5' si el id del rol asesor es otro en tu configuración.
+        $isConsultantRole = ($roleKey === '5');
+        $requesterId      = $request->header('X-User-Id') ?? auth()->id();
+
+        if ($isConsultantRole && $requesterId) {
+            $query->orderByRaw('CASE WHEN consultant_id = ? THEN 0 ELSE 1 END', [(int) $requesterId]);
+        }
+
+        // 7) Orden general por creación más reciente e id desc
+        $rows = $query
+            ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
 
-        // 7) Recortar cada fila a las columnas pedidas (en orden) + id
+        // 8) Recortar cada fila a las columnas pedidas (en orden) + id
         $cases = $rows->map(function ($row) use ($columns) {
             $record = ['id' => $row->id];
             foreach ($columns as $col) {
-                // property_exists permite devolver null si la columna existe pero su valor es null
                 $record[$col] = property_exists($row, $col) ? $row->{$col} : null;
             }
             return $record;
         })->values();
 
-        // 8) Respuesta estándar
+        // 9) Respuesta estándar
         return $this->success([
             'columns' => $columns,
             'cases'   => $cases,
         ], 'Casos por rol obtenidos correctamente');
     }
+
 }
