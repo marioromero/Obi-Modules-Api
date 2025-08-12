@@ -158,19 +158,19 @@ class CaseController extends BaseApiController
         }
 
        public function officeByUser(Request $request)
-{
-    /* 1) Validación: user_id requerido y usuario existente */
-    $data = $request->validate([
-        'user_id' => ['required','integer','min:1'],
-    ]);
-    $user = TraroUser::find($data['user_id']);
-    if (! $user) {
-        throw ValidationException::withMessages(['user_id' => 'usuario no encontrado']);
-    }
-    $userId  = (int) $user->id;
-    $roleId  = (int) $user->role_id;
+    {
+        /* 1) Validación: user_id requerido y usuario existente */
+        $data = $request->validate([
+            'user_id' => ['required','integer','min:1'],
+        ]);
+        $user = TraroUser::find($data['user_id']);
+        if (! $user) {
+            throw ValidationException::withMessages(['user_id' => 'usuario no encontrado']);
+        }
+        $userId  = (int) $user->id;
+        $roleId  = (int) $user->role_id;
 
-    /* 2) Pasos visibles según rol */
+       /* 2) Pasos visibles según rol (base) */
     $stepsByRole = [
         5 => ['Visita','Presupuesto','Liquidación'], // Asesor
         3 => ['Programación'],                       // Coordinador
@@ -179,33 +179,84 @@ class CaseController extends BaseApiController
     ];
     $visibleSteps = $stepsByRole[$roleId] ?? [];
 
+    /* 2) Pasos visibles basados SOLO en configuraciones (User_responsabilities) */
+    $configConn = (new Configuration)->getConnectionName() ?: config('database.default');
+
+    $resTypeId = DB::connection($configConn)
+        ->table('types')
+        ->where('name', 'User_responsabilities')
+        ->value('id');
+
+    if (! $resTypeId) {
+        throw ValidationException::withMessages([
+            'config' => "No existe el type 'User_responsabilities'.",
+        ]);
+    }
+
+    $resCfg = Configuration::where('type_id', $resTypeId)->firstOrFail();
+    $map   = $resCfg->content ?? [];
+
+    // Normalizar claves del seeder a nombres canónicos (con acentos)
+    $aliases = [
+        'Denuncio'     => 'Denuncio',
+        'Programacion' => 'Programación',
+        'Visita'       => 'Visita',
+        'Presupuesto'  => 'Presupuesto',
+        'Liquidacion'  => 'Liquidación',
+        'Recaudacion'  => 'Recaudación',
+    ];
+
+    $visibleSteps = [];
+    foreach ($map as $rawStep => $data) {
+        $step = $aliases[$rawStep] ?? null;
+        if (! $step) continue;
+
+        $ids = is_array($data) && isset($data['user_assigned'])
+            ? (array) $data['user_assigned']
+            : [];
+        $ids = array_map('intval', $ids);
+
+        if (in_array((int) $userId, $ids, true)) {
+            $visibleSteps[] = $step;
+        }
+    }
+    $visibleSteps = array_values(array_unique($visibleSteps)); // puede quedar vacío y está OK
+
     /* 3) Ventana de "resueltos" (2 meses) y base */
     $twoMonthsAgo = Carbon::now()->subMonthsNoOverflow(2)->toDateString();
     $base = DB::connection('cases_db')->table('v_cases_details');
 
     /* 4) Cargar Columns_by_rol para proyección por paso */
-    $configConn = (new Configuration)->getConnectionName() ?: config('database.default');
-    $typeId = DB::connection($configConn)->table('types')->where('name','Columns_by_rol')->value('id');
-    if (! $typeId) {
-        throw ValidationException::withMessages(['config' => "No existe el type 'Columns_by_rol'."]);
-    }
-    $cfg   = Configuration::where('type_id',$typeId)->firstOrFail();
-    $cont  = $cfg->content ?? [];
+    $typeId = DB::connection($configConn)
+        ->table('types')
+        ->where('name','Columns_by_rol')
+        ->value('id');
 
+    if (! $typeId) {
+        throw ValidationException::withMessages([
+            'config' => "No existe el type 'Columns_by_rol'.",
+        ]);
+    }
+
+    $cfg  = Configuration::where('type_id', $typeId)->firstOrFail();
+    $cont = $cfg->content ?? [];
+
+    /* Columnas por rol (asegúrate de tener definidas 3, 4 y 5 en Columns_by_rol) */
+    $colsRole3 = (isset($cont['3']) && is_array($cont['3'])) ? $cont['3'] : []; // Coordinador
     $colsRole4 = (isset($cont['4']) && is_array($cont['4'])) ? $cont['4'] : []; // Administrativo
     $colsRole5 = (isset($cont['5']) && is_array($cont['5'])) ? $cont['5'] : []; // Asesor
 
-    // Rol base de columnas por paso
+    /* Rol base de columnas por paso (no depende del rol del usuario) */
     $roleColsByStep = [
-        'Denuncio'     => $colsRole4,
-        'Programación' => $colsRole4,
-        'Visita'       => $colsRole5,
-        'Presupuesto'  => $colsRole5,
-        'Liquidación'  => $colsRole5,
-        'Recaudación'  => $colsRole4,
+        'Denuncio'     => $colsRole4, // Administrativo
+        'Programación' => $colsRole3, // Coordinador
+        'Visita'       => $colsRole5, // Asesor
+        'Presupuesto'  => $colsRole5, // Asesor
+        'Liquidación'  => $colsRole5, // Asesor
+        'Recaudación'  => $colsRole4, // Administrativo
     ];
 
-    // Columnas obligatorias por paso (pendientes / resueltos)
+    /* 5) Columnas obligatorias por paso (pendientes / resueltos) */
     $forcePending = [
         'Denuncio'     => ['denounce_status'],
         'Programación' => ['scheduling_status'],
