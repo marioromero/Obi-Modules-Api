@@ -21,7 +21,7 @@ class UpdateCustomerRequest extends FormRequest
             'address'        => ['sometimes','string','max:255'],
             'phone'          => ['sometimes','string','max:20'],
             'phone2'         => ['sometimes','nullable','string','max:20'],
-            'gender'         => ['sometimes','in:M,F,O'],
+            'gender'         => ['nullable','in:M,F,O'],
             'marital_status' => ['sometimes','in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo'],
             'occupation'     => ['sometimes','string','max:100'],
             'nationality'    => ['sometimes','in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña'],
