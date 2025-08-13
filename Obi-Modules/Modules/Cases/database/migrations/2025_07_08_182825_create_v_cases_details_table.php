@@ -17,11 +17,10 @@ return new class extends Migration
         DB::connection('cases_db')->statement(<<<SQL
         /* ───────────────────────────────────────────────────────────────
            Vista: v_cases_details
-           Devuelve 1 fila por caso con:
-           - Todos los campos del caso (incluye sent_to_acepta)
-           - Catálogos legibles (cliente, banco, etc.)
-           - Datos de flujo (case_flows)
-           - Último cambio de estado (case_step_logs + users)
+           - Devuelve 1 fila por caso con datos enriquecidos
+           - Incluye el ejecutivo (agent) tomado desde el CLIENTE:
+             • agent_id   = customers.assigned_agent
+             • agent_name = users.name (traro_db)
         ─────────────────────────────────────────────────────────────── */
         CREATE OR REPLACE VIEW v_cases_details AS
         SELECT
@@ -47,6 +46,10 @@ return new class extends Migration
             cu.address     AS customer_address,
             cmu.name       AS customer_commune_name,
 
+            /* Ejecutivo desde el CLIENTE (assigned_agent) */
+            cu.assigned_agent AS agent_id,
+            aag.name          AS agent_name,
+
             /* ───── Catálogos externos ───── */
             b.name   AS bank_name,
             ins.name AS insurer_name,
@@ -57,8 +60,7 @@ return new class extends Migration
             ag.name  AS agreement_name,
             at.name  AS accident_type_name,
 
-            /* ───── Usuarios TRARO ───── */
-            agnt.name AS agent_name,
+            /* ───── Usuarios TRARO (otros del caso) ───── */
             cons.name AS consultant_name,
             asg.name  AS assigned_user_name,
             crt.name  AS created_by_name,
@@ -80,18 +82,20 @@ return new class extends Migration
         LEFT JOIN grupoint_obi_cases_qa.agreements      ag ON ag.id = c.agreement_id
         LEFT JOIN grupoint_obi_cases_qa.accident_types  at ON at.id = c.accident_type_id
 
-        /* Usuarios TRARO */
-        LEFT JOIN {$traroDb}.users agnt ON agnt.id = c.agent_id      AND agnt.role_id = 2
+        /* Usuarios TRARO (del caso) — ya no usamos c.agent_id */
         LEFT JOIN {$traroDb}.users cons ON cons.id = c.consultant_id AND cons.role_id = 5
         LEFT JOIN {$traroDb}.users asg  ON asg.id  = c.assigned_user
         LEFT JOIN {$traroDb}.users crt  ON crt.id  = c.created_by
+
+        /* Usuario del assigned_agent (del cliente) */
+        LEFT JOIN {$traroDb}.users aag  ON aag.id  = cu.assigned_agent
 
         /* Comuna directa del caso */
         LEFT JOIN grupoint_obi_geography_qa.communes cco ON cco.id = c.commune_id
 
         /* ─────────── Case Flows (TRARO) ─────────── */
         LEFT JOIN {$traroDb}.case_flows cf
-               ON cf.obi_case_id = c.id      -- FK correcta
+               ON cf.obi_case_id = c.id
 
         /* ─────────── Último step-log ─────────── */
         LEFT JOIN (
@@ -114,7 +118,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection($this->connection)
-              ->dropIfExists('v_cases_details');
+        DB::connection($this->connection)
+          ->statement('DROP VIEW IF EXISTS `v_cases_details`');
     }
 };

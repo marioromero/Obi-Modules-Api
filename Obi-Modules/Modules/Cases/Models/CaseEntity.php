@@ -58,7 +58,7 @@ class CaseEntity extends Model
         'is_duplicated', 'description', 'resolution', 'payment_status',
 
         // Relaciones
-        'customer_id', 'assigned_user', 'agent_id', 'created_by',
+        'customer_id', 'assigned_user', 'created_by',
         'accident_type_id', 'commune_id',
         'bank_id', 'insurer_id', 'loss_adjuster_id', 'consultant_id',
     ];

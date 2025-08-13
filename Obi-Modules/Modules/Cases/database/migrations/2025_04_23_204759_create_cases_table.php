@@ -41,9 +41,6 @@ return new class extends Migration {
             $table->string('property_type', 30); //tipo de propiedad
             $table->date('contestation_date')->nullable(); //fecha de impugnacion
 
-            /* Relaciones propias */
-            $table->unsignedBigInteger('agent_id')->nullable(); //captador
-
             /* --- Relaciones externas--- */
             $table->unsignedBigInteger('customer_id')->nullable(); //cliente
             $table->unsignedBigInteger('created_by')->nullable(); // creado por
