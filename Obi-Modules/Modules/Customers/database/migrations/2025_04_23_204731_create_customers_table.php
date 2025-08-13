@@ -14,7 +14,8 @@ return new class extends Migration
             $table->id();
             $table->string('name', 100);
             $table->string('lastname', 100)->nullable();
-            $table->string('dni', 20)->nullable()->unique(); // ← ÚNICO
+            $table->string('full_name', 100)->nullable(); // ← NUEVO
+            $table->string('dni', 20)->nullable()->unique();
             $table->string('username', 50)->nullable();
             $table->string('password', 255)->nullable();
             $table->string('email', 100)->nullable();
@@ -25,15 +26,16 @@ return new class extends Migration
             $table->string('marital_status', 15)->nullable();
             $table->string('occupation', 100)->nullable();
             $table->string('nationality', 50)->nullable();
-            $table->json('tags')->nullable(); // Etiquetas de usuario
-            $table->unsignedBigInteger('commune_id')->nullable(); // FK lógica entre BDs (sin constraint)
-            $table->unsignedBigInteger('assigned_agent')->nullable(); // Ejecutivo asignado (captador)
+            $table->json('tags')->nullable();
+            $table->unsignedBigInteger('commune_id')->nullable();
+            $table->unsignedBigInteger('assigned_agent')->nullable();
             $table->longText('comments')->nullable();
         });
     }
 
-    public function down(): void
-    {
-        Schema::dropIfExists('customers');
-    }
-};
+           public function down(): void
+           {
+               Schema::dropIfExists('customers');
+           }
+       };
+       

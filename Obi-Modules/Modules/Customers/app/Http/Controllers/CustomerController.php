@@ -9,6 +9,7 @@ use Modules\Customers\app\Http\Requests\StoreCustomerRequest;
 use Modules\Customers\Models\Customer;
 use App\Http\Controllers\Controller;
 use Modules\Customers\Models\CustomerDetail;
+use Modules\Users\Models\TraroUser;
 
 class CustomerController extends BaseApiController
 {
@@ -234,6 +235,31 @@ class CustomerController extends BaseApiController
 
         // Devuelve el objeto completo (según atributos visibles del modelo)
         return $this->success($customer, 'Cliente encontrado', 200);
+    }
+
+    public function getCustomersByAgent(Request $request)
+    {
+        // 1) Validar ?agent_id=123 (requerido porque no hay Auth)
+        $request->validate([
+            'agent_id' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $agentId = (int) $request->query('agent_id');
+
+        // 2) Verificar que el usuario exista en Traro
+        $exists = TraroUser::on('traro_db')->whereKey($agentId)->exists();
+        if (! $exists) {
+            return $this->error("No existe el usuario con ID {$agentId}.", 404);
+        }
+
+        // 3) Traer SOLO clientes de ese agente
+        $customers = Customer::query()
+            ->where('assigned_agent', $agentId)
+            ->orderByDesc('id')
+            ->get();
+
+        // 4) Respuesta estándar
+        return $this->success($customers, "Clientes asignados al ejecutivo/a ID {$agentId}.");
     }
 
 }

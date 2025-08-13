@@ -25,7 +25,8 @@ Route::get('customers/get-tags-by-dni-user', [CustomerController::class, 'getTag
 Route::get('customers/verify-existing-customer', [CustomerController::class, 'verifyExistingCustomer'])->name('customers.verify-existing-customer');
 // Buscar usuario por DNI y devolver objeto CUSTOMER completo para modulo de contrato
 Route::get('/customers/by-dni', [CustomerController::class, 'showCustomerByDni'])->name('customers.showCustomerByDni');
-
+// Traer clientes por id de ejecutivo
+Route::get('customers/by-agent', [CustomerController::class, 'getCustomersByAgent'])->name('customers.by-agent');
 
 // REST para CustomerStatus
 use Modules\Customers\app\Http\Controllers\CustomerStatusController;
