@@ -45,24 +45,19 @@ Route::delete('priorities/{priority}', [PriorityController::class, 'destroy']);
 use Modules\Cases\app\Http\Controllers\CaseController;
 use Modules\Cases\app\Http\Controllers\CaseSubstateController;
 
-// Ruta para stats de metricas para casos
 Route::get('cases/stats', [CaseController::class, 'stats']);
-
 Route::get('cases', [CaseController::class, 'index']);
-Route::get('cases/{case}', [CaseController::class, 'show'])->whereNumber('case');;
 Route::post('cases', [CaseController::class, 'store']);
-Route::put('cases/{case}', [CaseController::class, 'update']);
-Route::patch('cases/{case}', [CaseController::class, 'patch']);
-Route::delete('cases/{case}', [CaseController::class, 'destroy']);
-// Nuevo endpoint: casos recientes por agente
-Route::get('cases/agent/{idejecutivo}/recent',[CaseController::class, 'recentByAgent'])->whereNumber('agent');
-// Rutas para transicionar estados
-Route::get('cases/{case}/transitions', [CaseController::class, 'transitions']);
-Route::post('cases/{case}/transition',  [CaseController::class, 'transition']);
-// Rutas para transicionar Sub-Estados
-Route::post('cases/{case}/substate',[CaseSubstateController::class, 'update']);
-Route::get('customers/{customerId}/cases', [CaseController::class, 'byCustomer'])->name('cases.byCustomer');
-Route::get('cases/officebyuser', [CaseController::class, 'officeByUser']);
+Route::get('cases/{id}', [CaseController::class, 'show'])->whereNumber('id');
+Route::put('cases/{id}', [CaseController::class, 'update'])->whereNumber('id');
+Route::patch('cases/{id}', [CaseController::class, 'patch'])->whereNumber('id');
+Route::delete('cases/{id}', [CaseController::class, 'destroy'])->whereNumber('id');
+Route::get('cases/agent/{agentId}/recent', [CaseController::class, 'recentByAgent'])->whereNumber('agentId');
+Route::get('cases/by-customer/{customerId}', [CaseController::class, 'byCustomer'])->whereNumber('customerId')->name('cases.byCustomer');
+Route::get('cases/office-by-user/{userId}', [CaseController::class, 'officeByUser'])->whereNumber('userId');
+Route::get('cases/{id}/transitions', [CaseController::class, 'transitions'])->whereNumber('id');
+Route::post('cases/{id}/transition', [CaseController::class, 'transition'])->whereNumber('id');
+Route::post('cases/{id}/substate', [CaseSubstateController::class, 'update'])->whereNumber('id');
 
 // REST para Agreement
 use Modules\Cases\app\Http\Controllers\AgreementController;
