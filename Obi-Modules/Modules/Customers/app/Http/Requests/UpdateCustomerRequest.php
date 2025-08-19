@@ -34,7 +34,7 @@ class UpdateCustomerRequest extends FormRequest
             'occupation'     => ['sometimes','string','max:100'],
             'nationality'    => ['sometimes','in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña'],
             'commune_id'     => ['sometimes','nullable','exists:geography_db.communes,id'],
-            'assigned_agent' => ['sometimes','nullable','exists:users_db.users,id'],
+            'assigned_agent' => ['sometimes','nullable','exists:traro_db.users,id'],
             'comments'       => ['sometimes','nullable','string'],
             'tags'           => ['sometimes','array'],
         ];
