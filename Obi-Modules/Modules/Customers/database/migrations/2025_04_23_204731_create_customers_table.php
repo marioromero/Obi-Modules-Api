@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('phone', 15)->nullable();
             $table->string('phone2', 15)->nullable();
             $table->char('gender', 1)->nullable();
-            $table->string('marital_status', 15)->nullable();
+            $table->string('marital_status', 50)->nullable();
             $table->string('occupation', 100)->nullable();
             $table->string('nationality', 50)->nullable();
             $table->json('tags')->nullable();
