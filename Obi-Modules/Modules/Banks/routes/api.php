@@ -8,11 +8,12 @@ Route::get('/ping-banks', fn() => response()->json(['pong' => 'Banks']))->name('
 // REST para Bank
 use Modules\Banks\app\Http\Controllers\BankController;
 Route::get('banks', [BankController::class, 'index']);
-Route::get('banks/{bank}', [BankController::class, 'show']);
 Route::post('banks', [BankController::class, 'store']);
-Route::put('banks/{bank}', [BankController::class, 'update']);
-Route::patch('banks/{bank}', [BankController::class, 'patch']);
-Route::delete('banks/{bank}', [BankController::class, 'destroy']);
+Route::get('banks/{bank}', [BankController::class, 'show'])->whereNumber('bank');
+Route::put('banks/{bank}', [BankController::class, 'update'])->whereNumber('bank');
+Route::patch('banks/{bank}', [BankController::class, 'patch'])->whereNumber('bank');
+Route::delete('banks/{bank}', [BankController::class, 'destroy'])->whereNumber('bank');
+
 
 // REST para Insurer
 use Modules\Banks\app\Http\Controllers\InsurerController;
