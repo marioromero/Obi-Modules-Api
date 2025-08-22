@@ -13,44 +13,41 @@ class CaseDetail extends Model
 
     /* Tipos y JSON */
     protected $casts = [
-        // ids / números (ajusta según necesites)
-        'id' => 'integer',
-        'customer_id' => 'integer',
-        'bank_id' => 'integer',
-        'insurer_id' => 'integer',
+        // ids / números
+        'id'               => 'integer',
+        'customer_id'      => 'integer',
+        'bank_id'          => 'integer',
+        'insurer_id'       => 'integer',
         'loss_adjuster_id' => 'integer',
         'accident_type_id' => 'integer',
-        'agreement_id' => 'integer',
-        'priority_id' => 'integer',
-        'consultant_id' => 'integer',
-        'assigned_user' => 'integer',
-        'created_by' => 'integer',
-        'agent_id' => 'integer',
+        'agreement_id'     => 'integer',
+        'priority_id'      => 'integer',
+        'consultant_id'    => 'integer',
+        'assigned_user'    => 'integer',
+        'created_by'       => 'integer',
+        'agent_id'         => 'integer',
 
         // booleans típicos
-        'is_duplicated' => 'boolean',
+        'is_duplicated'        => 'boolean',
 
         // JSON de la vista
-        'step_logs_json'  => 'array',
-        'case_flows_json' => 'array',
+        'step_logs_json'       => 'array',
+        'case_flows_json'      => 'array', //
+        'case_flow_last_json'  => 'array', //
     ];
 
-    /* Oculta crudos y snapshots de flow (para no duplicar con case_flows_json) */
+    /* Ocultar raw JSONs que no quieres exponer tal cual */
     protected $hidden = [
         'step_logs_json',
-        'fecha_documentos_listos',
-        'contrato_enviado_a_acepta',
-        'fecha_firma_contrato',
-        'mandato_enviado_a_acepta',
-        'fecha_firma_mandato',
-        'numero_notificaciones_documentos_enviados',
-        'numero_notificaciones_documento_pendiente',
-        'notificacion_documento_firmado',
-        'active_notifications',
+        'case_flows_json',
+        'case_flow_last_json',
     ];
 
-    /* Agrega 'step_logs' calculado al serializar el modelo */
-    protected $appends = ['step_logs'];
+    /* Atributos calculados que se agregan a la serialización */
+    protected $appends = [
+        'step_logs',
+        'case_flow_last',
+    ];
 
     /* ---------- Relaciones ---------- */
     public function stepLogs()
@@ -75,10 +72,17 @@ class CaseDetail extends Model
                     'type'       => $log->type,
                     'user_id'    => $log->user_id ? (int) $log->user_id : null,
                     'user_name'  => optional($log->user)->name,
-                    'payload'    => $log->payload ?? null,  // si tu tabla lo tiene
+                    'payload'    => $log->payload ?? null,
                     'comments'   => $log->comments,
                     'created_at' => $log->created_at,
                 ];
             })->values();
+    }
+
+    /* ---------- Accessor: snapshot del último case_flow ---------- */
+    public function getCaseFlowLastAttribute()
+    {
+        // Devuelve el objeto ya decodificado (gracias al cast 'array')
+        return $this->case_flow_last_json ?? null;
     }
 }

@@ -92,6 +92,9 @@ class CaseEntityResource extends JsonResource
             'last_state_change_user_id'   => $this->last_state_change_user_id,
             'last_state_change_user_name' => $this->last_state_change_user_name,
             'last_state_change_at'        => $this->last_state_change_at,
+
+             /* --- Notificaciones (desde cf_last en la vista) --- */
+            'active_notifications' => (bool) ($this->active_notifications ?? false),
         ];
     }
 }
