@@ -1,34 +1,29 @@
 <?php
 
 namespace Modules\Cases\app\Http\Controllers;
-use Modules\Core\app\Http\BaseApiController;
 
+use Modules\Core\app\Http\BaseApiController;
 use Illuminate\Http\Request;
 use Modules\Cases\Models\AccidentType;
 
-use App\Http\Controllers\Controller;
-
 class AccidentTypeController extends BaseApiController
 {
-    
     public function index()
     {
         $types = AccidentType::all();
-
-        return $this->success($types, 'Listado de tipos de siniestro completo');
+        return $this->success($types, 'Listado de tipos de siniestro', 200);
     }
 
     public function show(AccidentType $accidentType)
     {
-        return $this->success($accidentType, 'AccidentType obtenido correctamente');
+        return $this->success($accidentType, 'Tipo de siniestro obtenido correctamente', 200);
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:60',
-        ]);
-        $type = AccidentType::create($data);
+        $data = $request->validate(['name' => 'required|string|min:1|max:100']);
+        $type = AccidentType::create(['name' => trim($data['name'])]);
+
         return $this->success($type, 'Tipo de siniestro creado correctamente', 201);
     }
 
@@ -37,7 +32,7 @@ class AccidentTypeController extends BaseApiController
         $data = $request->validate(['name' => 'required|string']);
         $accidentType->update($data);
 
-        return $this->success($accidentType, 'AccidentType actualizado correctamente');
+        return $this->success($accidentType, 'Tipo de siniestro actualizado correctamente', 200);
     }
 
     public function patch(Request $request, AccidentType $accidentType)
@@ -45,14 +40,12 @@ class AccidentTypeController extends BaseApiController
         $data = $request->validate(['name' => 'sometimes|string']);
         $accidentType->update($data);
 
-        return $this->success($accidentType, 'AccidentType parcialmente actualizado');
+        return $this->success($accidentType, 'Tipo de siniestro parcialmente actualizado', 200);
     }
 
     public function destroy(AccidentType $accidentType)
     {
         $accidentType->delete();
-
         return $this->success(null, 'Tipo de siniestro eliminado correctamente', 200);
     }
 }
-

@@ -8,11 +8,12 @@ Route::get('/ping-cases', fn() => response()->json(['pong' => 'Cases']))->name('
 // REST para AccidentType
 use Modules\Cases\app\Http\Controllers\AccidentTypeController;
 Route::get('accident-types', [AccidentTypeController::class, 'index']);
-Route::get('accident-types/{accidentType}', [AccidentTypeController::class, 'show']);
 Route::post('accident-types', [AccidentTypeController::class, 'store']);
-Route::put('accident-types/{accidentType}', [AccidentTypeController::class, 'update']);
-Route::patch('accident-types/{accidentType}', [AccidentTypeController::class, 'patch']);
-Route::delete('accident-types/{accidentType}', [AccidentTypeController::class, 'destroy']);
+Route::get('accident-types/{accidentType}', [AccidentTypeController::class, 'show'])->whereNumber('accidentType');
+Route::put('accident-types/{accidentType}', [AccidentTypeController::class, 'update'])->whereNumber('accidentType');
+Route::patch('accident-types/{accidentType}', [AccidentTypeController::class, 'patch'])->whereNumber('accidentType');
+Route::delete('accident-types/{accidentType}', [AccidentTypeController::class, 'destroy'])->whereNumber('accidentType');
+
 
 // REST para CaseStatus
 use Modules\Cases\app\Http\Controllers\CaseStatusController;
@@ -41,23 +42,22 @@ Route::put('priorities/{priority}', [PriorityController::class, 'update']);
 Route::patch('priorities/{priority}', [PriorityController::class, 'patch']);
 Route::delete('priorities/{priority}', [PriorityController::class, 'destroy']);
 
-// REST para Case
+// REST para Cases
 use Modules\Cases\app\Http\Controllers\CaseController;
 use Modules\Cases\app\Http\Controllers\CaseSubstateController;
-
 Route::get('cases/stats', [CaseController::class, 'stats']);
 Route::get('cases', [CaseController::class, 'index']);
 Route::post('cases', [CaseController::class, 'store']);
-Route::get('cases/{id}', [CaseController::class, 'show'])->whereNumber('id');
-Route::put('cases/{id}', [CaseController::class, 'update'])->whereNumber('id');
-Route::patch('cases/{id}', [CaseController::class, 'patch'])->whereNumber('id');
-Route::delete('cases/{id}', [CaseController::class, 'destroy'])->whereNumber('id');
-Route::get('cases/agent/{agentId}/recent', [CaseController::class, 'recentByAgent'])->whereNumber('agentId');
-Route::get('cases/by-customer/{customerId}', [CaseController::class, 'byCustomer'])->whereNumber('customerId')->name('cases.byCustomer');
-Route::get('cases/office-by-user/{userId}', [CaseController::class, 'officeByUser'])->whereNumber('userId');
-Route::get('cases/{id}/transitions', [CaseController::class, 'transitions'])->whereNumber('id');
-Route::post('cases/{id}/transition', [CaseController::class, 'transition'])->whereNumber('id');
-Route::post('cases/{id}/substate', [CaseSubstateController::class, 'update'])->whereNumber('id');
+Route::get('cases/{case}', [CaseController::class, 'show'])->whereNumber('case');
+Route::put('cases/{case}', [CaseController::class, 'update'])->whereNumber('case');
+Route::patch('cases/{case}', [CaseController::class, 'patch'])->whereNumber('case');
+Route::delete('cases/{case}', [CaseController::class, 'destroy'])->whereNumber('case');
+Route::get('cases/agent/{agent}/recent', [CaseController::class, 'recentByAgent'])->whereNumber('agent');       // TraroUser
+Route::get('cases/by-customer/{customer}', [CaseController::class, 'byCustomer'])->whereNumber('customer');       // Customer
+Route::get('cases/office-by-user/{user}', [CaseController::class, 'officeByUser'])->whereNumber('user');         // TraroUser
+Route::get('cases/{case}/transitions', [CaseController::class, 'transitions'])->whereNumber('case');
+Route::post('cases/{case}/transition', [CaseController::class, 'transition'])->whereNumber('case');
+Route::post('cases/{case}/substate', [CaseSubstateController::class, 'update'])->whereNumber('case');
 
 // REST para Agreement
 use Modules\Cases\app\Http\Controllers\AgreementController;

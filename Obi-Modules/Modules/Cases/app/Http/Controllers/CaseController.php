@@ -32,13 +32,13 @@ class CaseController extends BaseApiController
         return $this->success($collection, 'Listado de casos', 200);
     }
 
-    public function show(int $id)
+    public function show(CaseEntity $case)
     {
-        $case = CaseDetail::find($id);
-        if (! $case) {
+        $detail = CaseDetail::find($case->id);
+        if (! $detail) {
             return $this->error('Caso no encontrado', 404);
         }
-        return $this->success($case, 'Caso obtenido correctamente', 200);
+        return $this->success($detail, 'Caso obtenido correctamente', 200);
     }
 
     public function store(StoreCaseRequest $request)
@@ -54,53 +54,29 @@ class CaseController extends BaseApiController
         return $this->success($case, 'Caso creado correctamente', 201);
     }
 
-    public function update(UpdateCaseRequest $request, int $id)
+    public function update(UpdateCaseRequest $request, CaseEntity $case)
     {
-        $case = CaseEntity::find($id);
-        if (! $case) {
-            return $this->error('Caso no encontrado', 404);
-        }
-
         $case->fill($request->validated())->save();
-
         return $this->success($case->refresh(), 'Caso actualizado correctamente', 200);
     }
 
-    public function patch(UpdateCaseRequest $request, int $id)
+    public function patch(UpdateCaseRequest $request, CaseEntity $case)
     {
-        $case = CaseEntity::find($id);
-        if (! $case) {
-            return $this->error('Caso no encontrado', 404);
-        }
-
         $case->update($request->validated());
-
         return $this->success($case, 'Caso actualizado correctamente', 200);
     }
 
-    public function destroy(int $id)
+    public function destroy(CaseEntity $case)
     {
-        $case = CaseEntity::find($id);
-        if (! $case) {
-            return $this->error('Caso no encontrado', 404);
-        }
-
         $case->delete();
-
         return $this->success(null, 'Caso eliminado exitosamente', 200);
     }
 
                             //Endpoints para lógica de negocio de TRARO
-    public function recentByAgent(int $agentId)
+    public function recentByAgent(TraroUser $agent)
     {
-        $agent = TraroUser::on('traro_db')->find($agentId);
-
-        if (! $agent) {
-            return $this->error("No existe ningún usuario con ID {$agentId}", 404);
-        }
-
-        $cases = \Modules\Cases\Models\CaseDetail::query()
-            ->where('assigned_agent', $agentId)
+        $cases = CaseDetail::query()
+            ->where('assigned_agent', $agent->id)
             ->orderByDesc('created_at')
             ->get();
 
@@ -111,14 +87,9 @@ class CaseController extends BaseApiController
         return $this->success($cases, "Casos asignados al ejecutivo/a '{$agent->name}'.", 200);
     }
 
-    public function byCustomer(int $customerId)
+    public function byCustomer(Customer $customer)
     {
-        $customer = Customer::find($customerId);
-        if (! $customer) {
-            return $this->error("No existe ningún cliente con ID {$customerId}", 404);
-        }
-
-        $cases = CaseDetail::where('customer_id', $customerId)
+        $cases = CaseDetail::where('customer_id', $customer->id)
                            ->orderByDesc('created_at')
                            ->get();
 
@@ -129,14 +100,9 @@ class CaseController extends BaseApiController
         return $this->success($cases, "Casos del cliente «{$customer->name} {$customer->lastname}»", 200);
     }
 
-
-       public function officeByUser(int $userId)
+       public function officeByUser(TraroUser $user)
     {
-        // 1) Validación/usuario
-        $user = TraroUser::find($userId);
-        if (! $user) {
-            return $this->error('usuario no encontrado', 404);
-        }
+        // 1) Ya viene bindeado
         $userId = (int) $user->id;
         $roleId = (int) $user->role_id;
 
@@ -181,7 +147,6 @@ class CaseController extends BaseApiController
         }
         $visibleSteps = array_values(array_unique($visibleSteps));
 
-        // 4) Base, ventanas y columnas por rol/paso
         $twoMonthsAgo = Carbon::now()->subMonthsNoOverflow(2)->toDateString();
         $base = DB::connection('cases_db')->table('v_cases_details');
 
@@ -197,9 +162,9 @@ class CaseController extends BaseApiController
         $cfg  = Configuration::where('type_id', $typeId)->first();
         $cont = $cfg?->content ?? [];
 
-        $colsRole3 = (isset($cont['3']) && is_array($cont['3'])) ? $cont['3'] : []; // Coordinador
-        $colsRole4 = (isset($cont['4']) && is_array($cont['4'])) ? $cont['4'] : []; // Administrativo
-        $colsRole5 = (isset($cont['5']) && is_array($cont['5'])) ? $cont['5'] : []; // Asesor
+        $colsRole3 = (isset($cont['3']) && is_array($cont['3'])) ? $cont['3'] : [];
+        $colsRole4 = (isset($cont['4']) && is_array($cont['4'])) ? $cont['4'] : [];
+        $colsRole5 = (isset($cont['5']) && is_array($cont['5'])) ? $cont['5'] : [];
 
         $roleColsByStep = [
             'Denuncio'     => $colsRole4,
@@ -221,7 +186,6 @@ class CaseController extends BaseApiController
         $forceResolved = [
             'Denuncio'     => ['denounce_status','complaint_date'],
             'Programación' => ['scheduling_status','inspection_date'],
-            // Importante: Visita usa document_signing_date en resueltos
             'Visita'       => ['visit_status','document_signing_date'],
             'Presupuesto'  => ['budget_status','budget_sending_date'],
             'Liquidación'  => ['settlement_report_date'],
@@ -348,13 +312,8 @@ class CaseController extends BaseApiController
     }
 
     //Devuelve arrays next / prev para habilitar botones
-    public function transitions(int $id)
+    public function transitions(CaseEntity $case)
     {
-        $case = CaseEntity::find($id);
-        if (! $case) {
-            return $this->error('Caso no encontrado', 404);
-        }
-
         $order = config('modules.Cases.CaseEntity_states.states');
         $map   = config('modules.Cases.CaseEntity_states.transitions');
 
@@ -370,25 +329,17 @@ class CaseController extends BaseApiController
         foreach ($allowed as $state) {
             $idx = array_search($state, $order, true);
             if ($idx === false) continue;
-            if ($idx > $idxCurrent) {
-                $next[] = $state;
-            } elseif ($idx < $idxCurrent) {
-                $prev[] = $state;
-            }
+            if ($idx > $idxCurrent)      $next[] = $state;
+            elseif ($idx < $idxCurrent)  $prev[] = $state;
         }
 
         return $this->success(['next' => $next, 'prev' => $prev], 'Transiciones disponibles', 200);
     }
 
-    public function transition(TransitionCaseRequest $req, int $id)
+   public function transition(TransitionCaseRequest $req, CaseEntity $case)
     {
-        $case = CaseEntity::find($id);
-        if (! $case) {
-            return $this->error('Caso no encontrado', 404);
-        }
-
         try {
-            $updated = app(CaseTransitionService::class)->transition(
+            $updated = app(\Modules\Cases\app\Services\CaseTransitionService::class)->transition(
                 $case,
                 $req->input('next_state'),
                 $req->input('comments'),
