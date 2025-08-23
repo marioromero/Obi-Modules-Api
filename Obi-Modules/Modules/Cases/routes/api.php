@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Cases\app\Http\Controllers\CaseDocumentController;
+
 
 Route::get('/ping-cases', fn() => response()->json(['pong' => 'Cases']))->name('Cases.ping');
 
@@ -67,3 +69,12 @@ Route::post('agreements', [AgreementController::class, 'store']);
 Route::put('agreements/{agreement}', [AgreementController::class, 'update']);
 Route::patch('agreements/{agreement}', [AgreementController::class, 'patch']);
 Route::delete('agreements/{agreement}', [AgreementController::class, 'destroy']);
+
+
+Route::get('cases/{code}/documents', [CaseDocumentController::class, 'index']);
+Route::get('cases/{code}/documents/download', [CaseDocumentController::class, 'download'])
+    ->where('code', '[A-Z0-9\-]+');
+Route::post('cases/{code}/documents/signature-check', [CaseDocumentController::class, 'checkSignature']);
+Route::get('cases/{code}/documents/preview', [CaseDocumentController::class, 'preview'])
+    ->where('code', 'TR\d+');
+
