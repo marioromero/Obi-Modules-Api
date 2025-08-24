@@ -1,12 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Configurations\app\Http\Controllers\TypeController;
+use Modules\Configurations\app\Http\Controllers\ConfigurationController;
 
 //Route::apiResource('configurations', ConfigurationController::class)
   //   ->names('configurations');
 
 // REST para Type
-use Modules\Configurations\app\Http\Controllers\TypeController;
 Route::get('types', [TypeController::class, 'index']);
 Route::get('types/{type}', [TypeController::class, 'show']);
 Route::post('types', [TypeController::class, 'store']);
@@ -15,8 +16,6 @@ Route::patch('types/{type}', [TypeController::class, 'patch']);
 Route::delete('types/{type}', [TypeController::class, 'destroy']);
 
 // REST para Configuration
-use Modules\Configurations\app\Http\Controllers\ConfigurationController;
-
 Route::get   ('configurations', [ConfigurationController::class, 'index']);
 Route::get   ('configurations/{configuration}', [ConfigurationController::class, 'show'])->whereNumber('configuration');
 Route::post  ('configurations', [ConfigurationController::class, 'store']);

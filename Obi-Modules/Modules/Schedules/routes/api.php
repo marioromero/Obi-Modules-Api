@@ -1,12 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Schedules\app\Http\Controllers\ScheduleController;
+use Modules\Schedules\app\Http\Controllers\ScheduleStatusController;
 
 Route::get('/ping-schedules', fn() => response()->json(['pong' => 'Schedules']))->name('Schedules.ping');
 
 
 // REST para Schedule
-use Modules\Schedules\app\Http\Controllers\ScheduleController;
 Route::get('schedules', [ScheduleController::class, 'index']);
 Route::get('schedules/{schedule}', [ScheduleController::class, 'show']);
 Route::post('schedules', [ScheduleController::class, 'store']);
@@ -15,7 +16,6 @@ Route::patch('schedules/{schedule}', [ScheduleController::class, 'patch']);
 Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy']);
 
 // REST para ScheduleStatus
-use Modules\Schedules\app\Http\Controllers\ScheduleStatusController;
 Route::get('schedule-statuses', [ScheduleStatusController::class, 'index']);
 Route::get('schedule-statuses/{scheduleStatus}', [ScheduleStatusController::class, 'show']);
 Route::post('schedule-statuses', [ScheduleStatusController::class, 'store']);

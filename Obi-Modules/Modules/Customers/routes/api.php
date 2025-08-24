@@ -1,11 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Customers\app\Http\Controllers\CustomerController;
+use Modules\Customers\app\Http\Controllers\CustomerStatusController;
+use Modules\Customers\app\Http\Controllers\TagController;
 
 Route::get('/ping-customers', fn() => response()->json(['pong' => 'Customers']))->name('Customers.ping');
 
 // REST para customers
-use Modules\Customers\app\Http\Controllers\CustomerController;
 Route::get('customers',[CustomerController::class,'index']);
 Route::get('customers/{customer}',[CustomerController::class,'show'])->whereNumber('customer');
 Route::post('customers',[CustomerController::class,'store']);
@@ -20,7 +22,6 @@ Route::get('customers/search/name/{q}',[CustomerController::class,'customersByNa
 Route::get('customers/by-agent/{agent}',[CustomerController::class,'getCustomersByAgent'])->whereNumber('agent')->name('customers.by-agent');
 
 // REST para CustomerStatus
-use Modules\Customers\app\Http\Controllers\CustomerStatusController;
 Route::get('customer-statuses', [CustomerStatusController::class, 'index']);
 Route::get('customer-statuses/{customerStatus}', [CustomerStatusController::class, 'show']);
 Route::post('customer-statuses', [CustomerStatusController::class, 'store']);
@@ -30,7 +31,6 @@ Route::delete('customer-statuses/{customerStatus}', [CustomerStatusController::c
 
 
 // REST para Tag
-use Modules\Customers\app\Http\Controllers\TagController;
 Route::get('tags', [TagController::class, 'index']);
 Route::get('tags/{tag}', [TagController::class, 'show']);
 Route::post('tags', [TagController::class, 'store']);
