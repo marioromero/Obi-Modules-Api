@@ -1,7 +1,8 @@
 <?php
 
-return [
+$env = env('APP_ENV', 'local');
 
+return [
     /*
     |--------------------------------------------------------------------------
     | Default Filesystem Disk
@@ -41,7 +42,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => env('APP_URL') . '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
@@ -60,6 +61,12 @@ return [
             'report' => false,
         ],
 
+        'cases-docs' => [
+            'driver' => 'local',
+            'root' => env('CASES_DOCS_ROOT_' . strtoupper($env), storage_path('app/cases-docs')),
+            'visibility' => 'private',
+            'throw' => false,
+        ],
     ],
 
     /*
@@ -76,5 +83,6 @@ return [
     'links' => [
         public_path('storage') => storage_path('app/public'),
     ],
+
 
 ];

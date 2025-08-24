@@ -33,3 +33,4 @@ auth.json
 /qodana.yaml
 /.github/workflows/qodana_code_quality.yml
 /.idea/dataSources.xml
+/.idea/sqldialects.xml
