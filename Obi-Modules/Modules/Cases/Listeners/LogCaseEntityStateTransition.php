@@ -85,7 +85,7 @@ class LogCaseEntityStateTransition
       5 => 'impugnado',
     ),
     'default' => 'en espera',
-    'final' => 'impugnado',
+    'final' => 'aprobado',
   ),
   'Recaudacion' =>
   array (
