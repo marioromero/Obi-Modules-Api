@@ -92,24 +92,23 @@ class ConfigurationSeeder extends Seeder
 
                 // 3 = Coordinador
                 '3' => [
-                    'code','customer_name','customer_dni','state','accident_type_name',
-                    'created_at','commune_name','property_address','bank_name',
-                    'document_signing_date','approved_amount',
-                    'assigned_user_name','agent_name','consultant_name',
-                    'scheduling_status','visit_status','inspection_date','property_type',
-                    'budget_status','budget_sending_date','settlement_report_date',
-                    'overall_status'
+                    'code','state','created_at',
+                    'property_address','inspection_date','document_signing_date','complaint_date','collection_date',
+                    'budget_sending_date','settlement_report_date','probable_payment_date',
+                    'customer_name','customer_dni','customer_address','customer_commune_name',
+                    'bank_name','assigned_user_name','accident_type_name','agent_name',
+                    'commune_name','loss_adjuster_name','insurer_name',
                 ],
 
                 // 4 = Administrativo
                 '4' => [
-                    'code','customer_name','customer_dni','state','accident_type_name',
-                    'created_at','commune_name','property_address','bank_name',
-                    'document_signing_date','approved_amount',
-                    'sent_to_acepta','signature_status','bank_service_number',
-                    'accident_number','complaint_date','collection_date',
-                    'online_collection_date','payment_status','amount_owed',
-                    'amount_paid','is_duplicated'
+                    'code','state',
+                    'customer_name','customer_dni','property_address','property_type','created_at',
+                    'accident_type_name','bank_name','agent_name','document_signing_date','agreement_name',
+                    'bank_service_number','complaint_date','accident_number','is_duplicated',
+                    'insurer_name','loss_adjuster_name','inspection_date','budget_sending_date',
+                    'settlement_report_date','probable_payment_date','collection_date',
+                    'amount_owed','amount_paid','online_collection_date',
                 ],
 
                 // 5 = Asesor
