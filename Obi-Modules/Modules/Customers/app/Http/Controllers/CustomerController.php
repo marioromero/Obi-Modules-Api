@@ -175,11 +175,15 @@ class CustomerController extends BaseApiController
     }
     public function getCustomersByAgent(TraroUser $agent)
     {
-        $customers = Customer::query()
+        $customers = CustomerDetail::query()
             ->where('assigned_agent', (int) $agent->id)
             ->orderByDesc('id')
             ->get();
 
-        return $this->success($customers, "Clientes asignados al ejecutivo/a ID {$agent->id}.", 200);
+        if ($customers->isEmpty()) {
+            return $this->success([], "No hay clientes asignados al ejecutivo/a '{$agent->name}'.", 200);
+        }
+
+        return $this->success($customers, "Clientes asignados al ejecutivo/a '{$agent->name}'.", 200);
     }
 }

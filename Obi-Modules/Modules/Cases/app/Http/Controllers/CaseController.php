@@ -76,7 +76,7 @@ class CaseController extends BaseApiController
     public function recentByAgent(TraroUser $agent)
     {
         $cases = CaseDetail::query()
-            ->where('assigned_agent', $agent->id)
+            ->where('agent_id', $agent->id)
             ->orderByDesc('created_at')
             ->get();
 
