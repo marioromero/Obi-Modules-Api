@@ -74,7 +74,7 @@ class ConfigurationSeeder extends Seeder
                     'document_signing_date','approved_amount',
                     'assigned_user_name','consultant_name','agent_name',
                     'payment_status','amount_owed','amount_paid','advisory_amount',
-                    'probable_payment_date','overall_status','sent_to_acepta',
+                    'probable_payment_date','overall_status',
                     'signature_status','created_by_name'
                 ],
 

@@ -6,8 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Modules\Core\app\Rules\ValidatedRut;
 use Modules\Geography\Models\Commune;
-use Modules\Users\Models\User;
-
+use Modules\Users\Models\TraroUser;
 class StoreCustomerRequest extends FormRequest
 {
     public function authorize(): bool
@@ -43,7 +42,7 @@ class StoreCustomerRequest extends FormRequest
 
             // Relaciones
             'commune_id'     => ['nullable', 'integer', Rule::exists(Commune::class, 'id')],
-            'assigned_agent' => ['nullable', 'integer', Rule::exists(User::class, 'id')], // antes user_id
+            'assigned_agent' => ['nullable','integer', Rule::exists(TraroUser::class, 'id')],
         ];
     }
 
