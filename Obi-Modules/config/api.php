@@ -35,4 +35,6 @@ return [
      |--------------------------------------------------------------------------
      */
     'subdomain' => env('API_SUBDOMAIN', null),
+
+    'trusted_internal_api_key' => env('TRUSTED_INTERNAL_API_KEY'),
 ];

@@ -11,6 +11,7 @@ return [
         'http://localhost:8000',
         'https://trarocrm.cl',
         'https://nodoxteam.cl',
+        'https://obi.trarocrm.cl',
 ],
 
     'allowed_origins_patterns' => [],
