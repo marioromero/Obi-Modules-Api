@@ -68,7 +68,14 @@ class CaseController extends BaseApiController
 
     public function destroy(CaseEntity $case)
     {
+        // Borra los registros en la BD de traro por el id del caso OBI
+        DB::connection('traro_db')
+            ->table('case_flows')
+            ->where('obi_case_id', $case->id)
+            ->delete();
+
         $case->delete();
+
         return $this->success(null, 'Caso eliminado exitosamente', 200);
     }
 
@@ -388,14 +395,10 @@ class CaseController extends BaseApiController
                 ->count(),
 
             // Casos en pasos fulminantes NO cerrados (mes actual)
-            'cases_in_closing_steps' => CaseEntity::where(function ($q) {
-                    foreach (['Cancelado','Desistido','DesistidoSinVisita'] as $step) {
-                        $q->orWhere('state', 'like', "%{$step}%");
-                    }
-                })
-                ->where(function ($q) {
-                    $q->whereNull('overall_status')
-                      ->orWhere('overall_status', '!=', 'cerrado');
+           'cases_in_closing_steps' => CaseEntity::where(function ($q) {
+        foreach (['Cancelado','Desistido','DesistidoSinVisita'] as $step) {
+            $q->orWhere('state', 'like', "%{$step}%");
+                }
                 })
                 ->whereBetween('created_at', [$startCurrentMonth, $now])
                 ->count(),
