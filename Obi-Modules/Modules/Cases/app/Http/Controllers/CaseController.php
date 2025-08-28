@@ -364,28 +364,56 @@ class CaseController extends BaseApiController
         $startPreviousMonth = $prevMonth->copy()->startOfMonth();
         $endPreviousMonth   = $prevMonth->copy()->endOfMonth();
         $todayDay           = $now->day;
+        $prevMonthSameDay   = $prevMonth->copy()->day(min($todayDay, $prevMonth->daysInMonth));
 
         $metrics = [
-            'cases_created_current_month'          => CaseEntity::whereBetween('created_at', [$startCurrentMonth, $now])->count(),
-            'cases_created_last_thirty_days'       => CaseEntity::where('created_at', '>=', $startLastThirty)->count(),
-            'cases_created_previous_month'         => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $endPreviousMonth])->count(),
-            'cases_created_to_date_current_month'  => CaseEntity::whereBetween('created_at', [$startCurrentMonth, $now])->count(),
-            'cases_created_to_date_previous_month' => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $prevMonth->copy()->day($todayDay)])->count(),
-            'closed_cases'                         => CaseEntity::where('overall_status', 'cerrado')->count(),
-            'cases_paid_in_collection'             => CaseEntity::where('state', 'like', '%Recaudacion%')
-                                                               ->where('payment_status', 'pagado')
-                                                               ->count(),
-            'cases_in_closing_steps'               => CaseEntity::where(function($q) {
-                                                            foreach (['Cancelado','Desistido','DesistidoSinVisita'] as $step) {
-                                                                $q->orWhere('state','like', "%{$step}%");
-                                                            }
-                                                        })->count(),
-            'cases_pending_collection'             => CaseEntity::where('state', 'like', '%Recaudacion%')
-                                                               ->where('payment_status', '!=', 'pagado')
-                                                               ->count(),
+            // Casos ingresados
+            'cases_created_current_month'           => CaseEntity::whereBetween('created_at', [$startCurrentMonth, $now])->count(),
+            'cases_created_last_thirty_days'        => CaseEntity::where('created_at', '>=', $startLastThirty)->count(),
+            'cases_created_previous_month'          => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $endPreviousMonth])->count(),
+            'cases_created_to_date_previous_month'  => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $prevMonthSameDay])->count(),
+
+            // Casos cerrados (mes actual)
+            'closed_cases' => CaseEntity::where('overall_status', 'cerrado')
+                ->whereBetween('created_at', [$startCurrentMonth, $now])
+                ->count(),
+
+            // Casos cobrados en recaudación (mes actual)
+            'cases_paid_in_collection' => CaseEntity::where(function ($q) {
+                    $q->where('state', 'like', '%Recaudacion%')
+                      ->orWhere('state', 'like', '%Recaudación%');
+                })
+                ->where('payment_status', 'pagado')
+                ->whereBetween('created_at', [$startCurrentMonth, $now])
+                ->count(),
+
+            // Casos en pasos fulminantes NO cerrados (mes actual)
+            'cases_in_closing_steps' => CaseEntity::where(function ($q) {
+                    foreach (['Cancelado','Desistido','DesistidoSinVisita'] as $step) {
+                        $q->orWhere('state', 'like', "%{$step}%");
+                    }
+                })
+                ->where(function ($q) {
+                    $q->whereNull('overall_status')
+                      ->orWhere('overall_status', '!=', 'cerrado');
+                })
+                ->whereBetween('created_at', [$startCurrentMonth, $now])
+                ->count(),
+
+            // Casos en recaudación pendientes de pago (mes actual)
+            'cases_pending_collection' => CaseEntity::where(function ($q) {
+                    $q->where('state', 'like', '%Recaudacion%')
+                      ->orWhere('state', 'like', '%Recaudación%');
+                })
+                ->where(function ($q) {
+                    $q->whereNull('payment_status')
+                      ->orWhere('payment_status', '!=', 'pagado');
+                })
+                ->whereBetween('created_at', [$startCurrentMonth, $now])
+                ->count(),
         ];
 
-        return $this->success($metrics, 'Estadisticas para métricas de casos', 200);
+        return $this->success($metrics, 'Estadísticas para métricas de casos', 200);
     }
 }
 
