@@ -27,4 +27,5 @@ Route::patch ('configurations/countries', [ConfigurationController::class, 'upda
 Route::get   ('configurations/responsibilities', [ConfigurationController::class, 'getUserResponsibilities']);
 Route::patch ('configurations/responsibilities', [ConfigurationController::class, 'updateUserResponsibilities']);
 Route::get   ('configurations/columns-by-role/{roleId}',[ConfigurationController::class, 'getColumnsAndCasesByRole'])->whereNumber('roleId');
+Route::get('configurations/filters-by-user/{user}', [ConfigurationController::class, 'filtersByUsers'])->whereNumber('user');
 

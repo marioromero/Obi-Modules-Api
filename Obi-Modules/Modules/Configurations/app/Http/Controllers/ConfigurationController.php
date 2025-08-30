@@ -230,7 +230,7 @@ class ConfigurationController extends BaseApiController
         }
         $roleKey = (string) $roleId;
 
-        $configConnection = (new Configuration)->getConnectionName() ?: config('database.default');
+        $configConnection = (new Configuration)->getConnectionName() ?: 'configurations_db';
 
         $typeId = DB::connection($configConnection)
             ->table('types')
@@ -279,5 +279,90 @@ class ConfigurationController extends BaseApiController
             'columns' => $columns,
             'cases'   => $cases,
         ], 'Casos por rol obtenidos correctamente');
+    }
+
+    public function filtersByUsers(TraroUser $user)
+    {
+        // Conexión del módulo de configuraciones
+        $configConnection = (new Configuration)->getConnectionName();
+
+        // 1) type_id para User_filters
+        $typeId = DB::connection($configConnection)
+            ->table('types')
+            ->where('name', 'User_filters')
+            ->value('id');
+
+        if (! $typeId) {
+            return $this->error("No existe el type 'User_filters' en la conexión '{$configConnection}'.", 422);
+        }
+
+        // 2) Cargar content
+        $row = Configuration::where('type_id', $typeId)->first();
+        if (! $row) {
+            return $this->error("No hay configuración para 'User_filters' (type_id={$typeId}).", 422);
+        }
+
+        $content = $row->content ?? [];
+        if (! is_array($content)) {
+            $content = is_string($content) ? (json_decode($content, true) ?: []) : (array) $content;
+        }
+
+        $userKey = (string) $user->id;
+
+        $configColumns = $content[$userKey]['filters']['config_columns'] ?? null;
+        if (! is_array($configColumns) || empty($configColumns)) {
+            return $this->error("No hay configuraciones para user_id={$user->id}.", 422);
+        }
+
+        // 3) Ejecutar cada filtro: SELECT id + columns FROM v_cases_details {sql}
+        $out = [];
+        foreach ($configColumns as $item) {
+            $key     = $item['key']    ?? null;
+            $name    = $item['name']   ?? null;
+            $columns = $item['columns'] ?? [];
+            $sqlFrag = $item['sql']    ?? null;
+
+            if (! $key || ! $name || ! is_array($columns) || empty($columns) || ! $sqlFrag) {
+                return $this->error("Filtro inválido en la configuración de user_id={$user->id}.", 422);
+            }
+
+            // normalizar columnas
+            $columns = array_values(array_map('strval', $columns));
+
+            // construir SELECT (id + columnas solicitadas)
+            $selectCols = array_merge(['id'], $columns);
+            $selectList = implode(',', array_map(fn($c) => "`{$c}`", $selectCols));
+
+            $query = "SELECT {$selectList} FROM v_cases_details v {$sqlFrag}";
+
+            try {
+                $rows = DB::connection('cases_db')->select($query);
+            } catch (\Throwable $e) {
+                return $this->error("Error al ejecutar el filtro '{$key}': ".$e->getMessage(), 422);
+            }
+
+            // mapear resultado a arreglo asociativo (solo columnas solicitadas)
+            $cases = array_map(function ($row) use ($selectCols) {
+                $record = [];
+                foreach ($selectCols as $col) {
+                    $record[$col] = property_exists($row, $col) ? $row->{$col} : null;
+                }
+                return $record;
+            }, $rows);
+
+            $out[] = [
+                'key'     => (string) $key,
+                'name'    => (string) $name,
+                'columns' => $columns,
+                'cases'   => $cases,
+            ];
+        }
+
+        return $this->success([
+            'user_id' => (int) $user->id,
+            'filters' => [
+                'config_columns' => $out,
+            ],
+        ], 'Filtros de usuario obtenidos correctamente');
     }
 }

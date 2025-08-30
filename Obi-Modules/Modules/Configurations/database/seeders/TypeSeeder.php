@@ -12,7 +12,7 @@ class TypeSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('types')->insert([
+        DB::connection('configurations_db')->table('types')->insert([
             ['name' => 'User_filters'],
             ['name' => 'Global_geography'],
             ['name' => 'Global_settings'],
