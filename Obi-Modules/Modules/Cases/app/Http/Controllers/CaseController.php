@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Customers\Models\Customer;
 use Modules\Users\Models\User;
 use Illuminate\Http\Request;
+use Modules\Core\app\Helpers\ColumnMap;
 
 
 class CaseController extends BaseApiController
@@ -27,9 +28,9 @@ class CaseController extends BaseApiController
     public function index()
     {
         $cases = CaseDetail::all();
-        $collection = CaseEntityResource::collection($cases);
+        $rows = CaseEntityResource::collection($cases)->toArray(request());
 
-        return $this->success($collection, 'Listado de casos', 200);
+        return $this->success(ColumnMap::renameCollection($rows, 'cases'), 'Listado de casos', 200);
     }
 
     public function show(CaseEntity $case)
@@ -38,7 +39,7 @@ class CaseController extends BaseApiController
         if (! $detail) {
             return $this->error('Caso no encontrado', 404);
         }
-        return $this->success($detail, 'Caso obtenido correctamente', 200);
+        return $this->success(ColumnMap::renameKeys($detail->toArray(), 'cases'), 'Caso obtenido correctamente', 200);
     }
 
     public function store(StoreCaseRequest $request)
@@ -80,6 +81,8 @@ class CaseController extends BaseApiController
     }
 
                             //Endpoints para lógica de negocio de TRARO
+
+    //Trae los casos asociados a los clientes a los cuales está asignado el ID del ejecutivo
     public function recentByAgent(TraroUser $agent)
     {
         $cases = CaseDetail::query()
@@ -91,7 +94,7 @@ class CaseController extends BaseApiController
             return $this->success([], "No se encontraron casos para el ejecutivo/a '{$agent->name}'.", 200);
         }
 
-        return $this->success($cases, "Casos asignados al ejecutivo/a '{$agent->name}'.", 200);
+        return $this->success( ColumnMap::renameCollection($cases->toArray(), 'cases'), "Casos asignados al ejecutivo/a '{$agent->name}'.", 200);
     }
 
     public function byCustomer(Customer $customer)
@@ -104,7 +107,7 @@ class CaseController extends BaseApiController
             return $this->success([], "El cliente «{$customer->name} {$customer->lastname}» no tiene casos registrados", 200);
         }
 
-        return $this->success($cases, "Casos del cliente «{$customer->name} {$customer->lastname}»", 200);
+        return $this->success(ColumnMap::renameCollection($cases->toArray(), 'cases'), "Casos del cliente «{$customer->name} {$customer->lastname}»", 200);
     }
 
        public function officeByUser(TraroUser $user)
@@ -200,15 +203,18 @@ class CaseController extends BaseApiController
         ];
 
         $project = function ($rows, array $roleCols, array $forcedCols) {
-            $cols = array_values(array_unique(array_merge($roleCols, $forcedCols)));
-            return collect($rows)->map(function ($row) use ($cols) {
-                $rec = ['id' => $row->id];
-                foreach ($cols as $c) {
-                    $rec[$c] = property_exists($row, $c) ? $row->{$c} : null;
-                }
-                return $rec;
-            })->values();
-        };
+        $cols = array_values(array_unique(array_merge($roleCols, $forcedCols)));
+
+        $plain = collect($rows)->map(function ($row) use ($cols) {
+            $rec = ['id' => $row->id]; // siempre incluye ID
+            foreach ($cols as $c) {
+                $rec[$c] = property_exists($row, $c) ? $row->{$c} : null;
+            }
+            return $rec;
+        })->values()->toArray();
+      
+        return ColumnMap::renameCollection($plain, 'cases');
+    };
 
         $offices = [];
 

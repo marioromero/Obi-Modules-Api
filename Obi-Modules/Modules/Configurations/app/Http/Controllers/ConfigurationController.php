@@ -9,6 +9,7 @@ use Modules\Users\Models\TraroUser;
 use Illuminate\Http\Request;
 use Modules\Geography\Models\Country;
 use Illuminate\Support\Facades\DB;
+use Modules\Core\app\Helpers\ColumnMap;
 
 class ConfigurationController extends BaseApiController
 {
@@ -276,8 +277,8 @@ class ConfigurationController extends BaseApiController
         })->values();
 
         return $this->success([
-            'columns' => $columns,
-            'cases'   => $cases,
+            'columns' => ColumnMap::translate($columns, 'cases'),
+            'cases'   => ColumnMap::renameCollection($cases->toArray(), 'cases'),
         ], 'Casos por rol obtenidos correctamente');
     }
 
@@ -404,8 +405,8 @@ class ConfigurationController extends BaseApiController
             'user_id' => (int) $user->id,
             'key'     => (string) $key,
             'name'    => (string) $name,
-            'columns' => $columns,
-            'cases'   => $cases,
+            'columns' => ColumnMap::translate($columns, 'cases'),
+            'cases'   => ColumnMap::renameCollection($cases, 'cases'),
         ], 'Casos del filtro obtenidos correctamente');
     }
 }
