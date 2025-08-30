@@ -34,6 +34,9 @@ class CoreServiceProvider extends ServiceProvider
         // Registrar otros providers de Core si los agregas
         // $this->app->register(EventServiceProvider::class);
         // $this->app->register(RouteServiceProvider::class);
+
+        // Carga el mapeo de columnas del módulo Core
+            $this->mergeConfigFrom(base_path('Modules/Core/Config/column_map.php'), 'column_map');
     }
 
     /**
