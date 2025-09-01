@@ -28,9 +28,8 @@ class CaseController extends BaseApiController
     public function index()
     {
         $cases = CaseDetail::all();
-        $rows = CaseEntityResource::collection($cases)->toArray(request());
-
-        return $this->success(ColumnMap::renameCollection($rows, 'cases'), 'Listado de casos', 200);
+        $collection = CaseEntityResource::collection($cases);
+        return $this->success($collection, 'Listado de casos', 200);
     }
 
     public function show(CaseEntity $case)
@@ -39,7 +38,7 @@ class CaseController extends BaseApiController
         if (! $detail) {
             return $this->error('Caso no encontrado', 404);
         }
-        return $this->success(ColumnMap::renameKeys($detail->toArray(), 'cases'), 'Caso obtenido correctamente', 200);
+        return $this->success($detail, 'Caso obtenido correctamente', 200);
     }
 
     public function store(StoreCaseRequest $request)
@@ -90,11 +89,53 @@ class CaseController extends BaseApiController
             ->orderByDesc('created_at')
             ->get();
 
-        if ($cases->isEmpty()) {
-            return $this->success([], "No se encontraron casos para el ejecutivo/a '{$agent->name}'.", 200);
+        $columnsEn = [];
+        try {
+            $columnsEn = DB::connection('cases_db')
+                ->getSchemaBuilder()
+                ->getColumnListing('v_cases_details');
+        } catch (\Throwable $e) {
+            $columnsEn = [];
         }
 
-        return $this->success( ColumnMap::renameCollection($cases->toArray(), 'cases'), "Casos asignados al ejecutivo/a '{$agent->name}'.", 200);
+        if (empty($columnsEn)) {
+            try {
+                $dbName = (string) config('database.connections.cases_db.database');
+                $rows = DB::connection('cases_db')->select(
+                    "SELECT COLUMN_NAME
+                       FROM INFORMATION_SCHEMA.COLUMNS
+                      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+                   ORDER BY ORDINAL_POSITION",
+                    [$dbName, 'v_cases_details']
+                );
+                $columnsEn = array_map(fn ($r) => $r->COLUMN_NAME, $rows);
+            } catch (\Throwable $e) {
+                // 3) Últimos fallback para no romper el contrato
+                if ($cases->isNotEmpty()) {
+                    $columnsEn = array_keys($cases->first()->toArray());
+                } else {
+                    $columnsEn = [
+                        'id','code','state','customer_name','created_at',
+                        'priority_name','payment_status','overall_status'
+                    ];
+                }
+            }
+        }
+
+        $hidden = ['sent_to_acepta'];
+        $columnsEn = array_values(array_diff($columnsEn, $hidden));
+
+        $columnsEs = ColumnMap::translate($columnsEn, 'cases');
+
+
+        return $this->success(
+            [
+                'columns' => $columnsEs,
+                'cases'   => $cases,
+            ],
+            "Casos asignados al ejecutivo/a '{$agent->name}'.",
+            200
+        );
     }
 
     public function byCustomer(Customer $customer)
@@ -107,7 +148,7 @@ class CaseController extends BaseApiController
             return $this->success([], "El cliente «{$customer->name} {$customer->lastname}» no tiene casos registrados", 200);
         }
 
-        return $this->success(ColumnMap::renameCollection($cases->toArray(), 'cases'), "Casos del cliente «{$customer->name} {$customer->lastname}»", 200);
+        return $this->success($cases, "Casos del cliente «{$customer->name} {$customer->lastname}»", 200);
     }
 
        public function officeByUser(TraroUser $user)
@@ -204,16 +245,13 @@ class CaseController extends BaseApiController
 
         $project = function ($rows, array $roleCols, array $forcedCols) {
         $cols = array_values(array_unique(array_merge($roleCols, $forcedCols)));
-
-        $plain = collect($rows)->map(function ($row) use ($cols) {
-            $rec = ['id' => $row->id]; // siempre incluye ID
+        return collect($rows)->map(function ($row) use ($cols) {
+            $rec = ['id' => $row->id];
             foreach ($cols as $c) {
                 $rec[$c] = property_exists($row, $c) ? $row->{$c} : null;
             }
             return $rec;
-        })->values()->toArray();
-      
-        return ColumnMap::renameCollection($plain, 'cases');
+        })->values();
     };
 
         $offices = [];

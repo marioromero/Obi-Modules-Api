@@ -41,6 +41,7 @@ class CaseDetail extends Model
         'step_logs_json',
         'case_flows_json',
         'case_flow_last_json',
+        'sent_to_acepta',
     ];
 
     /* Atributos calculados que se agregan a la serialización */

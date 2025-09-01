@@ -278,7 +278,7 @@ class ConfigurationController extends BaseApiController
 
         return $this->success([
             'columns' => ColumnMap::translate($columns, 'cases'),
-            'cases'   => ColumnMap::renameCollection($cases->toArray(), 'cases'),
+            'cases'   => $cases,
         ], 'Casos por rol obtenidos correctamente');
     }
 
@@ -406,7 +406,7 @@ class ConfigurationController extends BaseApiController
             'key'     => (string) $key,
             'name'    => (string) $name,
             'columns' => ColumnMap::translate($columns, 'cases'),
-            'cases'   => ColumnMap::renameCollection($cases, 'cases'),
+            'cases'   => $cases,
         ], 'Casos del filtro obtenidos correctamente');
     }
 }

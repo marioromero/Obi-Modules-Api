@@ -17,11 +17,7 @@ class CustomerController extends BaseApiController
     public function index()
     {
         $customers = Customer::all();
-
-        // Renombrar claves al español
-        $rowsEs = ColumnMap::renameCollection($customers->toArray(), 'customers');
-
-        return $this->success($rowsEs, 'Listado de clientes', 200);
+        return $this->success($customers, 'Listado de clientes', 200);
     }
 
     public function show(Customer $customer)
@@ -30,7 +26,7 @@ class CustomerController extends BaseApiController
         if (! $detail) {
             return $this->error('Cliente no existe', 404);
         }
-        return $this->success(ColumnMap::renameKeys($detail->toArray(), 'customers'), 'Cliente obtenido correctamente', 200);
+        return $this->success($detail, 'Cliente obtenido correctamente', 200);
     }
 
     public function store(StoreCustomerRequest $request)
@@ -190,6 +186,6 @@ class CustomerController extends BaseApiController
             return $this->success([], "No hay clientes asignados al ejecutivo/a '{$agent->name}'.", 200);
         }
 
-        return $this->success( ColumnMap::renameCollection($customers->toArray(), 'customers'), "Clientes asignados al ejecutivo/a '{$agent->name}'.", 200);
+        return $this->success($customers, "Clientes asignados al ejecutivo/a '{$agent->name}'.", 200);
     }
 }
