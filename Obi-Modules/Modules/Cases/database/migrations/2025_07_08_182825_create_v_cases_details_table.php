@@ -29,7 +29,25 @@ return new class extends Migration
           cf_last.numero_notificaciones_documentos_enviados,
           cf_last.numero_notificaciones_documento_pendiente,
           cf_last.notificacion_documento_firmado,
-          cf_last.active_notifications,
+
+          /* Disponibilidad según configuración States_machine */
+          CASE
+            WHEN JSON_CONTAINS(
+                   JSON_EXTRACT(confsm.content, '$.steps_with_whatsapp_notifications'),
+                   JSON_QUOTE(SUBSTRING_INDEX(c.state, '\\\\', -1))
+                 )
+            THEN 1 ELSE 0
+          END AS available_notifications,
+
+          /* active_notifications “capado” por disponibilidad */
+          CASE
+            WHEN JSON_CONTAINS(
+                   JSON_EXTRACT(confsm.content, '$.steps_with_whatsapp_notifications'),
+                   JSON_QUOTE(SUBSTRING_INDEX(c.state, '\\\\', -1))
+                 )
+            THEN cf_last.active_notifications
+            ELSE 0
+          END AS active_notifications,
 
           /* ───── Último cambio de estado (step log) ───── */
           csl.last_state_change_user_id,
@@ -92,6 +110,12 @@ return new class extends Migration
 
         /* Comuna directa del caso */
         LEFT JOIN grupoint_obi_geography.communes cco ON cco.id = c.commune_id
+
+        /* ─────────── Configuración States_machine ─────────── */
+        LEFT JOIN grupoint_obi_configurations.types tsm
+               ON tsm.name = 'States_machine'
+        LEFT JOIN grupoint_obi_configurations.configurations confsm
+               ON confsm.type_id = tsm.id
 
         /* ─────────── ÚLTIMO case_flow por caso (evita duplicar filas) ─────────── */
         LEFT JOIN (

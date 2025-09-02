@@ -136,8 +136,9 @@ class ConfigurationSeeder extends Seeder
 
         $newConfigColumns = [
             [
-                'key'     => 'configuration_1',
+            'key'     => 'configuration_1',
             'name'    => 'Estado en proceso sin firmas',
+            'color'   => '#ff8878',
             'columns' => ['code','customer_name','created_at','state','bank_name','commune_name','accident_type_name'],
             // Antiguos primero: created_at ASC
             'sql'     => "WHERE overall_status <> 'cerrado' AND document_signing_date IS NULL AND signature_status <> 'firmados' ORDER BY created_at ASC, id ASC",
@@ -145,6 +146,7 @@ class ConfigurationSeeder extends Seeder
         [
             'key'     => 'configuration_2',
             'name'    => 'Sin denuncio y contrato firmado',
+            'color'   => '#ec81ff',
             'columns' => ['code','customer_name','state','accident_type_name','bank_name','commune_name','document_signing_date'],
             // Ambos documentos firmados (canónico o respaldo) y sin denuncio. Orden: fecha efectiva de firma ASC.
             'sql'     => "WHERE complaint_date IS NULL AND (document_signing_date IS NOT NULL OR signature_status = 'firmados' OR (fecha_firma_contrato IS NOT NULL AND fecha_firma_mandato IS NOT NULL)) ORDER BY COALESCE(document_signing_date, GREATEST(fecha_firma_contrato, fecha_firma_mandato)) ASC, id ASC",
@@ -152,6 +154,7 @@ class ConfigurationSeeder extends Seeder
         [
             'key'     => 'configuration_3',
             'name'    => 'Sin pago y con informe de liquidación',
+            'color'   => '#818bff',
             'columns' => ['code','customer_name','state','settlement_report_date','approved_amount','advisory_amount','amount_owed'],
             // Liquidado y sin pago (excluye pagados y parciales). Orden: settlement_report_date ASC.
             'sql'     => "WHERE settlement_report_date IS NOT NULL AND (amount_paid IS NULL OR amount_paid = 0) AND (payment_status IS NULL OR payment_status NOT IN ('pagado','parcialmente pagado')) ORDER BY settlement_report_date ASC, id ASC",
@@ -159,6 +162,7 @@ class ConfigurationSeeder extends Seeder
         [
             'key'     => 'configuration_4',
             'name'    => 'Con fecha probable de pago y sin cobranza',
+            'color'   => '#81ffe3',
             'columns' => ['code','customer_name','state','settlement_report_date','probable_payment_date','approved_amount','advisory_amount','bank_name','accident_type_name'],
             // Tiene fecha probable, sin cobranza (incluye online), excluye pagados. Orden: probable_payment_date ASC.
             'sql'     => "WHERE probable_payment_date IS NOT NULL AND collection_date IS NULL AND online_collection_date IS NULL AND (payment_status IS NULL OR payment_status NOT IN ('pagado','cobranza','cobranza online')) ORDER BY probable_payment_date ASC, id ASC",
@@ -166,13 +170,14 @@ class ConfigurationSeeder extends Seeder
         [
             'key'     => 'configuration_5',
             'name'    => 'En cobranza sin pago',
+            'color'   => '#bdff81',
             'columns' => ['code','customer_name','state','approved_amount','advisory_amount','probable_payment_date','collection_date','payment_status'],
             // Señales de cobranza (fecha u estado), sin pago real, excluye pagados y parciales. Orden: fecha de cobranza disponible ASC.
             'sql'     => "WHERE (collection_date IS NOT NULL OR online_collection_date IS NOT NULL OR payment_status IN ('cobranza','cobranza online')) AND (amount_paid IS NULL OR amount_paid = 0) AND (payment_status IS NULL OR payment_status NOT IN ('pagado','parcialmente pagado')) ORDER BY COALESCE(collection_date, online_collection_date) ASC, id ASC",
         ],
     ];
 
-            // 1) Leer content existente
+        // 1) Leer content existente
         $existing = [];
         if ($row = DB::connection('configurations_db')->table('configurations')->where('type_id', 1)->first()) {
             $existing = json_decode($row->content ?? '[]', true) ?: [];
@@ -187,6 +192,143 @@ class ConfigurationSeeder extends Seeder
         DB::connection('configurations_db')->table('configurations')->updateOrInsert(
             ['type_id' => 1], // User_filters
             ['content' => json_encode($existing, JSON_UNESCAPED_UNICODE)]
+        );
+
+
+        // 6) States_machine (type_id = 6)
+        DB::connection('configurations_db')->table('configurations')->updateOrInsert(
+            ['type_id' => 6],
+            ['content' => json_encode([
+                "connection" => "cases_db",
+                "module" => "Cases",
+                "model" => "CaseEntity",
+                "table" => "cases",
+                "namespace" => "Traro",
+                "default" => "Ingreso",
+                "states" => [
+                    "Ingreso",
+                    "Denuncio",
+                    "Programacion",
+                    "Visita",
+                    "Presupuesto",
+                    "Liquidacion",
+                    "Recaudacion",
+                    "Cancelado",
+                    "Desistido",
+                    "DesistidoSinVisita"
+                ],
+                "transitions" => [
+                    "Ingreso" => ["Denuncio", "Cancelado", "Desistido", "DesistidoSinVisita"],
+                    "Denuncio" => ["Programacion", "Ingreso", "Cancelado", "Desistido", "DesistidoSinVisita"],
+                    "Programacion" => ["Visita", "Denuncio", "Cancelado", "Desistido", "DesistidoSinVisita"],
+                    "Visita" => ["Presupuesto", "Programacion", "Cancelado", "Desistido"],
+                    "Presupuesto" => ["Liquidacion", "Visita", "Cancelado", "Desistido"],
+                    "Liquidacion" => ["Recaudacion", "Presupuesto", "Cancelado", "Desistido"],
+                    "Recaudacion" => ["Cancelado", "Desistido"],
+                    "Cancelado" => ["Ingreso", "Denuncio", "Programacion", "Visita", "Presupuesto", "Liquidacion", "Recaudacion"],
+                    "Desistido" => ["Ingreso", "Denuncio", "Programacion", "Visita", "Presupuesto", "Liquidacion", "Recaudacion"],
+                    "DesistidoSinVisita" => ["Ingreso", "Denuncio", "Programacion", "Presupuesto", "Liquidacion", "Recaudacion"]
+                ],
+                "sub_states" => [
+                    "Ingreso" => [
+                        "column" => "signature_status",
+                        "values" => [
+                            "generado",
+                            "enviado a acepta",
+                            "notificado",
+                            "contrato pendiente",
+                            "mandato pendiente",
+                            "firmados"
+                        ],
+                        "default" => "generado",
+                        "final" => "firmados"
+                    ],
+                    "Denuncio" => [
+                        "column" => "denounce_status",
+                        "values" => ["pendiente", "en proceso", "realizado"],
+                        "default" => "pendiente",
+                        "final" => "realizado"
+                    ],
+                    "Programacion" => [
+                        "column" => "scheduling_status",
+                        "values" => ["pendiente", "en proceso", "realizado"],
+                        "default" => "pendiente",
+                        "final" => "realizado"
+                    ],
+                    "Visita" => [
+                        "column" => "visit_status",
+                        "values" => ["pendiente", "en proceso", "realizado"],
+                        "default" => "pendiente",
+                        "final" => "realizado"
+                    ],
+                    "Presupuesto" => [
+                        "column" => "budget_status",
+                        "values" => ["pendiente", "en proceso", "realizado"],
+                        "default" => "pendiente",
+                        "final" => "realizado"
+                    ],
+                    "Liquidacion" => [
+                        "column" => "decision_status",
+                        "values" => [
+                            "en espera",
+                            "aprobado",
+                            "bajo deducible",
+                            "rechazado aseguradora",
+                            "rechazado liquidadora",
+                            "impugnado"
+                        ],
+                        "default" => "en espera",
+                        "final" => "aprobado"
+                    ],
+                    "Recaudacion" => [
+                        "column" => "payment_status",
+                        "values" => [
+                            "pendiente",
+                            "cobranza",
+                            "parcialmente pagado",
+                            "pagado",
+                            "cobranza online"
+                        ],
+                        "default" => "pendiente",
+                        "final" => "pagado"
+                    ]
+                ],
+                "closing_steps" => [
+                    "Cancelado",
+                    "Desistido",
+                    "DesistidoSinVisita"
+                ],
+                "auto_transitions" => [
+                    "Ingreso" => "Denuncio",
+                    "Denuncio" => "Programacion",
+                    "Programacion" => "Visita",
+                    "Visita" => "Presupuesto",
+                    "Presupuesto" => "Liquidacion",
+                    "Liquidacion" => "Recaudacion"
+                ],
+                "overall_status" => [
+                    "column" => "overall_status",
+                    "values" => ["en proceso", "con pendientes", "cerrado"],
+                    "default" => "en proceso",
+                    "triggers" => [
+                        "closed" => [
+                            "states" => ["Cancelado", "Desistido", "DesistidoSinVisita"],
+                            "sub_states" => [
+                                "bajo deducible",
+                                "rechazado aseguradora",
+                                "rechazado liquidadora",
+                                "pagado"
+                            ]
+                        ],
+                        "pending" => [
+                            "sub_states" => ["pendiente"]
+                        ]
+                    ]
+                ],
+                "steps_with_whatsapp_notifications" => [
+                    "Ingreso"
+                ]
+            ], JSON_UNESCAPED_UNICODE)]
         );
     }
 }

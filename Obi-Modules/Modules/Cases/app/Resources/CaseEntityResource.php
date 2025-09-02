@@ -95,6 +95,7 @@ class CaseEntityResource extends JsonResource
 
              /* --- Notificaciones (desde cf_last en la vista) --- */
             'active_notifications' => (bool) ($this->active_notifications ?? false),
+            'available_notifications' => (bool) ($this->available_notifications ?? false),
         ];
     }
 }

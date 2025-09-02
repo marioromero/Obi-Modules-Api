@@ -18,6 +18,7 @@ class TypeSeeder extends Seeder
             ['name' => 'Global_settings'],
             ['name' => 'User_responsabilities'],
             ['name' => 'Columns_by_rol'],
+            ['name' => 'States_machine'],
         ]);
     }
 }
