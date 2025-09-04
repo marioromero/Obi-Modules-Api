@@ -23,6 +23,7 @@ class Customer extends Model
         'dni',
         'username',
         'password',
+        'serial_number',
         'email',
         'address',
         'phone',

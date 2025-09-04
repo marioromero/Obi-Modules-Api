@@ -30,6 +30,7 @@ class StoreCustomerRequest extends FormRequest
             ],
             'username'       => 'nullable|string|max:50',
             'password'       => 'nullable|string|max:255',
+            'serial_number'  => ['nullable','string','max:15'],
             'email'          => 'required|email|max:255',
             'address'        => 'required|string|max:255',
             'phone'          => 'required|string|regex:/^\d{9,11}$/',

@@ -19,6 +19,7 @@ class CustomerSeeder extends Seeder
             'dni'            => '12345678-9',
             'username'       => 'johndoe',
             'password'       => bcrypt('password123'),
+            'serial_number'  => '999.999.999',
             'email'          => 'johndoe@example.com',
             'address'        => '123 Main St',
             'phone'          => '987654321',

@@ -14,10 +14,11 @@ return new class extends Migration
             $table->id();
             $table->string('name', 100);
             $table->string('lastname', 100)->nullable();
-            $table->string('full_name', 100)->nullable(); // ← NUEVO
+            $table->string('full_name', 100)->nullable();
             $table->string('dni', 20)->nullable()->unique();
             $table->string('username', 50)->nullable();
             $table->string('password', 255)->nullable();
+            $table->string('serial_number', 15)->nullable();
             $table->string('email', 100)->nullable();
             $table->string('address', 255)->nullable();
             $table->string('phone', 15)->nullable();

@@ -24,7 +24,7 @@ class UpdateCustomerRequest extends FormRequest
                 Rule::unique('customers_db.customers', 'dni')
                     ->ignore($this->currentCustomerId()),
             ],
-
+            'serial_number'   => ['sometimes','nullable','string','max:15'],
             'email'          => ['sometimes','email'],
             'address'        => ['sometimes','string','max:255'],
             'phone'          => ['sometimes','string','max:20'],
