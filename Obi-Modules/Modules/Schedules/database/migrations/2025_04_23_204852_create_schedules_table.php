@@ -11,12 +11,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('schedules', function (Blueprint $table) {
-            $table->id();
-            $table->dateTime('schedule_date');
-            $table->unsignedBigInteger('scheduling_user');    // FK to users_db.users
-            $table->unsignedBigInteger('case_id');            // FK to cases_db.cases
-            $table->unsignedBigInteger('scheduled_user');     // FK to users_db.users
-            $table->foreignId('schedule_status_id')->constrained('schedule_statuses');
+            $table->id(); //ID
+            $table->unsignedBigInteger('case_id'); //FK a cases_db.cases
+            // Datos de agendamiento
+            $table->date('inspection_date')->nullable(); //Fecha de visita
+            $table->string('inspection_time', 5)->nullable(); //Hora de visita (HH:MM)
+            $table->integer('accident_number')->nullable(); //Número de siniestro
+            $table->longText('comments')->nullable(); //Comentarios
+            //Relaciones externas
+            $table->unsignedBigInteger('insurer_id')->nullable(); //FK a banks_db.insurers
+            $table->unsignedBigInteger('loss_adjuster_id')->nullable(); //FK a banks_db.loss_adjusters
+            $table->unsignedBigInteger('consultant_id')->nullable(); //FK a users_db.users
         });
     }
 
@@ -25,4 +30,3 @@ return new class extends Migration
         Schema::dropIfExists('schedules');
     }
 };
-

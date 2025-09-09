@@ -6,6 +6,8 @@ use Modules\Core\app\Http\BaseApiController;
 use Illuminate\Http\Request;
 use Modules\Schedules\Models\Schedule;
 use App\Http\Controllers\Controller;
+use Modules\Schedules\app\Http\Requests\StoreScheduleRequest;
+use Modules\Schedules\app\Http\Requests\UpdateScheduleRequest;
 
 class ScheduleController extends BaseApiController
 {
@@ -21,18 +23,16 @@ class ScheduleController extends BaseApiController
         return $this->success($schedule, 'Schedule obtenido correctamente');
     }
 
-    public function store(Request $request)
+    public function store(StoreScheduleRequest $request)
     {
-        $data   = $request->validate(['name' => 'required|string']);
-        $schedule = Schedule::create($data);
+        $schedule = Schedule::create($request->validated());
 
-        return $this->success($schedule, 'Schedule creado correctamente', 201);
+        return $this->success($schedule, 'Schedule creado correctamente', 200);
     }
 
-    public function update(Request $request, Schedule $schedule)
+    public function update(UpdateScheduleRequest $request, Schedule $schedule)
     {
-        $data = $request->validate(['name' => 'required|string']);
-        $schedule->update($data);
+        $schedule->update($request->validated());
 
         return $this->success($schedule, 'Schedule actualizado correctamente');
     }
