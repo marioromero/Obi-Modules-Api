@@ -14,27 +14,27 @@ class ScheduleController extends BaseApiController
 
     public function index()
     {
-        $paginator = Schedule::paginate(15);
-        return $this->paginated($paginator, 'Listado de schedules');
-    }
+        $schedules = Schedule::all();
+        return $this->success($schedules, 'Listado de programaciones', 200);
+    }    
 
     public function show(Schedule $schedule)
     {
-        return $this->success($schedule, 'Schedule obtenido correctamente');
+        return $this->success($schedule, 'Programación obtenida correctamente');
     }
 
     public function store(StoreScheduleRequest $request)
     {
         $schedule = Schedule::create($request->validated());
 
-        return $this->success($schedule, 'Schedule creado correctamente', 200);
+        return $this->success($schedule, 'Programación creada correctamente', 200);
     }
 
     public function update(UpdateScheduleRequest $request, Schedule $schedule)
     {
         $schedule->update($request->validated());
 
-        return $this->success($schedule, 'Schedule actualizado correctamente');
+        return $this->success($schedule, 'Programación actualizada correctamente');
     }
 
     public function patch(Request $request, Schedule $schedule)
@@ -48,7 +48,7 @@ class ScheduleController extends BaseApiController
     public function destroy(Schedule $schedule)
     {
         $schedule->delete();
-        return $this->success(null, 'Schedule eliminado correctamente', 204);
+        return $this->success(null, 'Programación eliminada correctamente', 204);
     }
 }
 
