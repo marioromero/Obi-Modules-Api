@@ -284,10 +284,8 @@ class ConfigurationController extends BaseApiController
 
     public function filtersByUsers(TraroUser $user)
     {
-        // Conexión del módulo de configuraciones
         $configConnection = (new Configuration)->getConnectionName();
 
-        // 1) type_id = User_filters
         $typeId = DB::connection($configConnection)
             ->table('types')
             ->where('name', 'User_filters')
@@ -297,7 +295,6 @@ class ConfigurationController extends BaseApiController
             return $this->error("No existe el type 'User_filters' en la conexión '{$configConnection}'.", 422);
         }
 
-        // 2) Cargar content
         $row = Configuration::where('type_id', $typeId)->first();
         if (! $row) {
             return $this->error("No hay configuración para 'User_filters' (type_id={$typeId}).", 422);
@@ -315,19 +312,21 @@ class ConfigurationController extends BaseApiController
             return $this->error("No hay configuraciones para user_id={$user->id}.", 422);
         }
 
-        // 3) Solo definiciones key y name
+        // Solo definiciones: key, name y color (SIN columns)
         $defs = [];
         foreach ($list as $it) {
-            $key  = $it['key']  ?? null;
-            $name = $it['name'] ?? null;
+            $key   = $it['key']   ?? null;
+            $name  = $it['name']  ?? null;
+            $color = $it['color'] ?? null;
 
             if (! $key || ! $name) {
                 return $this->error("Filtro inválido en la configuración de user_id={$user->id}.", 422);
             }
 
             $defs[] = [
-                'key'  => (string) $key,
-                'name' => (string) $name,
+                'key'   => (string) $key,
+                'name'  => (string) $name,
+                'color' => $color !== null ? (string) $color : null,
             ];
         }
 
@@ -338,6 +337,7 @@ class ConfigurationController extends BaseApiController
             ],
         ], 'Filtros de usuario obtenidos correctamente');
     }
+
 
     public function filterCasesByKey(TraroUser $user, string $key)
     {

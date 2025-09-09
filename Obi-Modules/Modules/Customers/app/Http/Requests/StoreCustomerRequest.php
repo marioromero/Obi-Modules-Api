@@ -30,7 +30,7 @@ class StoreCustomerRequest extends FormRequest
             ],
             'username'       => 'nullable|string|max:50',
             'password'       => 'nullable|string|max:255',
-            'serial_number'  => ['nullable','string','max:15'],
+            'serial_number'  => 'nullable','string','max:15',
             'email'          => 'required|email|max:255',
             'address'        => 'required|string|max:255',
             'phone'          => 'required|string|regex:/^\d{9,11}$/',
@@ -39,7 +39,7 @@ class StoreCustomerRequest extends FormRequest
             'marital_status' => 'required|in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo',
             'occupation'     => 'required|string|max:255',
             'nationality'    => 'nullable|in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña',
-            'comments'       => ['nullable', 'string'],
+            'comments'       => 'nullable', 'string',
 
             // Relaciones
             'commune_id'     => ['nullable', 'integer', Rule::exists(Commune::class, 'id')],
