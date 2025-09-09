@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 use Spatie\ModelStates\HasStates;
 use Modules\Cases\States\Core\CaseEntityState;
 use Modules\Cases\Models\CaseEntityStepLog;
-
+use Modules\Schedules\Models\Schedule;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Core\app\Support\Traits\DeletionStrategies;
@@ -138,7 +138,6 @@ class CaseEntity extends Model
     {
         return $this->belongsTo(\Modules\Banks\Models\LossAdjuster::class, 'loss_adjuster_id');
     }
-
 
     public function stepLogs()
     {

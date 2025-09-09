@@ -2,7 +2,7 @@
 
 namespace Modules\Banks\Models;
 use Modules\Core\app\Support\Traits\DeletionStrategies;
-
+use Modules\Schedules\Models\Schedule;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,6 +24,11 @@ class LossAdjuster extends Model
     public function cases()
     {
         return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'loss_adjuster_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(\Modules\Schedules\Models\Schedule::class, 'loss_adjuster_id');
     }
 }
 

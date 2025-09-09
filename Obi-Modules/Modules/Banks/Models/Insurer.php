@@ -2,7 +2,7 @@
 
 namespace Modules\Banks\Models;
 use Modules\Core\app\Support\Traits\DeletionStrategies;
-
+use Modules\Schedules\Models\Schedule;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,5 +25,11 @@ class Insurer extends Model
     {
         return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'insurer_id');
     }
+
+    public function schedules()
+    {
+        return $this->hasMany(\Modules\Schedules\Models\Schedule::class, 'insurer_id');
+    }
+
 }
 
