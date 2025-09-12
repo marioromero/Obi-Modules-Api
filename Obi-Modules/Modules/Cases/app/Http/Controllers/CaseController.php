@@ -110,14 +110,10 @@ class CaseController extends BaseApiController
                 );
                 $columnsEn = array_map(fn ($r) => $r->COLUMN_NAME, $rows);
             } catch (\Throwable $e) {
-                // 3) Últimos fallback para no romper el contrato
                 if ($cases->isNotEmpty()) {
                     $columnsEn = array_keys($cases->first()->toArray());
                 } else {
-                    $columnsEn = [
-                        'id','code','state','customer_name','created_at',
-                        'priority_name','payment_status','overall_status'
-                    ];
+                    $columnsEn = [];
                 }
             }
         }
@@ -125,8 +121,24 @@ class CaseController extends BaseApiController
         $hidden = ['sent_to_acepta'];
         $columnsEn = array_values(array_diff($columnsEn, $hidden));
 
+        //Columnas solicitadas por gente de traro
+        $columnsEn = [
+            'id',
+            'code',
+            'customer_name',
+            'state',
+            'commune_name',
+            'accident_type_name',
+            'bank_name',
+            'settlement_report_date',
+            'collection_date',
+            'approved_amount',
+        ];
+
         $columnsEs = ColumnMap::translate($columnsEn, 'cases');
 
+        // Reducimos cada caso solo a esas columnas
+        $cases = $cases->map(fn ($row) => collect($row)->only($columnsEn));
 
         return $this->success(
             [
