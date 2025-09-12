@@ -126,6 +126,7 @@ class CaseController extends BaseApiController
             'id',
             'code',
             'customer_name',
+            'customer_id',
             'state',
             'commune_name',
             'accident_type_name',
