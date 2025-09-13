@@ -39,6 +39,7 @@ class StoreCustomerRequest extends FormRequest
             'marital_status' => 'required|in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo',
             'occupation'     => 'required|string|max:255',
             'nationality'    => 'nullable|in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña',
+            'is_enabled'     => ['sometimes','boolean'],
             'comments'       => 'nullable', 'string',
 
             // Relaciones

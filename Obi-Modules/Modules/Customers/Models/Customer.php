@@ -34,6 +34,7 @@ class Customer extends Model
         'nationality',
         'commune_id',
         'assigned_agent',
+        'is_enabled',
         'tags',
         'comments',
     ];

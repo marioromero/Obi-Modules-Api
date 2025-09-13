@@ -27,6 +27,7 @@ class CustomerSeeder extends Seeder
             'gender'         => 'M',
             'marital_status' => 'Single',
             'occupation'     => 'Developer',
+            'is_enabled'     => true,
             'commune_id'     => null,
             'assigned_agent' => 1,
         ]);

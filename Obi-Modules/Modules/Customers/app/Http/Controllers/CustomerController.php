@@ -9,6 +9,7 @@ use Modules\Customers\app\Http\Requests\UpdateCustomerRequest;
 use Modules\Customers\Models\Customer;
 use Modules\Customers\Models\CustomerDetail;
 use Modules\Users\Models\TraroUser;
+use Illuminate\Http\Request;
 use Modules\Core\app\Helpers\ColumnMap;
 
 
@@ -187,5 +188,20 @@ class CustomerController extends BaseApiController
         }
 
         return $this->success($customers, "Clientes asignados al ejecutivo/a '{$agent->name}'.", 200);
+    }
+
+    public function updateStatusForCustomer(Request $request, Customer $customer)
+    {
+        $data = $request->validate([
+            'is_enabled' => ['required', 'boolean'],
+        ]);
+
+        $customer->is_enabled = $data['is_enabled'];
+        $customer->save();
+
+        return $this->success(
+            $customer->refresh(),
+            'Estado del cliente actualizado correctamente'
+        );
     }
 }

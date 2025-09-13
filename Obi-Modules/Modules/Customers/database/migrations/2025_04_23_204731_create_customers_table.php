@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('marital_status', 50)->nullable();
             $table->string('occupation', 100)->nullable();
             $table->string('nationality', 50)->nullable();
+            $table->boolean('is_enabled')->default(true);
             $table->json('tags')->nullable();
             $table->unsignedBigInteger('commune_id')->nullable();
             $table->unsignedBigInteger('assigned_agent')->nullable();
