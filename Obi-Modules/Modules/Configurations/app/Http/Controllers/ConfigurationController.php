@@ -409,4 +409,197 @@ class ConfigurationController extends BaseApiController
             'cases'   => $cases,
         ], 'Casos del filtro obtenidos correctamente');
     }
+
+    public function getUsersFiltersAndColumns(TraroUser $user, string $paso, ?string $filter = null)
+    {
+        $step = mb_strtolower($paso, 'UTF-8');
+        $key  = $filter;
+
+        // 1) Cargar configuración (type = User_filters)
+        $configConnection = (new Configuration)->getConnectionName() ?: 'configurations_db';
+
+        $typeId = DB::connection($configConnection)
+            ->table('types')->where('name', 'User_filters')->value('id');
+
+        if (! $typeId) {
+            return $this->error("No existe el type 'User_filters' en la conexión '{$configConnection}'.", 422);
+        }
+
+        $row = Configuration::where('type_id', $typeId)->first();
+        if (! $row) {
+            return $this->error("No hay configuración para 'User_filters' (type_id={$typeId}).", 422);
+        }
+
+        $content = $row->content ?? [];
+        if (! is_array($content)) {
+            $content = is_string($content) ? (json_decode($content, true) ?: []) : (array) $content;
+        }
+
+        $userKey = (string) $user->id;
+        if (! isset($content[$userKey]['steps'][$step])) {
+            return $this->error("No hay configuración para user_id={$user->id} en el paso '{$step}'.", 404);
+        }
+
+        $stepCfg = $content[$userKey]['steps'][$step];
+
+    // 2) Condición por estado (para default y casos ya manejados)
+    // state en BD viene con FQCN usamos el último segmento para rescatar solo el "paso"
+    $stateCond = function (string $s): ?string {
+        $label = [
+            'denuncio'     => 'Denuncio',
+            'programacion' => 'Programacion',
+            'visita'       => 'Visita',
+            'presupuesto'  => 'Presupuesto',
+            'liquidacion'  => 'Liquidacion',
+            'recaudacion'  => 'Recaudacion',
+        ][$s] ?? null;
+
+        if (! $label) return null;
+        return "SUBSTRING_INDEX(state, '\\\\', -1) = '{$label}'";
+    };
+
+    $baseOrder = 'ORDER BY created_at DESC, id DESC';
+    $baseSql   = 'SELECT * FROM v_cases_details v ';
+
+        // 3) phone y user_name desde customers_db.v_customers_details
+        $enrichWithCustomerData = function (array $rows): array {
+            if (empty($rows)) return $rows;
+
+            $customerIds = [];
+            foreach ($rows as $r) {
+                if (isset($r->customer_id)) $customerIds[] = (int) $r->customer_id;
+            }
+            $customerIds = array_values(array_unique(array_filter($customerIds)));
+            if (!$customerIds) return $rows;
+
+            $extras = DB::connection('customers_db')
+                ->table('v_customers_details')
+                ->whereIn('id', $customerIds)
+                ->get(['id', 'phone', 'user_name'])
+                ->keyBy('id');
+
+            foreach ($rows as $r) {
+                $cid = isset($r->customer_id) ? (int) $r->customer_id : null;
+                if ($cid && $extras->has($cid)) {
+                    $extra = $extras->get($cid);
+                    if (!isset($r->phone) || $r->phone === null) {
+                        $r->phone = $extra->phone ?? null;
+                    }
+                    if (!isset($r->user_name) || $r->user_name === null) {
+                        $r->user_name = $extra->user_name ?? null;
+                    }
+                }
+            }
+            return $rows;
+        };
+
+        // 4) id + columnas esperadas en el mismo orden
+        $projectRows = function (array $rows, array $columnsEn): array {
+            $selectCols = array_values(array_unique(array_merge(['id'], $columnsEn)));
+            return array_map(function ($r) use ($selectCols) {
+                $out = [];
+                foreach ($selectCols as $c) {
+                    $out[$c] = property_exists($r, $c) ? $r->{$c} : null;
+                }
+                return $out;
+            }, $rows);
+        };
+
+        // 5) Filtro específico (si viene {filter} en la ruta)
+        if ($key) {
+            $filterCfg = collect($stepCfg['filters'] ?? [])->firstWhere('key', $key);
+            if (! $filterCfg) {
+                return $this->error("No existe el filtro '{$key}' en el paso '{$step}'.", 404);
+            }
+
+            $sqlFrag = trim((string)($filterCfg['sql'] ?? ''));
+            if ($sqlFrag === '') {
+                return $this->error("Filtro '{$key}' inválido (sin SQL).", 422);
+            }
+
+            $columnsEn = array_values(array_map('strval', (array)($filterCfg['columns'] ?? [])));
+            $columnsEs = ColumnMap::translate($columnsEn, 'cases');
+            $querySql  = $baseSql . $sqlFrag;
+
+            try {
+                $rows = DB::connection('cases_db')->select($querySql);
+            } catch (\Throwable $e) {
+                return $this->error("Error al ejecutar el filtro '{$key}': " . $e->getMessage(), 422);
+            }
+
+            $rows = $enrichWithCustomerData($rows);
+            $rows = $projectRows($rows, $columnsEn);
+
+            return $this->success([
+                'user_id' => (int) $user->id,
+                'step'    => $step,
+                'filter'  => [
+                    'key'     => (string) $filterCfg['key'],
+                    'name'    => (string) $filterCfg['name'],
+                    'color'   => $filterCfg['color'] ?? null,
+                    'columns' => $columnsEs, // labels ES
+                ],
+                'data'    => $rows,
+            ], 'Filtro aplicado', 200);
+        }
+
+        // 6) DEFAULT del paso
+        $defaultColumnsEn = array_values(array_unique((array)($stepCfg['default'] ?? [])));
+        $defaultColumnsEs = ColumnMap::translate($defaultColumnsEn, 'cases');
+
+        $where = $stateCond($step);
+        if (! $where) {
+            return $this->error("Paso '{$step}' no reconocido para default.", 422);
+        }
+
+        $defaultSql = $baseSql . "WHERE {$where} {$baseOrder}";
+        try {
+            $defaultData = DB::connection('cases_db')->select($defaultSql);
+        } catch (\Throwable $e) {
+            return $this->error("Error al ejecutar default del paso '{$step}': " . $e->getMessage(), 422);
+        }
+
+        // Enriquecer y proyectar default
+        $defaultData = $enrichWithCustomerData($defaultData);
+        $defaultData = $projectRows($defaultData, $defaultColumnsEn);
+
+        // datos de filtros
+        $filtersMeta = array_map(function ($f) {
+            return ['key' => $f['key'], 'name' => $f['name'], 'color' => $f['color'] ?? null];
+        }, (array)($stepCfg['filters'] ?? []));
+
+        // 7) managed_cases (usa columnas del default)
+        $managedMonths = (int)($stepCfg['managed_cases']['months'] ?? 2);
+        $targetStep    = $stepCfg['managed_cases']['target_step'] ?? null;
+        $managedData   = [];
+
+        if ($targetStep) {
+            $tWhere = $stateCond($targetStep);
+            if ($tWhere) {
+                $window  = "created_at >= DATE_SUB(NOW(), INTERVAL {$managedMonths} MONTH)";
+                $mSql    = $baseSql . "WHERE ({$tWhere}) AND {$window} {$baseOrder}";
+                try {
+                    $managedData = DB::connection('cases_db')->select($mSql);
+                } catch (\Throwable $e) {
+                    return $this->error("Error al ejecutar managed_cases de '{$targetStep}': " . $e->getMessage(), 422);
+                }
+
+                // Enriquecer y proyectar managed_cases con columnas del default
+                $managedData = $enrichWithCustomerData($managedData);
+                $managedData = $projectRows($managedData, $defaultColumnsEn);
+            }
+        }
+
+        return $this->success([
+            'user_id'      => (int) $user->id,
+            'step'         => $step,
+            'default'      => $defaultColumnsEs,
+            'filters'      => $filtersMeta,
+            'data'         => $defaultData,
+            'managed_cases'=> [
+                'months' => $managedMonths,
+                'data'   => $managedData,
+            ],
+        ], 'Default del paso', 200);
+    }
 }

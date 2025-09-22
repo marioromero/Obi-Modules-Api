@@ -29,3 +29,4 @@ Route::patch ('configurations/responsibilities', [ConfigurationController::class
 Route::get   ('configurations/columns-by-role/{roleId}',[ConfigurationController::class, 'getColumnsAndCasesByRole'])->whereNumber('roleId');
 Route::get('configurations/filters-by-user/{user}', [ConfigurationController::class, 'filtersByUsers'])->whereNumber('user');
 Route::get('configurations/filters-by-user/{user}/cases/{key}',[ConfigurationController::class, 'filterCasesByKey'])->whereNumber('user');
+Route::get('users/{user}/filters-columns/{paso}/{filter?}', [ConfigurationController::class, 'getUsersFiltersAndColumns'])->name('configurations.users.filters-columns');
