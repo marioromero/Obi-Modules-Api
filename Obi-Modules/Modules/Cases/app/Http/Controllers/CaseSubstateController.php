@@ -37,9 +37,9 @@ class CaseSubstateController extends BaseApiController
 
             return $this->success($case->refresh(), 'Sub-estado actualizado correctamente', 200);
         } catch (ValidationException $e) {
-            return $this->error('Datos inválidos', 422);
+            return $this->error('Errores de validación: ' . collect($e->errors())->flatten()->implode(', '), 422);
         } catch (Throwable $e) {
-            return $this->error($e->getMessage() ?: 'Error interno', 500);
+            return $this->error('Error: ' . ($e->getMessage() ?: 'Error interno del servidor'), 500);
         }
     }
 }
