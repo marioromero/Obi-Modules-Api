@@ -44,7 +44,8 @@ return [
             'bank_service_number'    => 'N° atención banco',
             'advisory_amount'        => 'Monto asesoría',
             'accident_type_id'       => 'Tipo de siniestro (ID)',
-
+            'phone'                  => 'Teléfono 1',
+            'user_name'              => 'Ejecutivo asignado',
             'is_duplicated'          => '¿Duplicado?',
             'description'            => 'Descripción',
             'resolution'             => 'Resolución',
@@ -131,6 +132,7 @@ return [
             'lastname'       => 'Apellido',
             'full_name'      => 'Nombre completo',
             'dni'            => 'RUT',
+            'serial_number'  => 'Número de serie',
             'username'       => 'Usuario',
             'password'       => 'Password',
             'email'          => 'Correo',

@@ -129,71 +129,218 @@ class ConfigurationSeeder extends Seeder
             );
         }
 
-        //Seeder de filtros por usuario en este caso solamente el 22 (Edilia)
-        $userId  = 22;
+        //Filtros de usuario
+        $typeId = DB::connection('configurations_db')->table('types')
+            ->where('name', 'User_filters')
+            ->value('id');
 
-        $userKey = (string) $userId;
+        if ($typeId) {
+            // Leer contenido existente y normalizar
+            $row = DB::connection('configurations_db')->table('configurations')
+                ->where('type_id', $typeId)->first();
+            $content = $row ? (json_decode($row->content ?? '[]', true) ?: []) : [];
 
-        $newConfigColumns = [
-            [
-            'key'     => 'configuration_1',
-            'name'    => 'Estado en proceso sin firmas',
-            'color'   => '#ff8878',
-            'columns' => ['code','customer_name','created_at','state','bank_name','commune_name','accident_type_name'],
-            // Antiguos primero: created_at ASC
-            'sql'     => "WHERE overall_status <> 'cerrado' AND document_signing_date IS NULL AND signature_status <> 'firmados' ORDER BY created_at ASC, id ASC",
-        ],
-        [
-            'key'     => 'configuration_2',
-            'name'    => 'Sin denuncio y contrato firmado',
-            'color'   => '#ec81ff',
-            'columns' => ['code','customer_name','state','accident_type_name','bank_name','commune_name','document_signing_date'],
-            // Ambos documentos firmados (canónico o respaldo) y sin denuncio. Orden: fecha efectiva de firma ASC.
-            'sql'     => "WHERE complaint_date IS NULL AND (document_signing_date IS NOT NULL OR signature_status = 'firmados' OR (fecha_firma_contrato IS NOT NULL AND fecha_firma_mandato IS NOT NULL)) ORDER BY COALESCE(document_signing_date, GREATEST(fecha_firma_contrato, fecha_firma_mandato)) ASC, id ASC",
-        ],
-        [
-            'key'     => 'configuration_3',
-            'name'    => 'Sin pago y con informe de liquidación',
-            'color'   => '#818bff',
-            'columns' => ['code','customer_name','state','settlement_report_date','approved_amount','advisory_amount','amount_owed'],
-            // Liquidado y sin pago (excluye pagados y parciales). Orden: settlement_report_date ASC.
-            'sql'     => "WHERE settlement_report_date IS NOT NULL AND (amount_paid IS NULL OR amount_paid = 0) AND (payment_status IS NULL OR payment_status NOT IN ('pagado','parcialmente pagado')) ORDER BY settlement_report_date ASC, id ASC",
-        ],
-        [
-            'key'     => 'configuration_4',
-            'name'    => 'Con fecha probable de pago y sin cobranza',
-            'color'   => '#81ffe3',
-            'columns' => ['code','customer_name','state','settlement_report_date','probable_payment_date','approved_amount','advisory_amount','bank_name','accident_type_name'],
-            // Tiene fecha probable, sin cobranza (incluye online), excluye pagados. Orden: probable_payment_date ASC.
-            'sql'     => "WHERE probable_payment_date IS NOT NULL AND collection_date IS NULL AND online_collection_date IS NULL AND (payment_status IS NULL OR payment_status NOT IN ('pagado','cobranza','cobranza online')) ORDER BY probable_payment_date ASC, id ASC",
-        ],
-        [
-            'key'     => 'configuration_5',
-            'name'    => 'En cobranza sin pago',
-            'color'   => '#bdff81',
-            'columns' => ['code','customer_name','state','approved_amount','advisory_amount','probable_payment_date','collection_date','payment_status'],
-            // Señales de cobranza (fecha u estado), sin pago real, excluye pagados y parciales. Orden: fecha de cobranza disponible ASC.
-            'sql'     => "WHERE (collection_date IS NOT NULL OR online_collection_date IS NOT NULL OR payment_status IN ('cobranza','cobranza online')) AND (amount_paid IS NULL OR amount_paid = 0) AND (payment_status IS NULL OR payment_status NOT IN ('pagado','parcialmente pagado')) ORDER BY COALESCE(collection_date, online_collection_date) ASC, id ASC",
-        ],
-    ];
+            //Usuario 22 Edilia
 
-        // 1) Leer content existente
-        $existing = [];
-        if ($row = DB::connection('configurations_db')->table('configurations')->where('type_id', 1)->first()) {
-            $existing = json_decode($row->content ?? '[]', true) ?: [];
+            $content['22'] = [
+                'user_id' => 22,
+                'steps' => [
+                    'denuncio' => [
+                        'default' => [
+                            'code','customer_name','created_at','state','bank_name','commune_name',
+                            'accident_type_name','document_signing_date'
+                        ],
+                        'filters' => [
+                            [
+                                'key'     => 'configuration_1',
+                                'name'    => 'Estado en proceso sin firmas',
+                                'color'   => '#ff8878',
+                                'columns' => ['code','customer_name','created_at','state','bank_name','commune_name','accident_type_name'],
+                                'sql'     => "WHERE overall_status <> 'cerrado' AND document_signing_date IS NULL AND (signature_status IS NULL OR signature_status <> 'firmados') ORDER BY created_at ASC, id ASC",
+                            ],
+                            [
+                                'key'     => 'configuration_2',
+                                'name'    => 'Sin denuncio y contrato firmado',
+                                'color'   => '#ec81ff',
+                                'columns' => ['code','customer_name','state','accident_type_name','bank_name','commune_name','document_signing_date'],
+                                'sql'     => "WHERE complaint_date IS NULL AND (document_signing_date IS NOT NULL OR signature_status = 'firmados' OR (fecha_firma_contrato IS NOT NULL AND fecha_firma_mandato IS NOT NULL)) ORDER BY COALESCE(document_signing_date, GREATEST(fecha_firma_contrato, fecha_firma_mandato)) ASC, id ASC",
+                            ],
+                        ],
+                        'managed_cases' => ['months' => 2, 'target_step' => 'programacion'],
+                    ],
+
+                    'recaudacion' => [
+                        'default' => [
+                            'code','customer_name','state','settlement_report_date','probable_payment_date',
+                            'approved_amount','advisory_amount','amount_owed',
+                            'bank_name','accident_type_name','collection_date','payment_status'
+                        ],
+                        'filters' => [
+                            [
+                                'key'     => 'configuration_1',
+                                'name'    => 'Sin pago y con informe de liquidación',
+                                'color'   => '#818bff',
+                                'columns' => ['code','customer_name','state','settlement_report_date','approved_amount','advisory_amount','amount_owed'],
+                                'sql'     => "WHERE settlement_report_date IS NOT NULL AND (amount_paid IS NULL OR amount_paid = 0) AND (payment_status IS NULL OR payment_status NOT IN ('pagado','parcialmente pagado')) ORDER BY settlement_report_date ASC, id ASC",
+                            ],
+                            [
+                                'key'     => 'configuration_2',
+                                'name'    => 'Con fecha probable de pago y sin cobranza',
+                                'color'   => '#81ffe3',
+                                'columns' => ['code','customer_name','state','settlement_report_date','probable_payment_date','approved_amount','advisory_amount','bank_name','accident_type_name'],
+                                'sql'     => "WHERE probable_payment_date IS NOT NULL AND collection_date IS NULL AND online_collection_date IS NULL AND (payment_status IS NULL OR payment_status NOT IN ('pagado','cobranza','cobranza online')) ORDER BY probable_payment_date ASC, id ASC",
+                            ],
+                            [
+                                'key'     => 'configuration_3',
+                                'name'    => 'En cobranza sin pago',
+                                'color'   => '#bdff81',
+                                'columns' => ['code','customer_name','state','approved_amount','advisory_amount','probable_payment_date','collection_date','payment_status'],
+                                'sql'     => "WHERE (collection_date IS NOT NULL OR online_collection_date IS NOT NULL OR payment_status IN ('cobranza','cobranza online')) AND (amount_paid IS NULL OR amount_paid = 0) AND (payment_status IS NULL OR payment_status NOT IN ('pagado','parcialmente pagado')) ORDER BY COALESCE(collection_date, online_collection_date) ASC, id ASC",
+                            ],
+                        ],
+                        'managed_cases' => ['months' => 2, 'target_step' => null],
+                    ],
+                ],
+            ];
+
+            // Usuario 21 Beatriz
+            $content['21'] = [
+                'user_id' => 21,
+                'steps' => [
+                    'denuncio'    => $content['22']['steps']['denuncio'],
+                    'recaudacion' => $content['22']['steps']['recaudacion'],
+
+                    'programacion' => [
+                        'default' => [
+                            'code','customer_name','customer_dni','bank_name','insurer_name',
+                            'accident_type_name','accident_number','date_of_loss','commune_name',
+                            'property_address','loss_adjuster_name','phone','inspection_date','state'
+                        ],
+                        'filters' => [
+                            [
+                                'key'     => 'configuration_1',
+                                'name'    => 'Por asesor: Omar Carrasco',
+                                'color'   => '#4f86ff',
+                                'columns' => ['code','customer_name','customer_dni','bank_name','insurer_name',
+                                              'accident_type_name','accident_number','date_of_loss','commune_name',
+                                              'property_address','loss_adjuster_name','phone','inspection_date',
+                                              'consultant_name','state'],
+                                'sql'     => "WHERE consultant_id = 5 AND SUBSTRING_INDEX(REPLACE(state, '\\\\', '/'), '/', -1) = 'Programacion' ORDER BY created_at DESC, id DESC",
+                            ],
+                            [
+                                'key'     => 'configuration_2',
+                                'name'    => 'Por asesor: Ivette Contreras',
+                                'color'   => '#b36bff',
+                                'columns' => ['code','customer_name','customer_dni','bank_name','insurer_name',
+                                              'accident_type_name','accident_number','date_of_loss','commune_name',
+                                              'property_address','loss_adjuster_name','phone','inspection_date',
+                                              'consultant_name','state'],
+                                'sql'     => "WHERE consultant_id = 23 AND SUBSTRING_INDEX(REPLACE(state, '\\\\', '/'), '/', -1) = 'Programacion' ORDER BY created_at DESC, id DESC",
+                            ],
+                            [
+                                'key'     => 'configuration_3',
+                                'name'    => 'Por asesor: Pablo Yañez',
+                                'color'   => '#18c29c',
+                                'columns' => ['code','customer_name','customer_dni','bank_name','insurer_name',
+                                              'accident_type_name','accident_number','date_of_loss','commune_name',
+                                              'property_address','loss_adjuster_name','phone','inspection_date',
+                                              'consultant_name','state'],
+                                'sql'     => "WHERE consultant_id = 11 AND SUBSTRING_INDEX(REPLACE(state, '\\\\', '/'), '/', -1) = 'Programacion' ORDER BY created_at DESC, id DESC",
+                            ],
+                        ],
+                        'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
+                    ],
+
+                    'visita' => [
+                        'default' => [
+                            'code','customer_name','customer_dni','bank_name','insurer_name',
+                            'accident_type_name','accident_number','date_of_loss','commune_name',
+                            'property_address','loss_adjuster_name','phone','inspection_date','state'
+                        ],
+                        'filters' => [
+                            [
+                                'key'     => 'configuration_1',
+                                'name'    => 'Por asesor: Omar Carrasco',
+                                'color'   => '#4f86ff',
+                                'columns' => ['code','customer_name','customer_dni','bank_name','insurer_name',
+                                              'accident_type_name','accident_number','date_of_loss','commune_name',
+                                              'property_address','loss_adjuster_name','phone','inspection_date',
+                                              'consultant_name','state'],
+                                'sql'     => "WHERE consultant_id = 5 AND SUBSTRING_INDEX(REPLACE(state, '\\\\', '/'), '/', -1) = 'Visita' ORDER BY created_at DESC, id DESC",
+                            ],
+                            [
+                                'key'     => 'configuration_2',
+                                'name'    => 'Por asesor: Ivette Contreras',
+                                'color'   => '#b36bff',
+                                'columns' => ['code','customer_name','customer_dni','bank_name','insurer_name',
+                                              'accident_type_name','accident_number','date_of_loss','commune_name',
+                                              'property_address','loss_adjuster_name','phone','inspection_date',
+                                              'consultant_name','state'],
+                                'sql'     => "WHERE consultant_id = 23 AND SUBSTRING_INDEX(REPLACE(state, '\\\\', '/'), '/', -1) = 'Visita' ORDER BY created_at DESC, id DESC",
+                            ],
+                            [
+                                'key'     => 'configuration_3',
+                                'name'    => 'Por asesor: Pablo Yañez',
+                                'color'   => '#18c29c',
+                                'columns' => ['code','customer_name','customer_dni','bank_name','insurer_name',
+                                              'accident_type_name','accident_number','date_of_loss','commune_name',
+                                              'property_address','loss_adjuster_name','phone','inspection_date',
+                                              'consultant_name','state'],
+                                'sql'     => "WHERE consultant_id = 11 AND SUBSTRING_INDEX(REPLACE(state, '\\\\', '/'), '/', -1) = 'Visita' ORDER BY created_at DESC, id DESC",
+                            ],
+                        ],
+                        'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
+                    ],
+                ],
+            ];
+
+            // Usuario 11 Pablo
+            $content['11'] = [
+                'user_id' => 11,
+                'steps' => [
+                    'presupuesto' => [
+                        'default' => [
+                            'code','customer_name','user_name','document_signing_date','budget_sending_date',
+                            'commune_name','inspection_date','loss_adjuster_name','accident_number','accident_type_name','state'
+                        ],
+                        'filters' => [
+                            [
+                                'key'     => 'configuration_1',
+                                'name'    => 'Sin presupuesto enviado y con fecha de visita',
+                                'color'   => '#ffb74d',
+                                'columns' => ['code','customer_name','user_name','inspection_date','budget_sending_date','commune_name','loss_adjuster_name','accident_number','accident_type_name','state'],
+                                'sql'     => "WHERE budget_sending_date IS NULL AND inspection_date IS NOT NULL ORDER BY inspection_date ASC, id ASC",
+                            ],
+                        ],
+                        'managed_cases' => ['months' => 2, 'target_step' => 'liquidacion'],
+                    ],
+
+                    'liquidacion' => [
+                        'default' => [
+                            'code','customer_name','user_name','loss_adjuster_name','accident_type_name',
+                            'accident_number','commune_name','inspection_date','budget_sending_date',
+                            'settlement_report_date','approved_amount','is_duplicated','state'
+                        ],
+                        'filters' => [
+                            [
+                                'key'     => 'configuration_1',
+                                'name'    => 'Sin fecha de liquidación',
+                                'color'   => '#64b5f6',
+                                'columns' => ['code','customer_name','user_name','loss_adjuster_name','accident_type_name','accident_number','commune_name','inspection_date','budget_sending_date','settlement_report_date','approved_amount','is_duplicated','state'],
+                                'sql'     => "WHERE settlement_report_date IS NULL ORDER BY created_at ASC, id ASC",
+                            ],
+                        ],
+                        'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
+                    ],
+                ],
+            ];
+
+            // Guardar
+            DB::connection('configurations_db')->table('configurations')->updateOrInsert(
+                ['type_id' => $typeId],
+                ['content' => json_encode($content, JSON_UNESCAPED_UNICODE)]
+            );
         }
-
-        // 2) Asegurar llaves mínimas y asignar la nueva lista SOLO para el user 22
-        $existing[$userKey] = $existing[$userKey] ?? [];
-        $existing[$userKey]['filters'] = $existing[$userKey]['filters'] ?? [];
-        $existing[$userKey]['filters']['config_columns'] = $newConfigColumns;
-
-        // 3) Guardar
-        DB::connection('configurations_db')->table('configurations')->updateOrInsert(
-            ['type_id' => 1], // User_filters
-            ['content' => json_encode($existing, JSON_UNESCAPED_UNICODE)]
-        );
-
 
         // 6) States_machine (type_id = 6)
         DB::connection('configurations_db')->table('configurations')->updateOrInsert(
