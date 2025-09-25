@@ -9,7 +9,7 @@ return [
             'created_at' => 'Creado',
         ],
         // Tokens que deben quedar en MAYÚSCULAS dentro de las etiquetas
-        'exceptions' => ['ID','RUT','UF','JSON','URL','API','N°'],
+        'exceptions' => ['ID','RUT','UF','JSON','URL','API','NRO'],
     ],
 
     // Aliases por si alguna vez llegan claves en “español”
@@ -40,8 +40,8 @@ return [
             'settlement_report_date' => 'Fecha informe de liquidación',
             'probable_payment_date'  => 'Fecha probable de pago',
             'online_collection_date' => 'Fecha recaudación online',
-            'accident_number'        => 'N° siniestro',
-            'bank_service_number'    => 'N° atención banco',
+            'accident_number'        => 'NRO siniestro',
+            'bank_service_number'    => 'NRO atención banco',
             'advisory_amount'        => 'Monto asesoría',
             'accident_type_id'       => 'Tipo de siniestro (ID)',
             'phone'                  => 'Teléfono 1',
@@ -85,8 +85,8 @@ return [
             'fecha_firma_contrato'                      => 'Fecha firma contrato',
             'mandato_enviado_a_acepta'                  => 'Mandato enviado a Acepta',
             'fecha_firma_mandato'                       => 'Fecha firma mandato',
-            'numero_notificaciones_documentos_enviados' => 'N° notificaciones doc. enviados',
-            'numero_notificaciones_documento_pendiente' => 'N° notificaciones doc. pendiente',
+            'numero_notificaciones_documentos_enviados' => 'NRO notificaciones doc. enviados',
+            'numero_notificaciones_documento_pendiente' => 'NRO notificaciones doc. pendiente',
             'notificacion_documento_firmado'            => 'Notificación doc. firmado',
             'active_notifications'                      => 'Notificaciones activas',
 
