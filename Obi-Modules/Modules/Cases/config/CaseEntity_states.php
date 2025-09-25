@@ -37,7 +37,7 @@ return [
         Visita::class => [Presupuesto::class, Programacion::class, Cancelado::class, Desistido::class],
         Presupuesto::class => [Liquidacion::class, Visita::class, Cancelado::class, Desistido::class],
         Liquidacion::class => [Recaudacion::class, Presupuesto::class, Cancelado::class, Desistido::class],
-        Recaudacion::class => [Cancelado::class, Desistido::class],
+        Recaudacion::class => [Liquidacion::class, Cancelado::class, Desistido::class],
         Cancelado::class => [],
         Desistido::class => [],
         DesistidoSinVisita::class => [],

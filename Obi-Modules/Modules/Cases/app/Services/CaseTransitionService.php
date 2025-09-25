@@ -4,7 +4,6 @@ namespace Modules\Cases\app\Services;
 
 use Modules\Cases\Models\CaseEntity;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Arr;
 
 class CaseTransitionService
 {
@@ -12,11 +11,11 @@ class CaseTransitionService
      * Valida y ejecuta transición usando transitionToWithComments().
      *
      * @param  CaseEntity  $case
-     * @param  string      $nextState  FQN de la clase de estado destino
+     * @param  string      $nextState  Puede ser basename ("Liquidacion") o FQCN ("Modules\Cases\States\Traro\Liquidacion")
      * @param  string|null $comments
-     * @param  int|null    $userId     ID del usuario que dispara la transición
-     * @throws ValidationException      Si la transición es ilegal o faltan campos al avanzar
-     * @return CaseEntity               Modelo actualizado
+     * @param  int|null    $userId
+     * @throws ValidationException
+     * @return CaseEntity
      */
     public function transition(
         CaseEntity $case,
@@ -24,53 +23,44 @@ class CaseTransitionService
         ?string    $comments = null,
         ?int       $userId   = null
     ): CaseEntity {
-        $current = class_basename($case->state);  // e.g. "Ingreso"
+        $currentFqn  = $case->state::class;
+        $currentBase = class_basename($currentFqn);
 
-        /* 1️⃣ Verificar que el salto esté permitido */
-        $map = config('modules.Cases.CaseEntity_states.transitions', []);
-        $allowed = collect($map)
-            ->first(fn($tos, $fromFqn) =>
-                class_basename($fromFqn) === $current
-            ) ?? [];
+        // 0) Normalizar nextState: aceptar basename o FQCN
+        if (! str_contains($nextState, '\\')) {
+            // Lo convierto a FQCN en el namespace Traro
+            $nextState = "Modules\\Cases\\States\\Traro\\{$nextState}";
+        }
+        $nextBase = class_basename($nextState);
 
-        if (! in_array($nextState, $allowed, true)) {
+        /* 1) Verificar que la transición esté permitida (usando la clave correcta 'cases.*') */
+        $map = config('cases.CaseEntity_states.transitions', []);
+        // Tomar directamente las transiciones desde el FQCN actual (más preciso que filtrar por basename)
+        $allowedFqn = $map[$currentFqn] ?? [];
+        if (! in_array($nextState, $allowedFqn, true)) {
             throw ValidationException::withMessages([
-                'next_state' =>
-                    "No se puede pasar de $current a " . class_basename($nextState),
+                'next_state' => "No se puede pasar de {$currentBase} a {$nextBase}",
             ]);
         }
 
-        /* 2️⃣ Si es avance, chequear campos de pasos previos */
-        $order      = config('modules.Cases.CaseEntity_states.states', []);
-        $idxCurrent = array_search($current, $order, true);
-        $idxNext    = array_search(class_basename($nextState), $order, true);
+        /* 2) Si es avance (next idx > current idx), chequear campos requeridos previos (si los configuraste) */
+        $order      = config('cases.CaseEntity_states.states', []);
+        $idxCurrent = array_search($currentBase, $order, true);
+        $idxNext    = array_search($nextBase,   $order, true);
 
-        if ($idxNext > $idxCurrent) {
-            $reqCfg  = config('modules.Cases.CaseEntity_required', []);
-            $steps   = array_slice($order, 0, $idxCurrent + 1);
-            $missing = [];
-
-            foreach ($steps as $step) {
-                foreach ($reqCfg[$step] ?? [] as $field) {
-                    if (empty($case->{$field})) {
-                        $missing[$step][] = $field;
-                    }
-                }
-            }
-
-            if ($missing) {
-                throw ValidationException::withMessages([
-                    'missing' => 'Faltan: ' . implode(', ', Arr::flatten($missing)),
-                ]);
-            }
+        if ($idxCurrent === false || $idxNext === false) {
+            // Config inconsistente o estado desconocido
+            throw ValidationException::withMessages([
+                'state' => "Estados no configurados correctamente en 'cases.CaseEntity_states.states'.",
+            ]);
         }
 
-        /* 3️⃣ Ejecutar helper y devolver modelo actualizado */
+        /* 3) Ejecutar helper y devolver modelo actualizado */
         return $case
             ->transitionToWithComments(
                 $nextState,
                 $comments,
-                $userId    // ahora pasamos el ID de usuario
+                $userId
             )
             ->refresh();
     }

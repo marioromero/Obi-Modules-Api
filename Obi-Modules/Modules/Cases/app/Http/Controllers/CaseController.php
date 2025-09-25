@@ -134,6 +134,7 @@ class CaseController extends BaseApiController
             'settlement_report_date',
             'collection_date',
             'approved_amount',
+            'case_flow_last',
         ];
 
         $columnsEs = ColumnMap::translate($columnsEn, 'cases');
@@ -378,8 +379,8 @@ class CaseController extends BaseApiController
     //Devuelve arrays next / prev para habilitar botones
     public function transitions(CaseEntity $case)
     {
-        $order = config('modules.Cases.CaseEntity_states.states');
-        $map   = config('modules.Cases.CaseEntity_states.transitions');
+        $order = config('cases.CaseEntity_states.states');
+        $map   = config('cases.CaseEntity_states.transitions');
 
         $currentFqn  = $case->state::class;
         $currentBase = class_basename($currentFqn);

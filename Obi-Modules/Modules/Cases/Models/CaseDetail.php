@@ -4,6 +4,7 @@ namespace Modules\Cases\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Modules\Cases\Models\CaseEntityStepLog;
+use Illuminate\Support\Facades\DB;
 
 class CaseDetail extends Model
 {
@@ -48,7 +49,25 @@ class CaseDetail extends Model
     protected $appends = [
         'step_logs',
         'case_flow_last',
+        'phone',
     ];
+
+    // Accessor: si la view no trae phone, lo busca en customers_db
+    public function getPhoneAttribute()
+    {
+        // si la view algún día trae phone, respeta ese valor
+        if (array_key_exists('phone', $this->attributes) && !is_null($this->attributes['phone'])) {
+            return $this->attributes['phone'];
+        }
+
+        if (!$this->customer_id) return null;
+
+        // lee directo de customers
+        return DB::connection('customers_db')
+            ->table('customers')            // o 'v_customers_details'
+            ->where('id', $this->customer_id)
+            ->value('phone');
+    }
 
     /* ---------- Relaciones ---------- */
     public function stepLogs()
