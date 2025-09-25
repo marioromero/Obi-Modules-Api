@@ -71,6 +71,7 @@ Route::delete('agreements/{agreement}', [AgreementController::class, 'destroy'])
 
 
 Route::get('cases/{code}/documents', [CaseDocumentController::class, 'index']);
+Route::post('cases/{code}/documents', [CaseDocumentController::class, 'store']);
 Route::get('cases/{code}/documents/download', [CaseDocumentController::class, 'download'])
     ->where('code', '[A-Z0-9\-]+');
 Route::post('cases/{code}/documents/signature-check', [CaseDocumentController::class, 'checkSignature']);

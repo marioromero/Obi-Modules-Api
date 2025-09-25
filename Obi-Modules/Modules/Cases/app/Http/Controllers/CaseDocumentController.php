@@ -112,22 +112,27 @@ class CaseDocumentController extends BaseApiController
     {
         try {
             $request->validate([
-                'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png', // 10MB max
-                'filename' => 'sometimes|string|max:255'
+                'file' => 'required|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png', // 10MB max
+                'filename' => 'sometimes|string|max:255',
+                'type' => 'required|in:CONTRATO,MANDATO,DOC'
             ]);
 
             $file = $request->file('file');
+            $type = strtoupper($request->string('type')->toString());
             $filename = $request->string('filename')->toString() ?: $file->getClientOriginalName();
+
+            // Renombrar con prefijo
+            $filename = $type . '_' . $filename;
 
             // Construir ruta relativa
             $relativePath = $code . '/' . $filename;
 
-            // Verificar si ya existe
-            try {
-                $this->storage->read($code, $relativePath);
-                return $this->error('El documento ya existe', 409);
-            } catch (RuntimeException) {
-                // No existe, podemos continuar
+            // Verificar si ya existe y agregar timestamp si es necesario
+            while (Storage::disk('cases-docs')->exists($relativePath)) {
+                $base = pathinfo($filename, PATHINFO_FILENAME);
+                $ext = pathinfo($filename, PATHINFO_EXTENSION);
+                $filename = $base . '_' . time() . '.' . $ext;
+                $relativePath = $code . '/' . $filename;
             }
 
             // Guardar archivo
