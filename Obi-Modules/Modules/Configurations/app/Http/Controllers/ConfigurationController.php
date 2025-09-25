@@ -422,7 +422,7 @@ class ConfigurationController extends BaseApiController
             ->table('types')->where('name', 'User_filters')->value('id');
 
         if (! $typeId) {
-            return $this->error("No existe el type 'User_filters' en la conexión '{$configConnection}'.", 422);
+            return $this->error("No existe el tipo 'User_filters' en la conexión '{$configConnection}'.", 422);
         }
 
         $row = Configuration::where('type_id', $typeId)->first();
@@ -435,27 +435,87 @@ class ConfigurationController extends BaseApiController
             $content = is_string($content) ? (json_decode($content, true) ?: []) : (array) $content;
         }
 
-        $userKey = (string) $user->id;
-        if (! isset($content[$userKey]['steps'][$step])) {
-            return $this->error("No hay configuración para user_id={$user->id} en el paso '{$step}'.", 404);
-        }
+       $userKey = (string) $user->id;
 
-        $stepCfg = $content[$userKey]['steps'][$step];
+        //Se intenta usar la config propia del usuario para el paso
+        $stepCfg = $content[$userKey]['steps'][$step] ?? null;
+
+        // Fallback: si no hay config propia, heredar SOLO default (+ managed_cases) vía User_responsabilities
+        if (! $stepCfg) {
+            // 1) Cargar User_responsabilities
+            $respTypeId = DB::connection($configConnection)
+                ->table('types')->where('name', 'User_responsabilities')->value('id');
+
+            if (! $respTypeId) {
+                return $this->error("No existe el tipo 'User_responsabilities' en la conexión '{$configConnection}'.", 422);
+            }
+
+            $respRow = Configuration::where('type_id', $respTypeId)->first();
+            if (! $respRow) {
+                return $this->error("No hay configuración para 'User_responsabilities' (type_id={$respTypeId}).", 422);
+            }
+
+            $resp = $respRow->content ?? [];
+            if (! is_array($resp)) {
+                $resp = is_string($resp) ? (json_decode($resp, true) ?: []) : (array) $resp;
+            }
+
+            // 2) Map de clave de paso: filtros usa minúsculas
+            $stepRespKeyMap = [
+                'denuncio'     => 'Denuncio',
+                'programacion' => 'Programacion',
+                'visita'       => 'Visita',
+                'presupuesto'  => 'Presupuesto',
+                'liquidacion'  => 'Liquidacion',
+                'recaudacion'  => 'Recaudacion',
+            ];
+            $stepRespKey = $stepRespKeyMap[$step] ?? null;
+            if (! $stepRespKey) {
+                return $this->error("Paso '{$step}' no reconocido en User_responsabilities.", 422);
+            }
+
+            // 3) ¿Usuario asignado al paso?
+            $assigned = (array) ($resp[$stepRespKey]['user_assigned'] ?? []);
+            if ($assigned && in_array((int) $user->id, $assigned, true)) {
+                // Buscar el primer user_id del orden que tenga default en ese paso
+                foreach ($assigned as $candidateId) {
+                    $candKey     = (string) $candidateId;
+                    $candStepCfg = $content[$candKey]['steps'][$step] ?? null;
+                    $candDefault = is_array($candStepCfg['default'] ?? null) ? $candStepCfg['default'] : null;
+
+                    if ($candDefault) {
+                        // Heredar SOLO default y managed_cases
+                        $stepCfg = [
+                            'default'       => array_values(array_unique($candDefault)),
+                            'filters'       => [],
+                            'managed_cases' => $candStepCfg['managed_cases'] ?? null,
+                        ];
+                        break;
+                    }
+                }
+            }
+
+            // 4) Si aún no hay config ni herencia válida → error
+            if (! $stepCfg) {
+                return $this->error("No hay configuración para user_id={$user->id} en el paso '{$step}', ni herencia disponible.", 404);
+            }
+        }
 
     // 2) Condición por estado (para default y casos ya manejados)
     // state en BD viene con FQCN usamos el último segmento para rescatar solo el "paso"
     $stateCond = function (string $s): ?string {
-        $label = [
-            'denuncio'     => 'Denuncio',
-            'programacion' => 'Programacion',
-            'visita'       => 'Visita',
-            'presupuesto'  => 'Presupuesto',
-            'liquidacion'  => 'Liquidacion',
-            'recaudacion'  => 'Recaudacion',
-        ][$s] ?? null;
+    $label = [
+        'denuncio'     => 'Denuncio',
+        'programacion' => 'Programacion',
+        'visita'       => 'Visita',
+        'presupuesto'  => 'Presupuesto',
+        'liquidacion'  => 'Liquidacion',
+        'recaudacion'  => 'Recaudacion',
+    ][$s] ?? null;
 
-        if (! $label) return null;
-        return "SUBSTRING_INDEX(state, '\\\\', -1) = '{$label}'";
+    if (! $label) return null;
+    // tolerante a modos SQL
+    return "SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = '{$label}'";
     };
 
     $baseOrder = 'ORDER BY created_at DESC, id DESC';
@@ -543,7 +603,7 @@ class ConfigurationController extends BaseApiController
             ], 'Filtro aplicado', 200);
         }
 
-        // 6) DEFAULT del paso
+      // 6) DEFAULT del paso
         $defaultColumnsEn = array_values(array_unique((array)($stepCfg['default'] ?? [])));
         $defaultColumnsEs = ColumnMap::translate($defaultColumnsEn, 'cases');
 
@@ -552,7 +612,24 @@ class ConfigurationController extends BaseApiController
             return $this->error("Paso '{$step}' no reconocido para default.", 422);
         }
 
-        $defaultSql = $baseSql . "WHERE {$where} {$baseOrder}";
+        // Excluir casos cerrados
+        $where = "({$where}) AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')";
+
+        // Reglas especiales para Recaudación
+        $isRecaudacion = ($step === 'recaudacion');
+
+        $extraWhere = $isRecaudacion
+            ? " AND created_at >= DATE_SUB(NOW(), INTERVAL 2 MONTH)"
+            : "";
+
+        $orderBy = $isRecaudacion
+            // Si no hay probable_payment_date, cae a created_at. Ascendente prioriza próximos pagos.
+            ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
+            : $baseOrder; // "ORDER BY created_at DESC, id DESC"
+
+        // Usar realmente $extraWhere y $orderBy
+        $defaultSql = $baseSql . "WHERE {$where}{$extraWhere} {$orderBy}";
+
         try {
             $defaultData = DB::connection('cases_db')->select($defaultSql);
         } catch (\Throwable $e) {
@@ -574,15 +651,27 @@ class ConfigurationController extends BaseApiController
         $managedData   = [];
 
         if ($targetStep) {
-            $tWhere = $stateCond($targetStep);
-            if ($tWhere) {
-                $window  = "created_at >= DATE_SUB(NOW(), INTERVAL {$managedMonths} MONTH)";
-                $mSql    = $baseSql . "WHERE ({$tWhere}) AND {$window} {$baseOrder}";
-                try {
-                    $managedData = DB::connection('cases_db')->select($mSql);
-                } catch (\Throwable $e) {
-                    return $this->error("Error al ejecutar managed_cases de '{$targetStep}': " . $e->getMessage(), 422);
-                }
+        $tWhere = $stateCond($targetStep);
+        if ($tWhere) {
+            // Excluir cerrados
+            $tWhere = "({$tWhere}) AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')";
+
+            // Ventana temporal
+            $window = "created_at >= DATE_SUB(NOW(), INTERVAL {$managedMonths} MONTH)";
+
+            // Orden por paso (Recaudación vs otros)
+            $isTargetRecaudacion = (mb_strtolower($targetStep, 'UTF-8') === 'recaudacion');
+            $mOrderBy = $isTargetRecaudacion
+                ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
+                : $baseOrder; // "ORDER BY created_at DESC, id DESC"
+
+            $mSql = $baseSql . "WHERE {$tWhere} AND {$window} {$mOrderBy}";
+
+            try {
+                $managedData = DB::connection('cases_db')->select($mSql);
+            } catch (\Throwable $e) {
+                return $this->error("Error al ejecutar managed_cases de '{$targetStep}': " . $e->getMessage(), 422);
+            }
 
                 // Enriquecer y proyectar managed_cases con columnas del default
                 $managedData = $enrichWithCustomerData($managedData);

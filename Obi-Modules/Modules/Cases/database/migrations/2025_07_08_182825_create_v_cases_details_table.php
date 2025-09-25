@@ -59,6 +59,9 @@ return new class extends Migration
           cu.dni         AS customer_dni,
           cu.address     AS customer_address,
           cmu.name       AS customer_commune_name,
+          cu.phone       AS phone,
+          cu.phone2        AS phone2,
+          cu.serial_number AS serial_number,
 
           /* Ejecutivo desde el CLIENTE (assigned_agent) */
           cu.assigned_agent AS agent_id,
