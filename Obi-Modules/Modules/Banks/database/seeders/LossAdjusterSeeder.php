@@ -36,6 +36,7 @@ class LossAdjusterSeeder extends Seeder
             ['name' => 'RTS liquidadores'],
             ['name' => 'Nexus'],
             ['name' => 'WT liquidadores'],
+            ['name' => 'Crawford'],
         ];
 
         foreach ($records as $item) {
