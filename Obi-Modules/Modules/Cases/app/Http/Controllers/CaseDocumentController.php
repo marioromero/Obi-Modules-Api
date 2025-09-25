@@ -108,17 +108,19 @@ class CaseDocumentController extends BaseApiController
     /**
      * Sube un nuevo documento
      */
-    public function store(string $code, Request $request)
+    public function store(Request $request)
     {
         try {
             $request->validate([
                 'file' => 'required|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png', // 10MB max
                 'filename' => 'sometimes|string|max:255',
-                'type' => 'required|in:CONTRATO,MANDATO,DOC'
+                'type' => 'required|in:CONTRATO,MANDATO,DOC',
+                'code' => 'required|string'
             ]);
 
             $file = $request->file('file');
             $type = strtoupper($request->string('type')->toString());
+            $code = $request->string('code')->toString();
             $filename = $request->string('filename')->toString() ?: $file->getClientOriginalName();
 
             // Renombrar con prefijo
@@ -153,9 +155,12 @@ class CaseDocumentController extends BaseApiController
     /**
      * Elimina un documento
      */
-    public function destroy(string $code, Request $request)
+    public function destroy(Request $request)
     {
         try {
+            $code = (string)$request->query('code', '');
+            if ($code === '') return $this->error('Parámetro code es requerido', 422);
+
             $path = (string)$request->query('path', '');
             if ($path === '') {
                 // retrocompatibilidad con ?filename=
