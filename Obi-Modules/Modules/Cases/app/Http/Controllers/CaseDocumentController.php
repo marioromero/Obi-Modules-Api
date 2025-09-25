@@ -156,14 +156,18 @@ class CaseDocumentController extends BaseApiController
     public function destroy(string $code, Request $request)
     {
         try {
-            $filename = $request->string('filename')->toString();
-            if (!$filename) {
-                return $this->error('Parámetro filename es requerido', 422);
+            $path = (string)$request->query('path', '');
+            if ($path === '') {
+                // retrocompatibilidad con ?filename=
+                $filename = (string)$request->query('filename', '');
+                if ($filename === '') return $this->error('Parámetro path o filename es requerido', 422);
+                $path = $code . '/' . $filename;
             }
 
-            $relativePath = $code . '/' . $filename;
+            $this->storage->sanitizeCaseCode($code);
+            $path = $this->guardPath($code, $path);
 
-            $deleted = $this->storage->delete($code, $relativePath);
+            $deleted = $this->storage->delete($code, $path);
 
             if (!$deleted) {
                 return $this->error('Documento no encontrado', 404);
