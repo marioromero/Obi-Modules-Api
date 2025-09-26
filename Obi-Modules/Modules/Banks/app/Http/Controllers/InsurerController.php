@@ -18,15 +18,15 @@ class InsurerController extends BaseApiController
 
     public function show(Insurer $insurer)
     {
-        return $this->success($insurer, 'Insurer obtenido correctamente');
+        return $this->success($insurer, 'Aseguradora obtenida correctamente');
     }
 
     public function store(Request $request)
     {
-        $data   = $request->validate(['name' => 'required|string']);
-        $insurer = Insurer::create($data);
+        $data = $request->validate(['name' => 'required|string|min:1|max:100']);
+        $insurer = Insurer::create(['name' => trim($data['name'])]);
 
-        return $this->success($insurer, 'Insurer creado correctamente', 201);
+        return $this->success($insurer, 'Aseguradora creada correctamente', 201);
     }
 
     public function update(Request $request, Insurer $insurer)
@@ -34,7 +34,7 @@ class InsurerController extends BaseApiController
         $data = $request->validate(['name' => 'required|string']);
         $insurer->update($data);
 
-        return $this->success($insurer, 'Insurer actualizado correctamente');
+        return $this->success($insurer, 'Aseguradora actualizada correctamente');
     }
 
     public function patch(Request $request, Insurer $insurer)
@@ -42,13 +42,13 @@ class InsurerController extends BaseApiController
         $data = $request->validate(['name' => 'sometimes|string']);
         $insurer->update($data);
 
-        return $this->success($insurer, 'Insurer parcialmente actualizado');
+        return $this->success($insurer, 'Aseguradora parcialmente actualizada');
     }
 
     public function destroy(Insurer $insurer)
     {
         $insurer->delete();
-        return $this->success(null, 'Insurer eliminado correctamente', 204);
+        return $this->success(null, 'Aseguradora eliminada correctamente', 200);
     }
 }
 
