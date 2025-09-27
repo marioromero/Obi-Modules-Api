@@ -63,7 +63,26 @@ class CaseController extends BaseApiController
     public function patch(UpdateCaseRequest $request, CaseEntity $case)
     {
         $case->update($request->validated());
-        return $this->success($case, 'Caso actualizado correctamente', 200);
+
+        // Si viene user y content se crea nuevo registro
+        $descUser    = trim((string) data_get($request->all(), 'description.user', ''));
+        $descContent = (string) data_get($request->all(), 'description.content', '');
+
+        if ($descUser !== '' && $descContent !== '') {
+            $payload  = is_array($case->description) ? $case->description : [];
+            $comments = isset($payload['comments']) && is_array($payload['comments']) ? $payload['comments'] : [];
+
+            $comments[] = [
+                'date'    => Carbon::now('America/Santiago')->format('d/m/Y H:i:s'),
+                'user'    => $descUser,
+                'content' => $descContent,
+            ];
+
+            $case->description = ['comments' => array_values($comments)];
+            $case->save();
+        }
+
+        return $this->success($case->refresh(), 'Caso actualizado correctamente', 200);
     }
 
     public function destroy(CaseEntity $case)
@@ -475,6 +494,74 @@ class CaseController extends BaseApiController
         ];
 
         return $this->success($metrics, 'Estadísticas para métricas de casos', 200);
+    }
+
+    //metodo que trae el historial de comentarios de un caso x id
+    public function getCommentsByCaseId(CaseEntity $case)
+    {
+        $desc = $case->description;
+
+        if (is_string($desc)) {
+            $decoded = json_decode($desc, true);
+            $desc = is_array($decoded) ? $decoded : [];
+        } elseif (!is_array($desc)) {
+            $desc = [];
+        }
+
+        $comments = $desc['comments'] ?? [];
+        if (!is_array($comments)) {
+            $comments = [];
+        }
+
+        return $this->success(
+            ['comments' => array_values($comments)],
+            'Historial de comentarios obtenido',
+            200
+        );
+    }
+
+    //metodo para guardar comentarios de caso x id
+    public function saveComment(Request $request, CaseEntity $case)
+    {
+        // Validación
+        $validated = $request->validate([
+            'user'    => ['required', 'string'],
+            'content' => ['required', 'string'],
+        ]);
+
+        // Normalizar payload actual
+        $desc = $case->description;
+        if (is_string($desc)) {
+            $decoded = json_decode($desc, true);
+            $desc = is_array($decoded) ? $decoded : [];
+        } elseif (!is_array($desc)) {
+            $desc = [];
+        }
+
+        $comments = $desc['comments'] ?? [];
+        if (!is_array($comments)) {
+            $comments = [];
+        }
+
+        // Formato de fecha DD/MM/AAAA HH:MM:SS
+        $fecha = Carbon::now('America/Santiago')->format('d/m/Y H:i:s');
+
+        // Agregar comentario
+        $comments[] = [
+            'date'    => $fecha,
+            'user'    => trim($validated['user']),
+            'content' => trim($validated['content']),
+        ];
+
+        // Guardar en DB como array
+        $case->description = ['comments' => $comments];
+        $case->save();
+
+        return $this->success(
+            ['comments' => $comments],
+            'Comentario agregado',
+            200
+        );
     }
 }
 

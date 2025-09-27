@@ -19,6 +19,9 @@ class CaseEntity extends Model
             'collection_date'        => 'date:Y-m-d',
             'online_collection_date' => 'date:Y-m-d',
 
+            // comentarios
+            'description' => 'array',
+
             // montos enteros
             'amount_paid'  => 'integer',
             'amount_owed'  => 'integer',
