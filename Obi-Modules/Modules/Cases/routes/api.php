@@ -60,6 +60,8 @@ Route::get('cases/office-by-user/{user}', [CaseController::class, 'officeByUser'
 Route::get('cases/{case}/transitions', [CaseController::class, 'transitions'])->whereNumber('case');
 Route::post('cases/{case}/transition', [CaseController::class, 'transition'])->whereNumber('case');
 Route::post('cases/{case}/substate', [CaseSubstateController::class, 'update'])->whereNumber('case');
+Route::get('cases/{case}/comments', [CaseController::class, 'getCommentsByCaseId'])->whereNumber('case');
+Route::post('cases/{case}/comments', [CaseController::class, 'saveComment'])->whereNumber('case');
 
 // REST para Agreement
 Route::get('agreements', [AgreementController::class, 'index']);
