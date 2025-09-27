@@ -254,6 +254,18 @@ class ConfigurationController extends BaseApiController
             return $this->error("No hay columnas configuradas para role_id={$roleKey}.", 422);
         }
 
+        // Decoder seguro para JSON
+        $safeJsonDecode = function ($value) {
+            if ($value === null || $value === '' || $value === 'null') return null;
+            if (is_array($value))  return $value;
+            if (is_object($value)) return (array) $value;
+            if (is_string($value)) {
+                $decoded = json_decode($value, true);
+                return (json_last_error() === JSON_ERROR_NONE) ? $decoded : null;
+            }
+            return null;
+        };
+
         $query = DB::connection('cases_db')->table('v_cases_details');
 
         $isConsultantRole = ($roleKey === '5');
@@ -268,16 +280,25 @@ class ConfigurationController extends BaseApiController
             ->orderByDesc('id')
             ->get();
 
-        $cases = $rows->map(function ($row) use ($columns) {
+        $cases = $rows->map(function ($row) use ($columns, $safeJsonDecode) {
             $record = ['id' => $row->id];
+
             foreach ($columns as $col) {
-                $record[$col] = property_exists($row, $col) ? $row->{$col} : null;
+                if ($col === 'case_flows_last') {
+                    // Mapear case_flows_last (config) ← desde v_cases_details.case_flow_last_json (vista)
+                    $record['case_flows_last'] = property_exists($row, 'case_flow_last_json')
+                        ? $safeJsonDecode($row->case_flow_last_json)
+                        : null;
+                } else {
+                    $record[$col] = property_exists($row, $col) ? $row->{$col} : null;
+                }
             }
+
             return $record;
         })->values();
 
         return $this->success([
-            'columns' => ColumnMap::translate($columns, 'cases'),
+            'columns' => ColumnMap::translate($columns, 'cases'), // si quieres etiqueta bonita para case_flows_last, agrégala en ColumnMap
             'cases'   => $cases,
         ], 'Casos por rol obtenidos correctamente');
     }
@@ -435,7 +456,7 @@ class ConfigurationController extends BaseApiController
             $content = is_string($content) ? (json_decode($content, true) ?: []) : (array) $content;
         }
 
-       $userKey = (string) $user->id;
+        $userKey = (string) $user->id;
 
         //Se intenta usar la config propia del usuario para el paso
         $stepCfg = $content[$userKey]['steps'][$step] ?? null;
@@ -501,25 +522,23 @@ class ConfigurationController extends BaseApiController
             }
         }
 
-    // 2) Condición por estado (para default y casos ya manejados)
-    // state en BD viene con FQCN usamos el último segmento para rescatar solo el "paso"
-    $stateCond = function (string $s): ?string {
-    $label = [
-        'denuncio'     => 'Denuncio',
-        'programacion' => 'Programacion',
-        'visita'       => 'Visita',
-        'presupuesto'  => 'Presupuesto',
-        'liquidacion'  => 'Liquidacion',
-        'recaudacion'  => 'Recaudacion',
-    ][$s] ?? null;
+        // 2) Condición por estado (para default y casos ya manejados)
+        $stateCond = function (string $s): ?string {
+            $label = [
+                'denuncio'     => 'Denuncio',
+                'programacion' => 'Programacion',
+                'visita'       => 'Visita',
+                'presupuesto'  => 'Presupuesto',
+                'liquidacion'  => 'Liquidacion',
+                'recaudacion'  => 'Recaudacion',
+            ][$s] ?? null;
 
-    if (! $label) return null;
-    // tolerante a modos SQL
-    return "SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = '{$label}'";
-    };
+            if (! $label) return null;
+            return "SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = '{$label}'";
+        };
 
-    $baseOrder = 'ORDER BY created_at DESC, id DESC';
-    $baseSql   = 'SELECT * FROM v_cases_details v ';
+        $baseOrder = 'ORDER BY created_at DESC, id DESC';
+        $baseSql   = 'SELECT * FROM v_cases_details v ';
 
         // 3) phone y user_name desde customers_db.v_customers_details
         $enrichWithCustomerData = function (array $rows): array {
@@ -565,6 +584,62 @@ class ConfigurationController extends BaseApiController
             }, $rows);
         };
 
+        // 4.1 Calcular managed_cases (reutilizable para default y para filter)
+        $calcManagedCases = function (string $step, array $stepCfg, array $defaultColumnsEn) use (
+            $stateCond, $baseSql, $baseOrder, $enrichWithCustomerData, $projectRows
+        ) {
+            $managedMonths = (int)($stepCfg['managed_cases']['months'] ?? 2);
+            $targetStep    = $stepCfg['managed_cases']['target_step'] ?? null;
+
+            $managedData = [];
+
+            // Caso especial: Recaudación = "pagados recientes"
+           if ($step === 'recaudacion') {
+            $whereReca = $stateCond('recaudacion');
+            if ($whereReca) {
+                $window = "collection_date >= DATE_SUB(NOW(), INTERVAL {$managedMonths} MONTH)";
+                // Solo pagados y con fecha de pago
+                $status = "LOWER(payment_status) = 'pagado' AND collection_date IS NOT NULL";
+
+                $sql = $baseSql . "WHERE {$whereReca} AND {$status} AND {$window}
+                                   ORDER BY collection_date DESC, id DESC";
+                try {
+                    $managedData = DB::connection('cases_db')->select($sql);
+                } catch (\Throwable $e) {
+                    $managedData = [];
+                }
+                $managedData = $enrichWithCustomerData($managedData);
+                $managedData = $projectRows($managedData, $defaultColumnsEn);
+            }
+            return ['months' => $managedMonths, 'data' => $managedData];
+        }
+
+            // Otros pasos: usar target_step
+            if ($targetStep) {
+                $tWhere = $stateCond($targetStep);
+                if ($tWhere) {
+                    $tWhere = "({$tWhere}) AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')";
+                    $window = "created_at >= DATE_SUB(NOW(), INTERVAL {$managedMonths} MONTH)";
+
+                    $isTargetRecaudacion = (mb_strtolower($targetStep, 'UTF-8') === 'recaudacion');
+                    $mOrderBy = $isTargetRecaudacion
+                        ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
+                        : $baseOrder;
+
+                    $mSql = $baseSql . "WHERE {$tWhere} AND {$window} {$mOrderBy}";
+                    try {
+                        $managedData = DB::connection('cases_db')->select($mSql);
+                    } catch (\Throwable $e) {
+                        $managedData = [];
+                    }
+                    $managedData = $enrichWithCustomerData($managedData);
+                    $managedData = $projectRows($managedData, $defaultColumnsEn);
+                }
+            }
+
+            return ['months' => $managedMonths, 'data' => $managedData];
+        };
+
         // 5) Filtro específico (si viene {filter} en la ruta)
         if ($key) {
             $filterCfg = collect($stepCfg['filters'] ?? [])->firstWhere('key', $key);
@@ -590,20 +665,25 @@ class ConfigurationController extends BaseApiController
             $rows = $enrichWithCustomerData($rows);
             $rows = $projectRows($rows, $columnsEn);
 
+            // === NUEVO: calcular managed_cases SIN filtrar
+            $defaultColumnsEn = array_values(array_unique((array)($stepCfg['default'] ?? [])));
+            $managedBlock     = $calcManagedCases($step, $stepCfg, $defaultColumnsEn);
+
             return $this->success([
-                'user_id' => (int) $user->id,
-                'step'    => $step,
-                'filter'  => [
+                'user_id'      => (int) $user->id,
+                'step'         => $step,
+                'filter'       => [
                     'key'     => (string) $filterCfg['key'],
                     'name'    => (string) $filterCfg['name'],
                     'color'   => $filterCfg['color'] ?? null,
-                    'columns' => $columnsEs, // labels ES
+                    'columns' => $columnsEs,
                 ],
-                'data'    => $rows,
+                'data'         => $rows,
+                'managed_cases'=> $managedBlock,
             ], 'Filtro aplicado', 200);
         }
 
-      // 6) DEFAULT del paso
+        // 6) DEFAULT del paso
         $defaultColumnsEn = array_values(array_unique((array)($stepCfg['default'] ?? [])));
         $defaultColumnsEs = ColumnMap::translate($defaultColumnsEn, 'cases');
 
@@ -623,11 +703,9 @@ class ConfigurationController extends BaseApiController
             : "";
 
         $orderBy = $isRecaudacion
-            // Si no hay probable_payment_date, cae a created_at. Ascendente prioriza próximos pagos.
             ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
-            : $baseOrder; // "ORDER BY created_at DESC, id DESC"
+            : $baseOrder;
 
-        // Usar realmente $extraWhere y $orderBy
         $defaultSql = $baseSql . "WHERE {$where}{$extraWhere} {$orderBy}";
 
         try {
@@ -636,48 +714,15 @@ class ConfigurationController extends BaseApiController
             return $this->error("Error al ejecutar default del paso '{$step}': " . $e->getMessage(), 422);
         }
 
-        // Enriquecer y proyectar default
         $defaultData = $enrichWithCustomerData($defaultData);
         $defaultData = $projectRows($defaultData, $defaultColumnsEn);
 
-        // datos de filtros
         $filtersMeta = array_map(function ($f) {
             return ['key' => $f['key'], 'name' => $f['name'], 'color' => $f['color'] ?? null];
         }, (array)($stepCfg['filters'] ?? []));
 
-        // 7) managed_cases (usa columnas del default)
-        $managedMonths = (int)($stepCfg['managed_cases']['months'] ?? 2);
-        $targetStep    = $stepCfg['managed_cases']['target_step'] ?? null;
-        $managedData   = [];
-
-        if ($targetStep) {
-        $tWhere = $stateCond($targetStep);
-        if ($tWhere) {
-            // Excluir cerrados
-            $tWhere = "({$tWhere}) AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')";
-
-            // Ventana temporal
-            $window = "created_at >= DATE_SUB(NOW(), INTERVAL {$managedMonths} MONTH)";
-
-            // Orden por paso (Recaudación vs otros)
-            $isTargetRecaudacion = (mb_strtolower($targetStep, 'UTF-8') === 'recaudacion');
-            $mOrderBy = $isTargetRecaudacion
-                ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
-                : $baseOrder; // "ORDER BY created_at DESC, id DESC"
-
-            $mSql = $baseSql . "WHERE {$tWhere} AND {$window} {$mOrderBy}";
-
-            try {
-                $managedData = DB::connection('cases_db')->select($mSql);
-            } catch (\Throwable $e) {
-                return $this->error("Error al ejecutar managed_cases de '{$targetStep}': " . $e->getMessage(), 422);
-            }
-
-                // Enriquecer y proyectar managed_cases con columnas del default
-                $managedData = $enrichWithCustomerData($managedData);
-                $managedData = $projectRows($managedData, $defaultColumnsEn);
-            }
-        }
+        // managed_cases usando función común
+        $managedBlock = $calcManagedCases($step, $stepCfg, $defaultColumnsEn);
 
         return $this->success([
             'user_id'      => (int) $user->id,
@@ -685,10 +730,7 @@ class ConfigurationController extends BaseApiController
             'default'      => $defaultColumnsEs,
             'filters'      => $filtersMeta,
             'data'         => $defaultData,
-            'managed_cases'=> [
-                'months' => $managedMonths,
-                'data'   => $managedData,
-            ],
+            'managed_cases'=> $managedBlock,
         ], 'Default del paso', 200);
     }
 }

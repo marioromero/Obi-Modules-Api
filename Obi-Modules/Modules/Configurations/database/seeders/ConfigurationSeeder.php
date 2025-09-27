@@ -75,7 +75,7 @@ class ConfigurationSeeder extends Seeder
                     'assigned_user_name','consultant_name','agent_name',
                     'payment_status','amount_owed','amount_paid','advisory_amount',
                     'probable_payment_date','overall_status',
-                    'signature_status','created_by_name'
+                    'signature_status','created_by_name','case_flows_last'
                 ],
 
                 // 2 = Ejecutivo
@@ -87,7 +87,7 @@ class ConfigurationSeeder extends Seeder
                     'scheduling_status','visit_status','budget_status','decision_status',
                     'payment_status','inspection_date','budget_sending_date',
                     'settlement_report_date','contestation_date','probable_payment_date',
-                    'accident_number','bank_service_number'
+                    'accident_number','bank_service_number','case_flows_last'
                 ],
 
                 // 3 = Coordinador
@@ -97,7 +97,7 @@ class ConfigurationSeeder extends Seeder
                     'budget_sending_date','settlement_report_date','probable_payment_date',
                     'customer_name','customer_dni','customer_address','customer_commune_name',
                     'bank_name','assigned_user_name','accident_type_name','agent_name',
-                    'commune_name','loss_adjuster_name','insurer_name',
+                    'commune_name','loss_adjuster_name','insurer_name','case_flows_last'
                 ],
 
                 // 4 = Administrativo
@@ -108,7 +108,7 @@ class ConfigurationSeeder extends Seeder
                     'bank_service_number','complaint_date','accident_number','is_duplicated',
                     'insurer_name','loss_adjuster_name','inspection_date','budget_sending_date',
                     'settlement_report_date','probable_payment_date','collection_date',
-                    'amount_owed','amount_paid','online_collection_date',
+                    'amount_owed','amount_paid','online_collection_date','case_flows_last'
                 ],
 
                 // 5 = Asesor
@@ -119,7 +119,7 @@ class ConfigurationSeeder extends Seeder
                     'inspection_date','visit_status','budget_status','decision_status',
                     'settlement_report_date','date_of_loss','contestation_date',
                     'insurer_name','loss_adjuster_name','property_type',
-                    'uf_approved','advisory_amount'
+                    'uf_approved','advisory_amount','case_flows_last'
                 ],
             ];
 
@@ -158,6 +158,7 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Ingreso'
                                               AND signature_status IN ('generado','enviado a acepta','notificado')
                                               AND document_signing_date IS NULL
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
                                               ORDER BY created_at ASC, id ASC",
                             ],
                             [
@@ -174,6 +175,7 @@ class ConfigurationSeeder extends Seeder
                                                     signature_status = 'firmados'
                                                  OR (fecha_firma_contrato IS NOT NULL AND fecha_firma_mandato IS NOT NULL)
                                               )
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
                                               ORDER BY COALESCE(document_signing_date, GREATEST(fecha_firma_contrato, fecha_firma_mandato)) ASC, id ASC",
                             ],
                             [
@@ -186,6 +188,7 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Ingreso'
                                               AND signature_status IN ('contrato pendiente','mandato pendiente')
                                               AND document_signing_date IS NULL
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
                                               ORDER BY created_at ASC, id ASC",
                             ],
                         ],
@@ -206,6 +209,7 @@ class ConfigurationSeeder extends Seeder
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Recaudacion'
                                           AND LOWER(payment_status) = 'cobranza'
                                           AND collection_date IS NOT NULL
+                                          AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
                                           ORDER BY COALESCE(collection_date, settlement_report_date, created_at) ASC, id ASC",
                         ],
                         [
@@ -262,7 +266,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 5
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND scheduling_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_2',
@@ -275,7 +280,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 23
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND scheduling_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_3',
@@ -288,7 +294,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 11
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND scheduling_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
@@ -311,7 +318,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 5
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_2',
@@ -324,7 +332,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 23
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_3',
@@ -337,7 +346,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 11
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                             ORDER BY created_at DESC, id DESC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
@@ -370,7 +380,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 11
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND scheduling_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_2',
@@ -383,7 +394,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 5
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND scheduling_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_3',
@@ -396,7 +408,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 23
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND scheduling_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
@@ -419,7 +432,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 11
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_2',
@@ -432,7 +446,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 5
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_3',
@@ -445,7 +460,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 23
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
@@ -526,7 +542,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 5
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND scheduling_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_2',
@@ -539,7 +556,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 23
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND scheduling_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_3',
@@ -552,7 +570,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 11
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND scheduling_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
@@ -576,7 +595,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 5
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_2',
@@ -589,7 +609,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 23
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_3',
@@ -602,7 +623,8 @@ class ConfigurationSeeder extends Seeder
                                 'sql'     => "WHERE consultant_id = 11
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
-                                            ORDER BY created_at DESC, id DESC",
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
@@ -619,10 +641,10 @@ class ConfigurationSeeder extends Seeder
                                 'color'   => '#ffb74d',
                                 'columns' => ['code','state','customer_name','user_name','inspection_date','budget_sending_date','commune_name','loss_adjuster_name','accident_number','accident_type_name'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Presupuesto'
-                                              AND budget_status IN ('pendiente','en proceso')
                                               AND budget_sending_date IS NULL
                                               AND inspection_date IS NOT NULL
-                                            ORDER BY inspection_date ASC, id ASC",
+                                              AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
+                                              ORDER BY inspection_date ASC, id ASC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'liquidacion'],
@@ -642,7 +664,8 @@ class ConfigurationSeeder extends Seeder
                                 'columns' => ['code','state','customer_name','user_name','loss_adjuster_name','accident_type_name','accident_number','commune_name','inspection_date','budget_sending_date','settlement_report_date','approved_amount','is_duplicated'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Liquidacion'
                                               AND settlement_report_date IS NULL
-                                            ORDER BY created_at ASC, id ASC",
+                                              AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
+                                              ORDER BY created_at ASC, id ASC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
@@ -675,7 +698,8 @@ class ConfigurationSeeder extends Seeder
                             'sql'     => "WHERE consultant_id = 5
                                           AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                           AND scheduling_status IN ('pendiente','en proceso')
-                                        ORDER BY created_at DESC, id DESC",
+                                          AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                          ORDER BY created_at DESC, id DESC",
                         ],
                         [
                             'key'     => 'configuration_2',
@@ -688,7 +712,8 @@ class ConfigurationSeeder extends Seeder
                             'sql'     => "WHERE consultant_id = 23
                                           AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                           AND scheduling_status IN ('pendiente','en proceso')
-                                        ORDER BY created_at DESC, id DESC",
+                                          AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                          ORDER BY created_at DESC, id DESC",
                         ],
                         [
                             'key'     => 'configuration_3',
@@ -701,7 +726,8 @@ class ConfigurationSeeder extends Seeder
                             'sql'     => "WHERE consultant_id = 11
                                           AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                           AND scheduling_status IN ('pendiente','en proceso')
-                                        ORDER BY created_at DESC, id DESC",
+                                          AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                          ORDER BY created_at DESC, id DESC",
                         ],
                     ],
                     'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
@@ -725,7 +751,8 @@ class ConfigurationSeeder extends Seeder
                             'sql'     => "WHERE consultant_id = 5
                                           AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                           AND visit_status IN ('pendiente','en proceso')
-                                        ORDER BY created_at DESC, id DESC",
+                                          AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                          ORDER BY created_at DESC, id DESC",
                         ],
                         [
                             'key'     => 'configuration_2',
@@ -738,7 +765,8 @@ class ConfigurationSeeder extends Seeder
                             'sql'     => "WHERE consultant_id = 23
                                           AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                           AND visit_status IN ('pendiente','en proceso')
-                                        ORDER BY created_at DESC, id DESC",
+                                          AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                          ORDER BY created_at DESC, id DESC",
                         ],
                         [
                             'key'     => 'configuration_3',
@@ -751,7 +779,8 @@ class ConfigurationSeeder extends Seeder
                             'sql'     => "WHERE consultant_id = 11
                                           AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                           AND visit_status IN ('pendiente','en proceso')
-                                        ORDER BY created_at DESC, id DESC",
+                                          AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                          ORDER BY created_at DESC, id DESC",
                         ],
                     ],
                     'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
@@ -769,10 +798,10 @@ class ConfigurationSeeder extends Seeder
                             'color'   => '#ffb74d',
                             'columns' => ['code','state','customer_name','user_name','inspection_date','budget_sending_date','commune_name','loss_adjuster_name','accident_number','accident_type_name'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Presupuesto'
-                                          AND budget_status IN ('pendiente','en proceso')
                                           AND budget_sending_date IS NULL
                                           AND inspection_date IS NOT NULL
-                                        ORDER BY inspection_date ASC, id ASC",
+                                          AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
+                                          ORDER BY inspection_date ASC, id ASC",
                         ],
                     ],
                     'managed_cases' => ['months' => 2, 'target_step' => 'liquidacion'],
@@ -792,7 +821,8 @@ class ConfigurationSeeder extends Seeder
                             'columns' => ['code','state','customer_name','user_name','loss_adjuster_name','accident_type_name','accident_number','commune_name','inspection_date','budget_sending_date','settlement_report_date','approved_amount','is_duplicated'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Liquidacion'
                                           AND settlement_report_date IS NULL
-                                        ORDER BY created_at ASC, id ASC",
+                                          AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
+                                          ORDER BY created_at ASC, id ASC",
                         ],
                     ],
                     'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
