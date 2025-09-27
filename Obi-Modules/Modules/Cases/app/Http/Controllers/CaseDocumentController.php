@@ -107,21 +107,21 @@ class CaseDocumentController extends BaseApiController
 
     /**
      * Sube un nuevo documento
-     */
-    public function store(Request $request)
-    {
-        try {
-            $request->validate([
-                'file' => 'required|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png', // 10MB max
-                'filename' => 'sometimes|string|max:255',
-                'type' => 'required|in:CONTRATO,MANDATO,DOC',
-                'code' => 'required|string'
-            ]);
+      */
+     public function store(Request $request, string $code)
+     {
+         try {
+             $this->storage->sanitizeCaseCode($code);
 
-            $file = $request->file('file');
-            $type = strtoupper($request->string('type')->toString());
-            $code = $request->string('code')->toString();
-            $filename = $request->string('filename')->toString() ?: $file->getClientOriginalName();
+             $request->validate([
+                 'file' => 'required|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png', // 10MB max
+                 'filename' => 'sometimes|string|max:255',
+                 'type' => 'required|in:CONTRATO,MANDATO,DOC'
+             ]);
+
+             $file = $request->file('file');
+             $type = strtoupper($request->string('type')->toString());
+             $filename = $request->string('filename')->toString() ?: $file->getClientOriginalName();
 
             // Renombrar con prefijo
             $filename = $type . '_' . $filename;
@@ -155,11 +155,10 @@ class CaseDocumentController extends BaseApiController
     /**
      * Elimina un documento
      */
-    public function destroy(Request $request)
+    public function destroy(Request $request, string $code)
     {
         try {
-            $code = (string)$request->query('code', '');
-            if ($code === '') return $this->error('Parámetro code es requerido', 422);
+            $this->storage->sanitizeCaseCode($code);
 
             $path = (string)$request->query('path', '');
             if ($path === '') {
@@ -169,13 +168,16 @@ class CaseDocumentController extends BaseApiController
                 $path = $code . '/' . $filename;
             }
 
-            $this->storage->sanitizeCaseCode($code);
             $path = $this->guardPath($code, $path);
+
+            if (!Storage::disk('cases-docs')->exists($path)) {
+                return $this->error('Documento no encontrado', 404);
+            }
 
             $deleted = $this->storage->delete($code, $path);
 
             if (!$deleted) {
-                return $this->error('Documento no encontrado', 404);
+                return $this->error('Error al eliminar documento', 500);
             }
 
             return $this->success(null, 'Documento eliminado exitosamente', 200);
