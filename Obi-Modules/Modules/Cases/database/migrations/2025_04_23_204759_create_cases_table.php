@@ -33,7 +33,7 @@ return new class extends Migration {
 
             /* --- Campos transversales mínimos --- */
             $table->boolean('is_duplicated')->default(false); // duplicado?
-            $table->text('description')->nullable(); // descripcion
+            $table->longText('description')->nullable(); // comentarios
             $table->string('resolution')->nullable(); // resolucion
 
             /* ────── Datos core del negocio Traro ────── */

@@ -30,7 +30,8 @@ class CaseDetail extends Model
 
         // booleans típicos
         'is_duplicated'        => 'boolean',
-
+        //comentarios
+        'description' => 'array',
         // JSON de la vista
         'step_logs_json'       => 'array',
         'case_flows_json'      => 'array', //
