@@ -169,14 +169,20 @@ class ConfigurationSeeder extends Seeder
                                     'code','state','customer_name','accident_type_name',
                                     'bank_name','commune_name','document_signing_date'
                                 ],
-                                'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Denuncio'
+                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Denuncio'
                                               AND complaint_date IS NULL
                                               AND (
-                                                    signature_status = 'firmados'
-                                                 OR (fecha_firma_contrato IS NOT NULL AND fecha_firma_mandato IS NOT NULL)
-                                              )
-                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY COALESCE(document_signing_date, GREATEST(fecha_firma_contrato, fecha_firma_mandato)) ASC, id ASC",
+                                                    (fecha_firma_contrato IS NOT NULL AND fecha_firma_mandato IS NOT NULL)
+                                                    OR (
+                                                         fecha_firma_contrato IS NULL
+                                                     AND fecha_firma_mandato  IS NULL
+                                                     AND LOWER(signature_status) = 'firmados'
+                                                    )
+                                                  )
+                                              AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
+                                              ORDER BY COALESCE(document_signing_date,
+                                                                GREATEST(fecha_firma_contrato, fecha_firma_mandato)) ASC,
+                                                       id ASC",
                             ],
                             [
                                 'key'     => 'configuration_3',
@@ -296,6 +302,20 @@ class ConfigurationSeeder extends Seeder
                                               AND scheduling_status IN ('pendiente','en proceso')
                                               AND (overall_status IS NULL OR overall_status <> 'cerrado')
                                               ORDER BY created_at DESC, id DESC",
+                            ],
+                            [
+                                'key'     => 'configuration_4',
+                                'name'    => 'Denuncio realizado sin fecha de visita',
+                                'color'   => '#ff6d6d',
+                                'columns' => [
+                                    'code','state','customer_name','commune_name','bank_name',
+                                    'accident_type_name','complaint_date','inspection_date','bank_service_number'
+                                ],
+                                'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
+                                              AND complaint_date IS NOT NULL
+                                              AND inspection_date IS NULL
+                                              AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
+                                              ORDER BY complaint_date ASC, id ASC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'visita'],

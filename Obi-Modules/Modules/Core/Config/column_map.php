@@ -41,7 +41,7 @@ return [
             'probable_payment_date'  => 'Fecha probable de pago',
             'online_collection_date' => 'Fecha recaudación online',
             'accident_number'        => 'NRO siniestro',
-            'bank_service_number'    => 'NRO atención banco',
+            'bank_service_number'    => 'NRO atencion banco',
             'advisory_amount'        => 'Monto asesoría',
             'accident_type_id'       => 'Tipo de siniestro (ID)',
             'phone'                  => 'Teléfono 1',
