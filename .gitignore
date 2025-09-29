@@ -34,3 +34,8 @@ auth.json
 /.github/workflows/qodana_code_quality.yml
 /.idea/dataSources.xml
 /.idea/sqldialects.xml
+/.idea/copilot.data.migration.agent.xml
+/.idea/copilot.data.migration.ask.xml
+/.idea/copilot.data.migration.ask2agent.xml
+/.idea/copilot.data.migration.edit.xml
+/.idea/laravel-query-settings.xml

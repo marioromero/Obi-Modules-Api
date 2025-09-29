@@ -38,9 +38,9 @@ return [
         Presupuesto::class => [Liquidacion::class, Visita::class, Cancelado::class, Desistido::class],
         Liquidacion::class => [Recaudacion::class, Presupuesto::class, Cancelado::class, Desistido::class],
         Recaudacion::class => [Liquidacion::class, Cancelado::class, Desistido::class],
-        Cancelado::class => [],
-        Desistido::class => [],
-        DesistidoSinVisita::class => [],
+        Cancelado::class => [Ingreso::class, Denuncio::class, Programacion::class, Visita::class, Presupuesto::class, Liquidacion::class, Recaudacion::class, Desistido::class, DesistidoSinVisita::class],
+        Desistido::class => [Ingreso::class, Denuncio::class, Programacion::class, Visita::class, Presupuesto::class, Liquidacion::class, Recaudacion::class, Cancelado::class, DesistidoSinVisita::class],
+        DesistidoSinVisita::class => [Ingreso::class, Denuncio::class, Programacion::class, Visita::class, Presupuesto::class, Liquidacion::class, Recaudacion::class, Cancelado::class, Desistido::class]
     ],
 
     // Sub-estados por cada estado global
