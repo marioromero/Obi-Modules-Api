@@ -63,6 +63,7 @@ return [
             'approved_amount'        => 'Monto aprobado',
             'uf_approved'            => 'UF aprobadas',
             'amount_owed'            => 'Monto adeudado',
+            'amount_owed_including_vat' => 'Deuda mas IVA',
             'amount_paid'            => 'Monto pagado',
 
             'bank_id'                => 'Banco (ID)',

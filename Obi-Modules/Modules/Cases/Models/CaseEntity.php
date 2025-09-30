@@ -55,7 +55,7 @@ class CaseEntity extends Model
 
         // Montos
         'approved_amount', 'uf_approved',
-        'amount_owed', 'amount_paid', 'advisory_amount',
+        'amount_owed', 'amount_paid', 'advisory_amount', 'amount_owed_including_vat',
 
         // Flags genéricos
         'is_duplicated', 'description', 'resolution', 'payment_status',

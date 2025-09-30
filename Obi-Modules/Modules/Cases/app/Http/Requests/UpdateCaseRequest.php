@@ -61,6 +61,7 @@ class UpdateCaseRequest extends FormRequest
             'advisory_amount'      => 'sometimes|nullable|numeric|min:0',
             'amount_paid'          => 'sometimes|nullable|numeric|min:0',
             'amount_owed'          => 'sometimes|nullable|numeric|min:0',
+            'amount_owed_including_vat' => 'sometimes|nullable|numeric|min:0',
 
             /* ─────── Estado de pago ─────── */
             'payment_status'       => 'sometimes|nullable|string|max:50',

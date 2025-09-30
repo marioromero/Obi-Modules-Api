@@ -49,10 +49,11 @@ return new class extends Migration {
             $table->unsignedBigInteger('consultant_id')->nullable(); // asesor
 
             /* Montos específicos */
-            $table->integer('approved_amount')->nullable();
-            $table->float('uf_approved', 10, 2)->nullable();
-            $table->integer('amount_owed')->nullable();
-            $table->integer('amount_paid')->nullable();
+            $table->integer('approved_amount')->nullable(); // monto aprobado
+            $table->float('uf_approved', 10, 2)->nullable(); // UF aprobadas
+            $table->integer('amount_owed')->nullable(); // monto adeudado
+            $table->integer('amount_owed_including_vat')->nullable(); // deuda con IVA
+            $table->integer('amount_paid')->nullable(); // monto pagado
 
             /* Relaciones con banco, aseguradora y liquidadora */
             $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
