@@ -34,7 +34,7 @@ return new class extends Migration {
             /* --- Campos transversales mínimos --- */
             $table->boolean('is_duplicated')->default(false); // duplicado?
             $table->longText('description')->nullable(); // comentarios
-            $table->string('resolution')->nullable(); // resolucion
+            $table->longText('resolution')->nullable(); // resolucion
 
             /* ────── Datos core del negocio Traro ────── */
             $table->date('date_of_loss')->nullable(); //fecha del siniestro

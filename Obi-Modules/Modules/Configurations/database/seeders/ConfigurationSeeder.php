@@ -698,7 +698,6 @@ class ConfigurationSeeder extends Seeder
                 'user_id' => 4,
                  'steps' => [
                 'denuncio'    => $content['22']['steps']['denuncio'],
-                'recaudacion' => $content['22']['steps']['recaudacion'],
 
                 'programacion' => [
                     'default' => [
@@ -847,6 +846,26 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
                 ],
+
+                 'recaudacion' => [
+                     'default' => [
+                         'code','state','customer_name','settlement_report_date','probable_payment_date',
+                         'approved_amount','advisory_amount','amount_owed',
+                         'bank_name','accident_type_name','collection_date','payment_status','document_signing_date','agent_name', 'active_notifications', 'case_flow_last_json'
+                     ],
+                     'filters' => [
+                         [
+                             'key'     => 'configuration_1',
+                             'name'    => 'Cierre de mes',
+                             'color'   => '#f48fb1',
+                             'columns' => ['customer_name','document_signing_date','agent_name'],
+                              'sql'     => "WHERE document_signing_date >= DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01')
+                                           AND document_signing_date <  DATE_FORMAT(CURDATE(), '%Y-%m-01')
+                                           ORDER BY document_signing_date ASC, id ASC",
+                        ]
+                     ],
+                     'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
+                 ],
             ],
         ];
 
