@@ -38,7 +38,7 @@ return [
             'collection_date'        => 'Fecha recaudación',
             'budget_sending_date'    => 'Fecha envío presupuesto',
             'settlement_report_date' => 'Fecha informe de liquidación',
-            'probable_payment_date'  => 'Fecha probable de pago',
+            'probable_payment_date'  => 'Fecha de pago',
             'online_collection_date' => 'Fecha recaudación online',
             'accident_number'        => 'NRO siniestro',
             'bank_service_number'    => 'NRO atencion banco',
@@ -46,7 +46,7 @@ return [
             'accident_type_id'       => 'Tipo de siniestro (ID)',
             'phone'                  => 'Teléfono 1',
             'user_name'              => 'Ejecutivo asignado',
-            'is_duplicated'          => '¿Duplicado?',
+            'is_duplicated'          => 'Duplicado',
             'description'            => 'Descripción',
             'resolution'             => 'Resolución',
 
@@ -63,6 +63,7 @@ return [
             'approved_amount'        => 'Monto aprobado',
             'uf_approved'            => 'UF aprobadas',
             'amount_owed'            => 'Monto adeudado',
+            'amount_owed_including_vat' => 'Deuda mas IVA',
             'amount_paid'            => 'Monto pagado',
 
             'bank_id'                => 'Banco (ID)',
@@ -120,6 +121,7 @@ return [
             'case_flow_last_json'     => 'Último case flow (JSON)',
             'step_logs'               => 'Logs de pasos',
             'case_flow_last'          => 'Último case flow',
+            'case_flows_last'         => 'Último case flow',
         ],
     ],
 

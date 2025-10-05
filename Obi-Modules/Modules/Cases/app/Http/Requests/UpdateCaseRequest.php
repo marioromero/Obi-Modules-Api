@@ -34,6 +34,7 @@ class UpdateCaseRequest extends FormRequest
             'loss_adjuster_id'     => 'sometimes|nullable|integer|exists:banks_db.loss_adjusters,id',
             'insurer_id'           => 'sometimes|nullable|integer|exists:banks_db.insurers,id',
             'sent_to_acepta'       => 'sometimes|nullable|boolean',
+            'resolution'           => 'sometimes|nullable|string',
 
             /* ─────── Datos generales ─────── */
             'property_address'     => 'sometimes|nullable|string|max:255',
@@ -62,6 +63,7 @@ class UpdateCaseRequest extends FormRequest
             'advisory_amount'      => 'sometimes|nullable|numeric|min:0',
             'amount_paid'          => 'sometimes|nullable|numeric|min:0',
             'amount_owed'          => 'sometimes|nullable|numeric|min:0',
+            'amount_owed_including_vat' => 'sometimes|nullable|numeric|min:0',
 
             /* ─────── Estado de pago ─────── */
             'payment_status'       => 'sometimes|nullable|string|max:50',

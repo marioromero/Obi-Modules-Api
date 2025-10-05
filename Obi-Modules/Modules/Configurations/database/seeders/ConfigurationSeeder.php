@@ -69,7 +69,7 @@ class ConfigurationSeeder extends Seeder
             $columnsByRole = [
                 // 1 = Administrador
                 '1' => [
-                    'code','customer_name','customer_dni','state','accident_type_name',
+                    'code','state','customer_name','customer_id','customer_dni','accident_type_name',
                     'created_at','commune_name','property_address','bank_name',
                     'document_signing_date','approved_amount',
                     'assigned_user_name','consultant_name','agent_name',
@@ -80,7 +80,7 @@ class ConfigurationSeeder extends Seeder
 
                 // 2 = Ejecutivo
                 '2' => [
-                    'code','customer_name','customer_dni','state','accident_type_name',
+                    'code','state','customer_name','customer_id','customer_dni','accident_type_name',
                     'created_at','commune_name','property_address','bank_name',
                     'document_signing_date','approved_amount',
                     'assigned_user_name','signature_status','denounce_status',
@@ -92,10 +92,10 @@ class ConfigurationSeeder extends Seeder
 
                 // 3 = Coordinador
                 '3' => [
-                    'code','state','created_at',
+                    'code','state','customer_name','customer_id','created_at',
                     'property_address','inspection_date','document_signing_date','complaint_date','collection_date',
                     'budget_sending_date','settlement_report_date','probable_payment_date',
-                    'customer_name','customer_dni','customer_address','customer_commune_name',
+                    'customer_dni','customer_address','customer_commune_name',
                     'bank_name','assigned_user_name','accident_type_name','agent_name',
                     'commune_name','loss_adjuster_name','insurer_name','case_flows_last'
                 ],
@@ -103,7 +103,7 @@ class ConfigurationSeeder extends Seeder
                 // 4 = Administrativo
                 '4' => [
                     'code','state',
-                    'customer_name','customer_dni','property_address','property_type','created_at',
+                    'customer_name','customer_id','customer_dni','property_address','property_type','created_at',
                     'accident_type_name','bank_name','agent_name','document_signing_date','agreement_name',
                     'bank_service_number','complaint_date','accident_number','is_duplicated',
                     'insurer_name','loss_adjuster_name','inspection_date','budget_sending_date',
@@ -113,7 +113,7 @@ class ConfigurationSeeder extends Seeder
 
                 // 5 = Asesor
                 '5' => [
-                    'code','customer_name','customer_dni','state','accident_type_name',
+                    'code','state','customer_name','customer_id','customer_dni','accident_type_name',
                     'created_at','commune_name','property_address','bank_name',
                     'document_signing_date','consultant_id', 'consultant_name', 'approved_amount',
                     'inspection_date','visit_status','budget_status','decision_status',
@@ -146,7 +146,7 @@ class ConfigurationSeeder extends Seeder
                 'steps' => [
                     'denuncio' => [
                         'default' => [
-                            'code','state','customer_name','phone','created_at','bank_name','commune_name',
+                            'code','state','customer_name','customer_id','phone','created_at','bank_name','commune_name',
                             'accident_type_name','document_signing_date', 'active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
@@ -154,7 +154,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Estado en proceso sin firmas',
                                 'color'   => '#ff8878',
-                                'columns' => ['code','state','customer_name','phone','created_at','bank_name','commune_name','accident_type_name'],
+                                'columns' => ['code','state','customer_name','customer_id','phone','created_at','bank_name','commune_name','accident_type_name'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Ingreso'
                                               AND signature_status IN ('generado','enviado a acepta','notificado')
                                               AND document_signing_date IS NULL
@@ -166,7 +166,7 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Sin denuncio y contrato firmado',
                                 'color'   => '#ec81ff',
                                 'columns' => [
-                                    'code','state','customer_name','accident_type_name',
+                                    'code','state','customer_name','customer_id','accident_type_name',
                                     'bank_name','commune_name','document_signing_date'
                                 ],
                                  'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Denuncio'
@@ -189,7 +189,7 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Solo un documento firmado',
                                 'color'   => '#ffa94d',
                                 'columns' => [
-                                    'code','state','customer_name','created_at','bank_name','commune_name','accident_type_name','signature_status'
+                                    'code','state','customer_name','customer_id','created_at','bank_name','commune_name','accident_type_name','signature_status'
                                 ],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Ingreso'
                                               AND signature_status IN ('contrato pendiente','mandato pendiente')
@@ -202,7 +202,7 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'recaudacion' => [
                         'default' => [
-                            'code','state','customer_name','settlement_report_date','probable_payment_date',
+                            'code','state','customer_name','customer_id','settlement_report_date','probable_payment_date',
                             'approved_amount','advisory_amount','amount_owed',
                             'bank_name','accident_type_name','collection_date','payment_status', 'active_notifications', 'case_flow_last_json'
                         ],
@@ -211,7 +211,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_1',
                             'name'    => 'En cobranza sin pago',
                             'color'   => '#bdff81',
-                            'columns' => ['code','state','customer_name','approved_amount','advisory_amount','probable_payment_date','collection_date','payment_status'],
+                            'columns' => ['code','state','customer_name','customer_id','approved_amount','advisory_amount','probable_payment_date','collection_date','payment_status'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Recaudacion'
                                           AND LOWER(payment_status) = 'cobranza'
                                           AND collection_date IS NOT NULL
@@ -222,7 +222,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_2',
                             'name'    => 'Sin fecha probable de pago y con informe de liquidación',
                             'color'   => '#818bff',
-                            'columns' => ['code','state','customer_name','settlement_report_date','approved_amount','advisory_amount','amount_owed'],
+                            'columns' => ['code','state','customer_name','customer_id','settlement_report_date','approved_amount','advisory_amount','amount_owed'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Recaudacion'
                                           AND settlement_report_date IS NOT NULL
                                           AND probable_payment_date IS NULL
@@ -234,7 +234,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_3',
                             'name'    => 'Con fecha probable de pago y sin cobranza',
                             'color'   => '#81ffe3',
-                            'columns' => ['code','state','customer_name','settlement_report_date','probable_payment_date','approved_amount','advisory_amount','bank_name','accident_type_name'],
+                            'columns' => ['code','state','customer_name','customer_id','settlement_report_date','probable_payment_date','approved_amount','advisory_amount','bank_name','accident_type_name'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Recaudacion'
                                           AND probable_payment_date IS NOT NULL
                                           AND collection_date IS NULL
@@ -256,7 +256,7 @@ class ConfigurationSeeder extends Seeder
                     'recaudacion' => $content['22']['steps']['recaudacion'],
                     'programacion' => [
                         'default' => [
-                            'code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
                             'property_address','loss_adjuster_name','phone','inspection_date', 'active_notifications', 'case_flow_last_json'
                         ],
@@ -265,7 +265,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Por asesor: Omar Carrasco',
                                 'color'   => '#4f86ff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -279,7 +279,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_2',
                                 'name'    => 'Por asesor: Ivette Contreras',
                                 'color'   => '#b36bff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -293,7 +293,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_3',
                                 'name'    => 'Por asesor: Pablo Yañez',
                                 'color'   => '#18c29c',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -308,7 +308,7 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Denuncio realizado sin fecha de visita',
                                 'color'   => '#ff6d6d',
                                 'columns' => [
-                                    'code','state','customer_name','commune_name','bank_name',
+                                    'code','state','customer_name','customer_id','commune_name','bank_name',
                                     'accident_type_name','complaint_date','inspection_date','bank_service_number'
                                 ],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
@@ -322,7 +322,7 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'visita' => [
                         'default' => [
-                            'code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
                             'property_address','loss_adjuster_name','phone','inspection_date', 'active_notifications', 'case_flow_last_json'
                         ],
@@ -331,7 +331,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Por asesor: Omar Carrasco',
                                 'color'   => '#4f86ff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -345,7 +345,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_2',
                                 'name'    => 'Por asesor: Ivette Contreras',
                                 'color'   => '#b36bff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -359,7 +359,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_3',
                                 'name'    => 'Por asesor: Pablo Yañez',
                                 'color'   => '#18c29c',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -384,7 +384,7 @@ class ConfigurationSeeder extends Seeder
                     // 2) Programación
                     'programacion' => [
                         'default' => [
-                            'code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
                             'property_address','loss_adjuster_name','phone','inspection_date','active_notifications', 'case_flow_last_json'
                         ],
@@ -393,7 +393,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Por asesor: Pablo Yañez',
                                 'color'   => '#18c29c',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -407,7 +407,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_2',
                                 'name'    => 'Por asesor: Omar Carrasco',
                                 'color'   => '#4f86ff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -421,7 +421,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_3',
                                 'name'    => 'Por asesor: Ivette Contreras',
                                 'color'   => '#b36bff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -436,7 +436,7 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'visita' => [
                         'default' => [
-                            'code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
                             'property_address','loss_adjuster_name','phone','inspection_date','active_notifications', 'case_flow_last_json'
                         ],
@@ -445,7 +445,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Por asesor: Pablo Yañez',
                                 'color'   => '#18c29c',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -459,7 +459,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_2',
                                 'name'    => 'Por asesor: Omar Carrasco',
                                 'color'   => '#4f86ff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -473,7 +473,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_3',
                                 'name'    => 'Por asesor: Ivette Contreras',
                                 'color'   => '#b36bff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -489,7 +489,7 @@ class ConfigurationSeeder extends Seeder
                     // 4) Presupuesto
                     'presupuesto' => [
                         'default' => [
-                            'code','state','customer_name','user_name','document_signing_date','budget_sending_date',
+                            'code','state','customer_name','customer_id','user_name','document_signing_date','budget_sending_date','is_duplicated',
                             'commune_name','inspection_date','loss_adjuster_name','accident_number','accident_type_name', 'active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
@@ -497,8 +497,8 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Sin presupuesto enviado y con fecha de visita',
                                 'color'   => '#ffb74d',
-                                'columns' => ['code','state','customer_name','agent_name','document_signing_date',
-                                             'budget_sending_date','commune_name','inspection_date',
+                                'columns' => ['code','state','customer_name','customer_id','agent_name','document_signing_date',
+                                             'budget_sending_date','is_duplicated','commune_name','inspection_date',
                                              'loss_adjuster_name','accident_number','accident_type_name'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Presupuesto'
                                               AND budget_sending_date IS NULL
@@ -512,7 +512,7 @@ class ConfigurationSeeder extends Seeder
                     // 5) Liquidación
                     'liquidacion' => [
                         'default' => [
-                            'code','state','customer_name','user_name','loss_adjuster_name','accident_type_name',
+                            'code','state','customer_name','customer_id','user_name','loss_adjuster_name','accident_type_name',
                             'accident_number','commune_name','inspection_date','budget_sending_date',
                             'settlement_report_date','approved_amount','is_duplicated', 'active_notifications', 'case_flow_last_json'
                         ],
@@ -521,7 +521,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Sin fecha de liquidación',
                                 'color'   => '#64b5f6',
-                                'columns' => ['code','state','customer_name','loss_adjuster_name','accident_type_name',
+                                'columns' => ['code','state','customer_name','customer_id','loss_adjuster_name','accident_type_name',
                                              'accident_number','commune_name','inspection_date','budget_sending_date',
                                              'settlement_report_date','approved_amount','is_duplicated'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Liquidacion'
@@ -546,7 +546,7 @@ class ConfigurationSeeder extends Seeder
 
                     'programacion' => [
                         'default' => [
-                            'code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
                             'property_address','loss_adjuster_name','phone','inspection_date','active_notifications', 'case_flow_last_json'
                         ],
@@ -555,7 +555,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Por asesor: Omar Carrasco',
                                 'color'   => '#4f86ff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -569,7 +569,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_2',
                                 'name'    => 'Por asesor: Ivette Contreras',
                                 'color'   => '#b36bff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -583,7 +583,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_3',
                                 'name'    => 'Por asesor: Pablo Yañez',
                                 'color'   => '#18c29c',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -599,7 +599,7 @@ class ConfigurationSeeder extends Seeder
 
                     'visita' => [
                         'default' => [
-                            'code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
                             'property_address','loss_adjuster_name','phone','inspection_date','active_notifications', 'case_flow_last_json'
                         ],
@@ -608,7 +608,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Por asesor: Omar Carrasco',
                                 'color'   => '#4f86ff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -622,7 +622,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_2',
                                 'name'    => 'Por asesor: Ivette Contreras',
                                 'color'   => '#b36bff',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -636,7 +636,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_3',
                                 'name'    => 'Por asesor: Pablo Yañez',
                                 'color'   => '#18c29c',
-                                'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
                                               'property_address','loss_adjuster_name','phone','inspection_date',
                                               'consultant_name'],
@@ -651,7 +651,7 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'presupuesto' => [
                         'default' => [
-                            'code','state','customer_name','user_name','document_signing_date','budget_sending_date',
+                            'code','state','customer_name','customer_id','user_name','document_signing_date','budget_sending_date',
                             'commune_name','inspection_date','loss_adjuster_name','accident_number','accident_type_name','active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
@@ -659,7 +659,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Sin presupuesto enviado y con fecha de visita',
                                 'color'   => '#ffb74d',
-                                'columns' => ['code','state','customer_name','user_name','inspection_date','budget_sending_date','commune_name','loss_adjuster_name','accident_number','accident_type_name'],
+                                'columns' => ['code','state','customer_name','customer_id','user_name','inspection_date','budget_sending_date','commune_name','loss_adjuster_name','accident_number','accident_type_name'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Presupuesto'
                                               AND budget_sending_date IS NULL
                                               AND inspection_date IS NOT NULL
@@ -672,7 +672,7 @@ class ConfigurationSeeder extends Seeder
 
                     'liquidacion' => [
                         'default' => [
-                            'code','state','customer_name','user_name','loss_adjuster_name','accident_type_name',
+                            'code','state','customer_name','customer_id','user_name','loss_adjuster_name','accident_type_name',
                             'accident_number','commune_name','inspection_date','budget_sending_date',
                             'settlement_report_date','approved_amount','is_duplicated','active_notifications', 'case_flow_last_json'
                         ],
@@ -681,7 +681,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Sin fecha de liquidación',
                                 'color'   => '#64b5f6',
-                                'columns' => ['code','state','customer_name','user_name','loss_adjuster_name','accident_type_name','accident_number','commune_name','inspection_date','budget_sending_date','settlement_report_date','approved_amount','is_duplicated'],
+                                'columns' => ['code','state','customer_name','customer_id','user_name','loss_adjuster_name','accident_type_name','accident_number','commune_name','inspection_date','budget_sending_date','settlement_report_date','approved_amount','is_duplicated'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Liquidacion'
                                               AND settlement_report_date IS NULL
                                               AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
@@ -698,11 +698,10 @@ class ConfigurationSeeder extends Seeder
                 'user_id' => 4,
                  'steps' => [
                 'denuncio'    => $content['22']['steps']['denuncio'],
-                'recaudacion' => $content['22']['steps']['recaudacion'],
 
                 'programacion' => [
                     'default' => [
-                        'code','state','customer_name','customer_dni','bank_name','insurer_name',
+                        'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                         'accident_type_name','accident_number','date_of_loss','commune_name',
                         'property_address','loss_adjuster_name','phone','inspection_date','active_notifications', 'case_flow_last_json'
                     ],
@@ -711,7 +710,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_1',
                             'name'    => 'Por asesor: Omar Carrasco',
                             'color'   => '#4f86ff',
-                            'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                           'accident_type_name','accident_number','date_of_loss','commune_name',
                                           'property_address','loss_adjuster_name','phone','inspection_date',
                                           'consultant_name'],
@@ -725,7 +724,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_2',
                             'name'    => 'Por asesor: Ivette Contreras',
                             'color'   => '#b36bff',
-                            'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                           'accident_type_name','accident_number','date_of_loss','commune_name',
                                           'property_address','loss_adjuster_name','phone','inspection_date',
                                           'consultant_name'],
@@ -739,7 +738,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_3',
                             'name'    => 'Por asesor: Pablo Yañez',
                             'color'   => '#18c29c',
-                            'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                           'accident_type_name','accident_number','date_of_loss','commune_name',
                                           'property_address','loss_adjuster_name','phone','inspection_date',
                                           'consultant_name'],
@@ -755,7 +754,7 @@ class ConfigurationSeeder extends Seeder
 
                 'visita' => [
                     'default' => [
-                        'code','state','customer_name','customer_dni','bank_name','insurer_name',
+                        'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                         'accident_type_name','accident_number','date_of_loss','commune_name',
                         'property_address','loss_adjuster_name','phone','inspection_date','active_notifications', 'case_flow_last_json'
                     ],
@@ -764,7 +763,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_1',
                             'name'    => 'Por asesor: Omar Carrasco',
                             'color'   => '#4f86ff',
-                            'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                           'accident_type_name','accident_number','date_of_loss','commune_name',
                                           'property_address','loss_adjuster_name','phone','inspection_date',
                                           'consultant_name'],
@@ -778,7 +777,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_2',
                             'name'    => 'Por asesor: Ivette Contreras',
                             'color'   => '#b36bff',
-                            'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                           'accident_type_name','accident_number','date_of_loss','commune_name',
                                           'property_address','loss_adjuster_name','phone','inspection_date',
                                           'consultant_name'],
@@ -792,7 +791,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_3',
                             'name'    => 'Por asesor: Pablo Yañez',
                             'color'   => '#18c29c',
-                            'columns' => ['code','state','customer_name','customer_dni','bank_name','insurer_name',
+                            'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                           'accident_type_name','accident_number','date_of_loss','commune_name',
                                           'property_address','loss_adjuster_name','phone','inspection_date',
                                           'consultant_name'],
@@ -808,7 +807,7 @@ class ConfigurationSeeder extends Seeder
 
                 'presupuesto' => [
                     'default' => [
-                        'code','state','customer_name','user_name','document_signing_date','budget_sending_date',
+                        'code','state','customer_name','customer_id','user_name','document_signing_date','budget_sending_date',
                         'commune_name','inspection_date','loss_adjuster_name','accident_number','accident_type_name','active_notifications', 'case_flow_last_json'
                     ],
                     'filters' => [
@@ -816,7 +815,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_1',
                             'name'    => 'Sin presupuesto enviado y con fecha de visita',
                             'color'   => '#ffb74d',
-                            'columns' => ['code','state','customer_name','user_name','inspection_date','budget_sending_date','commune_name','loss_adjuster_name','accident_number','accident_type_name'],
+                            'columns' => ['code','state','customer_name','customer_id','user_name','inspection_date','budget_sending_date','commune_name','loss_adjuster_name','accident_number','accident_type_name'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Presupuesto'
                                           AND budget_sending_date IS NULL
                                           AND inspection_date IS NOT NULL
@@ -829,7 +828,7 @@ class ConfigurationSeeder extends Seeder
 
                 'liquidacion' => [
                     'default' => [
-                        'code','state','customer_name','user_name','loss_adjuster_name','accident_type_name',
+                        'code','state','customer_name','customer_id','user_name','loss_adjuster_name','accident_type_name',
                         'accident_number','commune_name','inspection_date','budget_sending_date',
                         'settlement_report_date','approved_amount','is_duplicated','active_notifications', 'case_flow_last_json'
                     ],
@@ -838,7 +837,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_1',
                             'name'    => 'Sin fecha de liquidación',
                             'color'   => '#64b5f6',
-                            'columns' => ['code','state','customer_name','user_name','loss_adjuster_name','accident_type_name','accident_number','commune_name','inspection_date','budget_sending_date','settlement_report_date','approved_amount','is_duplicated'],
+                            'columns' => ['code','state','customer_name','customer_id','user_name','loss_adjuster_name','accident_type_name','accident_number','commune_name','inspection_date','budget_sending_date','settlement_report_date','approved_amount','is_duplicated'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Liquidacion'
                                           AND settlement_report_date IS NULL
                                           AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
@@ -847,6 +846,26 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
                 ],
+
+                 'recaudacion' => [
+                     'default' => [
+                         'code','state','customer_name','customer_id','settlement_report_date','probable_payment_date',
+                         'approved_amount','advisory_amount','amount_owed',
+                         'bank_name','accident_type_name','collection_date','payment_status','document_signing_date','agent_name', 'active_notifications', 'case_flow_last_json'
+                     ],
+                     'filters' => [
+                         [
+                             'key'     => 'configuration_1',
+                             'name'    => 'Cierre de mes',
+                             'color'   => '#f48fb1',
+                             'columns' => ['customer_name','customer_id','document_signing_date','agent_name'],
+                              'sql'     => "WHERE document_signing_date >= DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01')
+                                           AND document_signing_date <  DATE_FORMAT(CURDATE(), '%Y-%m-01')
+                                           ORDER BY document_signing_date ASC, id ASC",
+                        ]
+                     ],
+                     'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
+                 ],
             ],
         ];
 

@@ -62,6 +62,7 @@ return new class extends Migration
           cu.phone       AS phone,
           cu.phone2        AS phone2,
           cu.serial_number AS serial_number,
+          cu.email          AS customer_email,
 
           /* Ejecutivo desde el CLIENTE (assigned_agent) */
           cu.assigned_agent AS agent_id,
