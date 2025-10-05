@@ -50,6 +50,7 @@ class UpdateCaseRequest extends FormRequest
             'probable_payment_date'  => 'sometimes|nullable|date',
             'collection_date'        => 'sometimes|nullable|date',
             'online_collection_date' => 'sometimes|nullable|date',
+            'document_signing_date'  => 'sometimes|nullable|date',
 
             /* ─────── Identificadores externos ─────── */
             'bank_service_number'  => 'sometimes|nullable|string|max:50',
