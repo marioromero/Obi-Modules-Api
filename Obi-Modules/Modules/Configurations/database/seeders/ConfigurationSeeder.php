@@ -232,9 +232,9 @@ class ConfigurationSeeder extends Seeder
                         ],
                         [
                             'key'     => 'configuration_3',
-                            'name'    => 'Con fecha probable de pago y sin cobranza',
+                            'name'    => 'Con fecha de pago y sin cobranza',
                             'color'   => '#81ffe3',
-                            'columns' => ['code','state','customer_name','customer_id','settlement_report_date','probable_payment_date','approved_amount','advisory_amount','bank_name','accident_type_name'],
+                            'columns' => ['code','state','customer_name','customer_id','probable_payment_date','settlement_report_date','probable_payment_date','approved_amount','advisory_amount','bank_name','accident_type_name'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Recaudacion'
                                           AND probable_payment_date IS NOT NULL
                                           AND collection_date IS NULL
@@ -256,7 +256,7 @@ class ConfigurationSeeder extends Seeder
                     'recaudacion' => $content['22']['steps']['recaudacion'],
                     'programacion' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
+                            'code','state','customer_name','customer_id','is_duplicated','customer_dni','bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
                             'property_address','loss_adjuster_name','phone','inspection_date', 'active_notifications', 'case_flow_last_json'
                         ],
@@ -308,7 +308,7 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Denuncio realizado sin fecha de visita',
                                 'color'   => '#ff6d6d',
                                 'columns' => [
-                                    'code','state','customer_name','customer_id','commune_name','bank_name',
+                                    'code','state','customer_name','customer_id','is_duplicated','commune_name','bank_name',
                                     'accident_type_name','complaint_date','inspection_date','bank_service_number'
                                 ],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
@@ -848,24 +848,38 @@ class ConfigurationSeeder extends Seeder
                 ],
 
                  'recaudacion' => [
-                     'default' => [
-                         'code','state','customer_name','customer_id','settlement_report_date','probable_payment_date',
-                         'approved_amount','advisory_amount','amount_owed',
-                         'bank_name','accident_type_name','collection_date','payment_status','document_signing_date','agent_name', 'active_notifications', 'case_flow_last_json'
-                     ],
-                     'filters' => [
-                         [
-                             'key'     => 'configuration_1',
-                             'name'    => 'Cierre de mes',
-                             'color'   => '#f48fb1',
-                             'columns' => ['customer_name','customer_id','document_signing_date','agent_name'],
-                              'sql'     => "WHERE document_signing_date >= DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01')
-                                           AND document_signing_date <  DATE_FORMAT(CURDATE(), '%Y-%m-01')
-                                           ORDER BY document_signing_date ASC, id ASC",
-                        ]
-                     ],
-                     'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
-                 ],
+                    'default' => [
+                        'code','state','customer_name','customer_id',
+                        'settlement_report_date','probable_payment_date',
+                        'approved_amount','advisory_amount','amount_owed',
+                        'bank_name','accident_type_name','collection_date',
+                        'payment_status','document_signing_date','agent_name',
+                        'commune_name','phone','created_at',
+                        'active_notifications','case_flow_last_json'
+                    ],
+                    'filters' => [
+                        [
+                            'key'     => 'configuration_1',
+                            'name'    => 'Cierre de mes',
+                            'color'   => '#f48fb1',
+                            'columns' => ['customer_name','customer_id','document_signing_date','agent_name'],
+                            'sql'     => "WHERE document_signing_date >= DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01')
+                                          AND document_signing_date <  DATE_FORMAT(CURDATE(), '%Y-%m-01')
+                                          ORDER BY document_signing_date ASC, id ASC",
+                        ],
+                        [
+                            'key'     => 'configuration_2',
+                            'name'    => 'Filtro para duplicados',
+                            'color'   => '#ffb3b3',
+                            'columns' => [
+                                'code','state','customer_name','customer_id',
+                                'commune_name','phone','created_at','agent_name','accident_type_name'
+                            ],
+                            'sql'     => "ORDER BY created_at DESC, id DESC",
+                        ],
+                    ],
+                    'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
+                ],
             ],
         ];
 
