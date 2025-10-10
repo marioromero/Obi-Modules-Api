@@ -317,6 +317,17 @@ class ConfigurationSeeder extends Seeder
                                               AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
                                               ORDER BY complaint_date ASC, id ASC",
                             ],
+                            [
+                            'key'     => 'configuration_5',
+                            'name'    => 'Casos desistidos',
+                            'color'   => '#a7c7e7',
+                            'columns' => [
+                                'code','state','customer_name','customer_id','is_duplicated','commune_name','bank_name',
+                                'accident_type_name','complaint_date','inspection_date','bank_service_number','created_at'
+                            ],
+                            'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) IN ('Desistido', 'DesistidoSinVisita')
+                                        ORDER BY created_at DESC, id DESC",
+                        ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
                     ],
@@ -489,7 +500,7 @@ class ConfigurationSeeder extends Seeder
                     // 4) Presupuesto
                     'presupuesto' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','user_name','document_signing_date','budget_sending_date','is_duplicated',
+                            'code','state','customer_name','customer_id','agent_name','document_signing_date','budget_sending_date','is_duplicated',
                             'commune_name','inspection_date','loss_adjuster_name','accident_number','accident_type_name', 'active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
@@ -873,7 +884,7 @@ class ConfigurationSeeder extends Seeder
                             'color'   => '#ffb3b3',
                             'columns' => [
                                 'code','state','customer_name','customer_id',
-                                'commune_name','phone','created_at','agent_name','accident_type_name'
+                                'commune_name','phone','bank_name','created_at','agent_name','accident_type_name'
                             ],
                             'sql'     => "ORDER BY created_at DESC, id DESC",
                         ],
