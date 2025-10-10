@@ -9,6 +9,7 @@ use Modules\Cases\app\Http\Controllers\PriorityController;
 use Modules\Cases\app\Http\Controllers\CaseController;
 use Modules\Cases\app\Http\Controllers\CaseSubstateController;
 use Modules\Cases\app\Http\Controllers\AgreementController;
+use Modules\Cases\app\Http\Controllers\StatsController;
 
 Route::get('/ping-cases', fn() => response()->json(['pong' => 'Cases']))->name('Cases.ping');
 
@@ -81,3 +82,12 @@ Route::post('cases/{code}/documents/signature-check', [CaseDocumentController::c
 Route::get('cases/{code}/documents/preview', [CaseDocumentController::class, 'preview'])
     ->where('code', 'TR\d+');
 
+
+// REST para Stats
+Route::get('stats', [StatsController::class, 'index']);
+Route::get('stats/{stats}', [StatsController::class, 'show']);
+Route::post('stats', [StatsController::class, 'store']);
+Route::put('stats/{stats}', [StatsController::class, 'update']);
+Route::patch('stats/{stats}', [StatsController::class, 'patch']);
+Route::delete('stats/{stats}', [StatsController::class, 'destroy']);
+Route::get('stats/by-role/{roleId}', [StatsController::class, 'statsByRole']);
