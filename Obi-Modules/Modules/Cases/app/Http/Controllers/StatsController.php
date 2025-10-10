@@ -1,7 +1,7 @@
 <?php
 
 namespace Modules\Cases\app\Http\Controllers;
-use Modules\Core\App\Http\BaseApiController;
+use Modules\Core\app\Http\BaseApiController;
 use Modules\Cases\Models\Stats;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +53,7 @@ class StatsController extends BaseApiController
         return $this->success(null, 'Stats eliminado correctamente', 204);
     }
 
+    //Metricas por rol
      public function statsByRole(int $roleId): JsonResponse
     {
         $now                = Carbon::now();
@@ -64,7 +65,7 @@ class StatsController extends BaseApiController
         $todayDay           = $now->day;
         $prevMonthSameDay   = $prevMonth->copy()->day(min($todayDay, $prevMonth->daysInMonth));
 
-        // Métricas base (vigentes para todos los roles)
+        // Métricas base para todos los roles
         $metrics = [
             // Casos ingresados
             'cases_created_current_month'           => CaseEntity::whereBetween('created_at', [$startCurrentMonth, $now])->count(),
@@ -118,22 +119,22 @@ class StatsController extends BaseApiController
                 $rangeStart = $this->firstDayMinus12Months();
                 $rangeEnd   = $this->firstDayCurrentMonth();
 
-                // 🟩 1) Listado de pagos (suma total de todos los montos pagados) – total tabla
+                //Listado de pagos (suma total de todos los montos pagados) – total tabla
                 $metrics['total_paid_amount'] = (int) (CaseEntity::sum('amount_paid') ?? 0);
 
-                // 🟦 2) Casos ingresados por mes (últimos 12 meses) + TOTAL
+                //Casos ingresados por mes (últimos 12 meses) + TOTAL
                 $metrics['cases_created_by_month_last_12'] = $this->monthlyCountWithTotal('created_at', $rangeStart, $rangeEnd);
 
-                // 🟨 3) Casos firmados por mes (últimos 12 meses) + TOTAL
+                //Casos firmados por mes (últimos 12 meses) + TOTAL
                 $metrics['document_signed_by_month_last_12'] = $this->monthlyCountWithTotal('document_signing_date', $rangeStart, $rangeEnd);
 
-                // 🟧 4) Casos visitados por mes (últimos 12 meses) + TOTAL
+                //Casos visitados por mes (últimos 12 meses) + TOTAL
                 $metrics['inspections_by_month_last_12'] = $this->monthlyCountWithTotal('inspection_date', $rangeStart, $rangeEnd);
 
-                // 🟥 5) Presupuestos enviados por mes (últimos 12 meses) + TOTAL
+                //Presupuestos enviados por mes (últimos 12 meses) + TOTAL
                 $metrics['budgets_sent_by_month_last_12'] = $this->monthlyCountWithTotal('budget_sending_date', $rangeStart, $rangeEnd);
 
-                // 🟪 6) Casos denunciados por mes (últimos 12 meses) + TOTAL
+                //Casos denunciados por mes (últimos 12 meses) + TOTAL
                 $metrics['complaints_by_month_last_12'] = $this->monthlyCountWithTotal('complaint_date', $rangeStart, $rangeEnd);
                 break;
 
@@ -185,7 +186,6 @@ class StatsController extends BaseApiController
             ORDER BY (year = 'TOTAL'), year, month
         ";
 
-        /** @var array<int, \stdClass{year:mixed, month:mixed, count:mixed}> $rows */
         $rows = DB::connection($connection)->select($sql, [$start, $end, $start, $end]);
 
         // Normalizamos tipos
