@@ -62,7 +62,9 @@ Route::get('cases/{case}/transitions', [CaseController::class, 'transitions'])->
 Route::post('cases/{case}/transition', [CaseController::class, 'transition'])->whereNumber('case');
 Route::post('cases/{case}/substate', [CaseSubstateController::class, 'update'])->whereNumber('case');
 Route::get('cases/{case}/comments', [CaseController::class, 'getCommentsByCaseId'])->whereNumber('case');
-Route::post('cases/{case}/comments', [CaseController::class, 'saveComment'])->whereNumber('case');
+Route::post('cases/{case}/comments', [CaseController::class, 'StoreCommentForCase'])->whereNumber('case');
+Route::patch('cases/code/{code}', [CaseController::class, 'UpdateCaseByCode']);
+
 
 // REST para Agreement
 Route::get('agreements', [AgreementController::class, 'index']);

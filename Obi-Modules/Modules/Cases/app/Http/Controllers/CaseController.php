@@ -4,6 +4,7 @@ namespace Modules\Cases\app\Http\Controllers;
 
 use Modules\Cases\app\Http\Requests\StoreCaseRequest;
 use Modules\Cases\app\Http\Requests\TransitionCaseRequest;
+use Modules\Cases\app\Http\Requests\UpdateCaseByCodeRequest;
 use Modules\Cases\app\Http\Requests\UpdateCaseRequest;
 use Modules\Cases\app\Resources\CaseEntityResource;
 use Modules\Cases\app\Services\CaseTransitionService;
@@ -60,27 +61,9 @@ class CaseController extends BaseApiController
         return $this->success($case->refresh(), 'Caso actualizado correctamente', 200);
     }
 
-    public function patch(UpdateCaseRequest $request, CaseEntity $case)
+   public function patch(UpdateCaseRequest $request, CaseEntity $case)
     {
-        $case->update($request->validated());
-
-        // Si viene user y content se crea nuevo registro
-        $descUser    = trim((string) data_get($request->all(), 'description.user', ''));
-        $descContent = (string) data_get($request->all(), 'description.content', '');
-
-        if ($descUser !== '' && $descContent !== '') {
-            $payload  = is_array($case->description) ? $case->description : [];
-            $comments = isset($payload['comments']) && is_array($payload['comments']) ? $payload['comments'] : [];
-
-            $comments[] = [
-                'date'    => Carbon::now('America/Santiago')->format('d/m/Y H:i:s'),
-                'user'    => $descUser,
-                'content' => $descContent,
-            ];
-
-            $case->description = ['comments' => array_values($comments)];
-            $case->save();
-        }
+        $case->fill($request->validated())->save();
 
         return $this->success($case->refresh(), 'Caso actualizado correctamente', 200);
     }
@@ -521,47 +504,40 @@ class CaseController extends BaseApiController
     }
 
     //metodo para guardar comentarios de caso x id
-    public function saveComment(Request $request, CaseEntity $case)
+    public function StoreCommentForCase(Request $request, CaseEntity $case)
     {
-        // Validación
         $validated = $request->validate([
-            'user'    => ['required', 'string'],
-            'content' => ['required', 'string'],
+            'user'    => 'required|string',
+            'content' => 'required|string',
         ]);
 
-        // Normalizar payload actual
-        $desc = $case->description;
-        if (is_string($desc)) {
-            $decoded = json_decode($desc, true);
-            $desc = is_array($decoded) ? $decoded : [];
-        } elseif (!is_array($desc)) {
-            $desc = [];
-        }
+        $payload  = is_array($case->description) ? $case->description : [];
+        $comments = isset($payload['comments']) && is_array($payload['comments']) ? $payload['comments'] : [];
 
-        $comments = $desc['comments'] ?? [];
-        if (!is_array($comments)) {
-            $comments = [];
-        }
-
-        // Formato de fecha DD/MM/AAAA HH:MM:SS
-        $fecha = Carbon::now('America/Santiago')->format('d/m/Y H:i:s');
-
-        // Agregar comentario
         $comments[] = [
-            'date'    => $fecha,
-            'user'    => trim($validated['user']),
-            'content' => trim($validated['content']),
+            'date'    => now('America/Santiago')->format('d/m/Y H:i:s'),
+            'user'    => $validated['user'],
+            'content' => $validated['content'],
         ];
 
-        // Guardar en DB como array
-        $case->description = ['comments' => $comments];
+        $case->description = ['comments' => array_values($comments)];
         $case->save();
 
-        return $this->success(
-            ['comments' => $comments],
-            'Comentario agregado',
-            200
-        );
+        return $this->success($case->refresh(), 'Comentario agregado correctamente', 201);
     }
+
+    public function UpdateCaseByCode(UpdateCaseByCodeRequest $request, string $code)
+    {
+        $case = CaseEntity::where('code', $code)->first();
+
+        if (! $case) {
+            return $this->error("Caso con código {$code} no encontrado", 404);
+        }
+
+        $case->fill($request->validated())->save();
+
+        return $this->success($case->refresh(), "Caso {$code} actualizado correctamente", 200);
+    }
+
 }
 

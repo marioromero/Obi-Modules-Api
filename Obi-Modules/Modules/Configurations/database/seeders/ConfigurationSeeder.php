@@ -146,7 +146,7 @@ class ConfigurationSeeder extends Seeder
                 'steps' => [
                     'denuncio' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','phone','created_at','bank_name','commune_name',
+                            'code','state','customer_name','customer_id','phone','is_duplicated','created_at','bank_name','commune_name',
                             'accident_type_name','document_signing_date', 'active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
@@ -167,7 +167,7 @@ class ConfigurationSeeder extends Seeder
                                 'color'   => '#ec81ff',
                                 'columns' => [
                                     'code','state','customer_name','customer_id','accident_type_name',
-                                    'bank_name','commune_name','document_signing_date'
+                                    'bank_name','is_duplicated','commune_name','document_signing_date'
                                 ],
                                  'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Denuncio'
                                               AND complaint_date IS NULL
