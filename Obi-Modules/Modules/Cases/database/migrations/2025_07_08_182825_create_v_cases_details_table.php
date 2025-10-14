@@ -107,7 +107,7 @@ return new class extends Migration
         LEFT JOIN grupoint_obi_cases.accident_types  at ON at.id = c.accident_type_id
 
         /* Usuarios TRARO (del caso) */
-        LEFT JOIN grupoint_traro.users cons ON cons.id = c.consultant_id AND cons.role_id = 5
+        LEFT JOIN grupoint_traro.users cons ON cons.id = c.consultant_id
         LEFT JOIN grupoint_traro.users asg  ON asg.id  = c.assigned_user
         LEFT JOIN grupoint_traro.users crt  ON crt.id  = c.created_by
         LEFT JOIN grupoint_traro.users aag  ON aag.id  = cu.assigned_agent

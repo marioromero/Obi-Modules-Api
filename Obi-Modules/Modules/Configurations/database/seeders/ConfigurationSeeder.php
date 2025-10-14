@@ -333,52 +333,59 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'visita' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                            'accident_type_name','accident_number','date_of_loss','commune_name',
-                            'property_address','loss_adjuster_name','phone','inspection_date', 'active_notifications', 'case_flow_last_json'
+                            'code','state','inspection_date','consultant_name','property_address',
+                            'accident_type_name','customer_name','customer_dni','phone',
+                            'bank_name','insurer_name','loss_adjuster_name','accident_number',
+                            'date_of_loss','commune_name','active_notifications','case_flow_last_json'
                         ],
                         'filters' => [
                             [
                                 'key'     => 'configuration_1',
                                 'name'    => 'Por asesor: Omar Carrasco',
                                 'color'   => '#4f86ff',
-                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                              'accident_type_name','accident_number','date_of_loss','commune_name',
-                                              'property_address','loss_adjuster_name','phone','inspection_date',
-                                              'consultant_name'],
+                                'columns' => [
+                                    'code','state','inspection_date','consultant_name','property_address',
+                                    'accident_type_name','customer_name','customer_dni','phone',
+                                    'bank_name','insurer_name','loss_adjuster_name','accident_number',
+                                    'date_of_loss','commune_name','active_notifications','case_flow_last_json'
+                                ],
                                 'sql'     => "WHERE consultant_id = 5
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
                                               AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at DESC, id DESC",
+                                              ORDER BY COALESCE(inspection_date, '9999-12-31') ASC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_2',
                                 'name'    => 'Por asesor: Ivette Contreras',
                                 'color'   => '#b36bff',
-                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                              'accident_type_name','accident_number','date_of_loss','commune_name',
-                                              'property_address','loss_adjuster_name','phone','inspection_date',
-                                              'consultant_name'],
+                                'columns' => [
+                                    'code','state','inspection_date','consultant_name','property_address',
+                                    'accident_type_name','customer_name','customer_dni','phone',
+                                    'bank_name','insurer_name','loss_adjuster_name','accident_number',
+                                    'date_of_loss','commune_name','active_notifications','case_flow_last_json'
+                                ],
                                 'sql'     => "WHERE consultant_id = 23
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
                                               AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at DESC, id DESC",
+                                              ORDER BY COALESCE(inspection_date, '9999-12-31') ASC, id DESC",
                             ],
                             [
                                 'key'     => 'configuration_3',
                                 'name'    => 'Por asesor: Pablo Yañez',
                                 'color'   => '#18c29c',
-                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                              'accident_type_name','accident_number','date_of_loss','commune_name',
-                                              'property_address','loss_adjuster_name','phone','inspection_date',
-                                              'consultant_name'],
+                                'columns' => [
+                                    'code','state','inspection_date','consultant_name','property_address',
+                                    'accident_type_name','customer_name','customer_dni','phone',
+                                    'bank_name','insurer_name','loss_adjuster_name','accident_number',
+                                    'date_of_loss','commune_name','active_notifications','case_flow_last_json'
+                                ],
                                 'sql'     => "WHERE consultant_id = 11
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
                                               AND visit_status IN ('pendiente','en proceso')
                                               AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                             ORDER BY created_at DESC, id DESC",
+                                              ORDER BY COALESCE(inspection_date, '9999-12-31') ASC, id DESC",
                             ],
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
@@ -445,58 +452,9 @@ class ConfigurationSeeder extends Seeder
                         ],
                         'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
                     ],
-                    'visita' => [
-                        'default' => [
-                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                            'accident_type_name','accident_number','date_of_loss','commune_name',
-                            'property_address','loss_adjuster_name','phone','inspection_date','active_notifications', 'case_flow_last_json'
-                        ],
-                        'filters' => [
-                            [
-                                'key'     => 'configuration_1',
-                                'name'    => 'Por asesor: Pablo Yañez',
-                                'color'   => '#18c29c',
-                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                              'accident_type_name','accident_number','date_of_loss','commune_name',
-                                              'property_address','loss_adjuster_name','phone','inspection_date',
-                                              'consultant_name'],
-                                'sql'     => "WHERE consultant_id = 11
-                                              AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
-                                              AND visit_status IN ('pendiente','en proceso')
-                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at DESC, id DESC",
-                            ],
-                            [
-                                'key'     => 'configuration_2',
-                                'name'    => 'Por asesor: Omar Carrasco',
-                                'color'   => '#4f86ff',
-                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                              'accident_type_name','accident_number','date_of_loss','commune_name',
-                                              'property_address','loss_adjuster_name','phone','inspection_date',
-                                              'consultant_name'],
-                                'sql'     => "WHERE consultant_id = 5
-                                              AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
-                                              AND visit_status IN ('pendiente','en proceso')
-                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at DESC, id DESC",
-                            ],
-                            [
-                                'key'     => 'configuration_3',
-                                'name'    => 'Por asesor: Ivette Contreras',
-                                'color'   => '#b36bff',
-                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                              'accident_type_name','accident_number','date_of_loss','commune_name',
-                                              'property_address','loss_adjuster_name','phone','inspection_date',
-                                              'consultant_name'],
-                                'sql'     => "WHERE consultant_id = 23
-                                              AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
-                                              AND visit_status IN ('pendiente','en proceso')
-                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at DESC, id DESC",
-                            ],
-                        ],
-                        'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
-                    ],
+
+                    'visita'       => $content['21']['steps']['visita'],
+
                     // 4) Presupuesto
                     'presupuesto' => [
                         'default' => [
@@ -608,58 +566,8 @@ class ConfigurationSeeder extends Seeder
                         'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
                     ],
 
-                    'visita' => [
-                        'default' => [
-                            'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                            'accident_type_name','accident_number','date_of_loss','commune_name',
-                            'property_address','loss_adjuster_name','phone','inspection_date','active_notifications', 'case_flow_last_json'
-                        ],
-                        'filters' => [
-                            [
-                                'key'     => 'configuration_1',
-                                'name'    => 'Por asesor: Omar Carrasco',
-                                'color'   => '#4f86ff',
-                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                              'accident_type_name','accident_number','date_of_loss','commune_name',
-                                              'property_address','loss_adjuster_name','phone','inspection_date',
-                                              'consultant_name'],
-                                'sql'     => "WHERE consultant_id = 5
-                                              AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
-                                              AND visit_status IN ('pendiente','en proceso')
-                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at DESC, id DESC",
-                            ],
-                            [
-                                'key'     => 'configuration_2',
-                                'name'    => 'Por asesor: Ivette Contreras',
-                                'color'   => '#b36bff',
-                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                              'accident_type_name','accident_number','date_of_loss','commune_name',
-                                              'property_address','loss_adjuster_name','phone','inspection_date',
-                                              'consultant_name'],
-                                'sql'     => "WHERE consultant_id = 23
-                                              AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
-                                              AND visit_status IN ('pendiente','en proceso')
-                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at DESC, id DESC",
-                            ],
-                            [
-                                'key'     => 'configuration_3',
-                                'name'    => 'Por asesor: Pablo Yañez',
-                                'color'   => '#18c29c',
-                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                              'accident_type_name','accident_number','date_of_loss','commune_name',
-                                              'property_address','loss_adjuster_name','phone','inspection_date',
-                                              'consultant_name'],
-                                'sql'     => "WHERE consultant_id = 11
-                                              AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
-                                              AND visit_status IN ('pendiente','en proceso')
-                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at DESC, id DESC",
-                            ],
-                        ],
-                        'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
-                    ],
+                    'visita'       => $content['21']['steps']['visita'],
+
                     'presupuesto' => [
                         'default' => [
                             'code','state','customer_name','customer_id','user_name','document_signing_date','budget_sending_date',
@@ -763,58 +671,7 @@ class ConfigurationSeeder extends Seeder
                     'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
                 ],
 
-                'visita' => [
-                    'default' => [
-                        'code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                        'accident_type_name','accident_number','date_of_loss','commune_name',
-                        'property_address','loss_adjuster_name','phone','inspection_date','active_notifications', 'case_flow_last_json'
-                    ],
-                    'filters' => [
-                        [
-                            'key'     => 'configuration_1',
-                            'name'    => 'Por asesor: Omar Carrasco',
-                            'color'   => '#4f86ff',
-                            'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                          'accident_type_name','accident_number','date_of_loss','commune_name',
-                                          'property_address','loss_adjuster_name','phone','inspection_date',
-                                          'consultant_name'],
-                            'sql'     => "WHERE consultant_id = 5
-                                          AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
-                                          AND visit_status IN ('pendiente','en proceso')
-                                          AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                          ORDER BY created_at DESC, id DESC",
-                        ],
-                        [
-                            'key'     => 'configuration_2',
-                            'name'    => 'Por asesor: Ivette Contreras',
-                            'color'   => '#b36bff',
-                            'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                          'accident_type_name','accident_number','date_of_loss','commune_name',
-                                          'property_address','loss_adjuster_name','phone','inspection_date',
-                                          'consultant_name'],
-                            'sql'     => "WHERE consultant_id = 23
-                                          AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
-                                          AND visit_status IN ('pendiente','en proceso')
-                                          AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                          ORDER BY created_at DESC, id DESC",
-                        ],
-                        [
-                            'key'     => 'configuration_3',
-                            'name'    => 'Por asesor: Pablo Yañez',
-                            'color'   => '#18c29c',
-                            'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
-                                          'accident_type_name','accident_number','date_of_loss','commune_name',
-                                          'property_address','loss_adjuster_name','phone','inspection_date',
-                                          'consultant_name'],
-                            'sql'     => "WHERE consultant_id = 11
-                                          AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
-                                          AND visit_status IN ('pendiente','en proceso')
-                                          AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                          ORDER BY created_at DESC, id DESC",
-                        ],
-                    ],
-                    'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
-                ],
+                'visita'       => $content['21']['steps']['visita'],
 
                 'presupuesto' => [
                     'default' => [
@@ -893,6 +750,14 @@ class ConfigurationSeeder extends Seeder
                 ],
             ],
         ];
+            // Usuario 23 Ivette
+            $content['23'] = [
+                'user_id' => 23,
+                'steps' => [
+                    'visita' => $content['21']['steps']['visita'],
+                ],
+            ];
+
 
             // Guardar
             DB::connection('configurations_db')->table('configurations')->updateOrInsert(
