@@ -50,8 +50,8 @@ class ConfigurationSeeder extends Seeder
         //    Mapea cada estado general de caso a su array de usuarios encargados
         $userResponsibilities = [
             'Denuncio'     => ['user_assigned' => [21, 22, 11, 4, 5]],
-            'Programacion' => ['user_assigned' => [21, 4, 5, 11, 22]],
-            'Visita'       => ['user_assigned' => [21, 5, 4, 11, 22]],
+            'Programacion' => ['user_assigned' => [21, 4, 5, 11, 22,23]],
+            'Visita'       => ['user_assigned' => [21, 5, 4, 11, 22,23]],
             'Presupuesto'  => ['user_assigned' => [11, 5, 4, 22, 21]],
             'Liquidacion'  => ['user_assigned' => [5, 11, 4, 21, 22]],
             'Recaudacion'  => ['user_assigned' => [21, 4, 5, 11, 22]],
@@ -154,7 +154,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Estado en proceso sin firmas',
                                 'color'   => '#ff8878',
-                                'columns' => ['code','state','customer_name','customer_id','phone','created_at','bank_name','commune_name','accident_type_name'],
+                                'columns' => ['code','state','customer_name','customer_id','phone','is_duplicated','created_at','bank_name','commune_name','accident_type_name'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Ingreso'
                                               AND signature_status IN ('generado','enviado a acepta','notificado')
                                               AND document_signing_date IS NULL
