@@ -80,7 +80,7 @@ class ConfigurationSeeder extends Seeder
 
                 // 2 = Ejecutivo
                 '2' => [
-                    'code','state','customer_name','customer_id','customer_dni','accident_type_name',
+                    'code','state','customer_name','customer_id','customer_dni','accident_type_name','agent_name',
                     'created_at','commune_name','property_address','bank_name',
                     'document_signing_date','approved_amount',
                     'assigned_user_name','signature_status','denounce_status',
@@ -113,7 +113,7 @@ class ConfigurationSeeder extends Seeder
 
                 // 5 = Asesor
                 '5' => [
-                    'code','state','customer_name','customer_id','customer_dni','accident_type_name',
+                    'code','state','customer_name','customer_id','customer_dni','accident_type_name','agent_name',
                     'created_at','commune_name','property_address','bank_name',
                     'document_signing_date','consultant_id', 'consultant_name', 'approved_amount',
                     'inspection_date','visit_status','budget_status','decision_status',
@@ -202,8 +202,8 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'recaudacion' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','settlement_report_date','probable_payment_date',
-                            'approved_amount','advisory_amount','amount_owed',
+                            'code','state','customer_name','phone','customer_id','settlement_report_date','probable_payment_date',
+                            'approved_amount','advisory_amount','amount_owed','accident_number',
                             'bank_name','accident_type_name','collection_date','payment_status', 'active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
@@ -211,7 +211,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_1',
                             'name'    => 'En cobranza sin pago',
                             'color'   => '#bdff81',
-                            'columns' => ['code','state','customer_name','customer_id','approved_amount','advisory_amount','probable_payment_date','collection_date','payment_status'],
+                            'columns' => ['code','state','customer_name','phone','customer_id','approved_amount','advisory_amount','bank_name','probable_payment_date','collection_date','payment_status'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Recaudacion'
                                           AND LOWER(payment_status) = 'cobranza'
                                           AND collection_date IS NOT NULL
@@ -220,9 +220,9 @@ class ConfigurationSeeder extends Seeder
                         ],
                         [
                             'key'     => 'configuration_2',
-                            'name'    => 'Sin fecha probable de pago y con informe de liquidación',
+                            'name'    => 'Sin fecha de pago y con informe de liquidación',
                             'color'   => '#818bff',
-                            'columns' => ['code','state','customer_name','customer_id','settlement_report_date','approved_amount','advisory_amount','amount_owed'],
+                            'columns' => ['code','state','customer_name','customer_id','settlement_report_date','accident_number','approved_amount','advisory_amount','amount_owed'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Recaudacion'
                                           AND settlement_report_date IS NOT NULL
                                           AND probable_payment_date IS NULL
