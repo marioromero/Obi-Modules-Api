@@ -146,7 +146,7 @@ class ConfigurationSeeder extends Seeder
                 'steps' => [
                     'denuncio' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','phone','is_duplicated','created_at','bank_name','commune_name',
+                            'code','state','customer_name','customer_id','phone','agent_name','is_duplicated','created_at','bank_name','commune_name',
                             'accident_type_name','document_signing_date', 'active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
@@ -154,7 +154,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Estado en proceso sin firmas',
                                 'color'   => '#ff8878',
-                                'columns' => ['code','state','customer_name','customer_id','phone','is_duplicated','created_at','bank_name','commune_name','accident_type_name'],
+                                'columns' => ['code','state','customer_name','customer_id','phone','agent_name','is_duplicated','created_at','bank_name','commune_name','accident_type_name'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Ingreso'
                                               AND signature_status IN ('generado','enviado a acepta','notificado')
                                               AND document_signing_date IS NULL
