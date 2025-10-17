@@ -14,6 +14,9 @@ Route::post('schedules', [ScheduleController::class, 'store']);
 Route::put('schedules/{schedule}', [ScheduleController::class, 'update']);
 Route::patch('schedules/{schedule}', [ScheduleController::class, 'patch']);
 Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy']);
+Route::get('schedule/{case}', [ScheduleController::class, 'indexScheduleByCaseId']);   // Listar programaciones por caso
+Route::post('schedule/{case}', [ScheduleController::class, 'save']);               // Crear o reprogramar
+Route::patch('schedule/{case}', [ScheduleController::class, 'updateSchedule']);    // Editar programación vigente
 
 // REST para ScheduleStatus
 Route::get('schedule-statuses', [ScheduleStatusController::class, 'index']);

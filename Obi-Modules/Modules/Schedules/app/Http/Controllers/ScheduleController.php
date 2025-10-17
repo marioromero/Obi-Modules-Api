@@ -5,12 +5,13 @@ use Modules\Core\app\Http\BaseApiController;
 
 use Illuminate\Http\Request;
 use Modules\Schedules\Models\Schedule;
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use Modules\Schedules\app\Http\Requests\StoreScheduleRequest;
 use Modules\Schedules\app\Http\Requests\UpdateScheduleRequest;
 
 class ScheduleController extends BaseApiController
 {
+    protected string $conn = 'schedules_db';
 
     public function index()
     {
@@ -49,6 +50,101 @@ class ScheduleController extends BaseApiController
     {
         $schedule->delete();
         return $this->success(null, 'Programación eliminada correctamente', 204);
+    }
+
+    //Metodos con logica de negocio de traro
+
+    //Listar todas las programaciones de un caso (vigente primero)
+    public function indexScheduleByCaseId($caseId)
+    {
+        $schedules = Schedule::on($this->conn)
+            ->where('case_id', $caseId)
+            ->orderByDesc('id')
+            ->get();
+
+        return $this->success($schedules, 'Listado de programaciones del caso');
+    }
+
+    //Crear primera programación o reprogramar (si viene is_reprogramming = true)
+    public function save(Request $req, $caseId)
+    {
+        $data = $req->validate([
+            'inspection_date'           => 'nullable|date',
+            'inspection_time'           => 'nullable|regex:/^\d{2}:\d{2}$/',
+            'liquidator_inspector_info' => 'nullable|string',
+            'comments'                  => 'nullable|string',
+            'is_reprogramming'          => 'nullable|boolean',
+        ]);
+
+        return DB::connection($this->conn)->transaction(function () use ($caseId, $data) {
+            $current = Schedule::on($this->conn)
+                ->where('case_id', $caseId)
+                ->orderByDesc('id')
+                ->first();
+
+            $isReprog = (bool)($data['is_reprogramming'] ?? false);
+
+            //Primera programación
+            if (!$current) {
+                $schedule = Schedule::on($this->conn)->create([
+                    'case_id'                   => $caseId,
+                    'inspection_date'           => $data['inspection_date'] ?? null,
+                    'inspection_time'           => $data['inspection_time'] ?? null,
+                    'liquidator_inspector_info' => $data['liquidator_inspector_info'] ?? null,
+                ]);
+
+                return $this->success($schedule, 'Programación creada correctamente');
+            }
+
+            //Reprogramación
+            if ($isReprog) {
+                // Agregar comentario solo a la programación anterior
+                if (!empty($data['comments'])) {
+                    $previousComments = trim((string)$current->comments);
+                    $newComment = $previousComments === ''
+                        ? $data['comments']
+                        : $previousComments . "\n" . $data['comments'];
+
+                    $current->update(['comments' => $newComment]);
+                }
+
+                //Crear nueva programación
+                $new = Schedule::on($this->conn)->create([
+                    'case_id'                   => $caseId,
+                    'inspection_date'           => $data['inspection_date'] ?? null,
+                    'inspection_time'           => $data['inspection_time'] ?? null,
+                    'liquidator_inspector_info' => $data['liquidator_inspector_info'] ?? null,
+                    'comments'                  => null,
+                ]);
+
+                return $this->success($new, 'Reprogramación creada correctamente');
+            }
+
+                return $this->error('Debe especificar si es una creación o reprogramación', 400);
+        });
+    }
+
+    //Actualizar programación vigente (sin crear nueva)
+    public function updateSchedule(Request $req, $caseId)
+    {
+        $data = $req->validate([
+            'inspection_date'           => 'nullable|date',
+            'inspection_time'           => 'nullable|regex:/^\d{2}:\d{2}$/',
+            'liquidator_inspector_info' => 'nullable|string',
+        ]);
+
+        $schedule = Schedule::on($this->conn)
+            ->where('case_id', $caseId)
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$schedule) {
+            return $this->error('No existe programación vigente para este caso', 404);
+        }
+
+        $schedule->update($data);
+
+        return $this->success($schedule->fresh(), 'Programación actualizada correctamente');
     }
 }
 

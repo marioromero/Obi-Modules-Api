@@ -11,21 +11,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('schedules', function (Blueprint $table) {
-            $table->id(); //ID
-            $table->unsignedBigInteger('case_id'); //FK a cases_db.cases
-            // Datos de agendamiento
-            $table->date('inspection_date')->nullable(); //Fecha de visita
-            $table->string('inspection_time', 5)->nullable(); //Hora de visita (HH:MM)
-            $table->integer('accident_number')->nullable(); //Número de siniestro
-            $table->longText('comments')->nullable(); //Comentarios
-            //Relaciones externas
-            $table->unsignedBigInteger('insurer_id')->nullable(); //FK a banks_db.insurers
-            $table->unsignedBigInteger('loss_adjuster_id')->nullable(); //FK a banks_db.loss_adjusters
-            $table->unsignedBigInteger('consultant_id')->nullable(); //FK a users_db.users
+            $table->id(); // ID programación
+            $table->unsignedBigInteger('case_id'); // FK a cases_db.cases
+            $table->longText('liquidator_inspector_info')->nullable(); // Datos del inspector de la liquidadora
+            $table->date('inspection_date')->nullable(); // fecha de programacion
+            $table->string('inspection_time', 5)->nullable(); // Hora de la inspeccion
+            $table->longText('comments')->nullable(); // comentarios de la reprogramacion
         });
     }
 
-    public function down(): void
+   public function down(): void
     {
         Schema::dropIfExists('schedules');
     }
