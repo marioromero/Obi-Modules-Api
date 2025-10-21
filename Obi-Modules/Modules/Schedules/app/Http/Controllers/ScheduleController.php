@@ -74,6 +74,10 @@ class ScheduleController extends BaseApiController
             'liquidator_inspector_info' => 'nullable|string',
             'comments'                  => 'nullable|string',
             'is_reprogramming'          => 'nullable|boolean',
+            'consultant_id'             => 'nullable|integer',
+            'loss_adjuster_id'          => 'nullable|integer',
+            'message_sent'              => 'nullable|boolean',
+            'message_confirmed'         => 'nullable|boolean',
         ]);
 
         return DB::connection($this->conn)->transaction(function () use ($caseId, $data) {
@@ -91,6 +95,10 @@ class ScheduleController extends BaseApiController
                     'inspection_date'           => $data['inspection_date'] ?? null,
                     'inspection_time'           => $data['inspection_time'] ?? null,
                     'liquidator_inspector_info' => $data['liquidator_inspector_info'] ?? null,
+                    'consultant_id'             => $data['consultant_id'] ?? null,
+                    'loss_adjuster_id'          => $data['loss_adjuster_id'] ?? null,
+                    'message_sent'              => $data['message_sent'] ?? false,
+                    'message_confirmed'         => $data['message_confirmed'] ?? false,
                 ]);
 
                 return $this->success($schedule, 'Programación creada correctamente');
@@ -115,6 +123,10 @@ class ScheduleController extends BaseApiController
                     'inspection_time'           => $data['inspection_time'] ?? null,
                     'liquidator_inspector_info' => $data['liquidator_inspector_info'] ?? null,
                     'comments'                  => null,
+                    'consultant_id'             => $data['consultant_id'] ?? null,
+                    'loss_adjuster_id'          => $data['loss_adjuster_id'] ?? null,
+                    'message_sent'              => $data['message_sent'] ?? false,
+                    'message_confirmed'         => $data['message_confirmed'] ?? false,
                 ]);
 
                 return $this->success($new, 'Reprogramación creada correctamente');
@@ -131,6 +143,10 @@ class ScheduleController extends BaseApiController
             'inspection_date'           => 'nullable|date',
             'inspection_time'           => 'nullable|regex:/^\d{2}:\d{2}$/',
             'liquidator_inspector_info' => 'nullable|string',
+            'consultant_id'             => 'nullable|integer',
+            'loss_adjuster_id'          => 'nullable|integer',
+            'message_sent'              => 'nullable|boolean',
+            'message_confirmed'         => 'nullable|boolean',
         ]);
 
         $schedule = Schedule::on($this->conn)

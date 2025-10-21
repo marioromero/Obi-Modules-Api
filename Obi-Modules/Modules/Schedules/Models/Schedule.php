@@ -17,14 +17,28 @@ class Schedule extends Model
 
     protected $fillable = [
         'case_id',
+        'consultant_id',
+        'loss_adjuster_id',
         'liquidator_inspector_info',
         'inspection_date',
         'inspection_time',
         'comments',
+        'message_sent',
+        'message_confirmed',
     ];
 
     public function case()
     {
         return $this->belongsTo(CaseEntity::class, 'case_id', 'id');
+    }
+
+    public function consultant()
+    {
+        return $this->belongsTo(\Modules\Users\Models\TraroUser::class, 'consultant_id', 'id');
+    }
+
+    public function lossAdjuster()
+    {
+        return $this->belongsTo(\Modules\Banks\Models\LossAdjuster::class, 'loss_adjuster_id', 'id');
     }
 }

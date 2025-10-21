@@ -70,7 +70,7 @@ class ConfigurationSeeder extends Seeder
                 // 1 = Administrador
                 '1' => [
                     'code','state','customer_name','customer_id','customer_dni','accident_type_name',
-                    'created_at','commune_name','property_address','bank_name',
+                    'created_at','commune_name','property_address','accident_number','bank_name',
                     'document_signing_date','approved_amount',
                     'assigned_user_name','consultant_name','agent_name',
                     'payment_status','amount_owed','amount_paid','advisory_amount',
@@ -93,7 +93,7 @@ class ConfigurationSeeder extends Seeder
                 // 3 = Coordinador
                 '3' => [
                     'code','state','customer_name','customer_id','created_at',
-                    'property_address','inspection_date','document_signing_date','complaint_date','collection_date',
+                    'property_address','inspection_date','accident_number','document_signing_date','complaint_date','collection_date',
                     'budget_sending_date','settlement_report_date','probable_payment_date',
                     'customer_dni','customer_address','customer_commune_name',
                     'bank_name','assigned_user_name','accident_type_name','agent_name',
@@ -114,7 +114,7 @@ class ConfigurationSeeder extends Seeder
                 // 5 = Asesor
                 '5' => [
                     'code','state','customer_name','customer_id','customer_dni','accident_type_name','agent_name',
-                    'created_at','commune_name','property_address','bank_name',
+                    'created_at','accident_number','commune_name','property_address','bank_name',
                     'document_signing_date','consultant_id', 'consultant_name', 'approved_amount',
                     'inspection_date','visit_status','budget_status','decision_status',
                     'settlement_report_date','date_of_loss','contestation_date',
@@ -256,7 +256,7 @@ class ConfigurationSeeder extends Seeder
                     'recaudacion' => $content['22']['steps']['recaudacion'],
                     'programacion' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','is_duplicated','customer_dni','bank_name','insurer_name',
+                            'code','state','customer_name','customer_id','is_duplicated','customer_dni','complaint_date','bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
                             'property_address','loss_adjuster_name','phone','inspection_date', 'active_notifications', 'case_flow_last_json'
                         ],
@@ -308,8 +308,8 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Denuncio realizado sin fecha de visita',
                                 'color'   => '#ff6d6d',
                                 'columns' => [
-                                    'code','state','customer_name','customer_id','is_duplicated','commune_name','bank_name',
-                                    'accident_type_name','complaint_date','inspection_date','bank_service_number'
+                                    'code','state','customer_name','customer_id','is_duplicated','complaint_date','commune_name','bank_name',
+                                    'accident_type_name','inspection_date','bank_service_number'
                                 ],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
                                               AND complaint_date IS NOT NULL

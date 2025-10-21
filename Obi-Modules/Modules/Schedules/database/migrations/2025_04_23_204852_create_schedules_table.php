@@ -17,6 +17,10 @@ return new class extends Migration
             $table->date('inspection_date')->nullable(); // fecha de programacion
             $table->string('inspection_time', 5)->nullable(); // Hora de la inspeccion
             $table->longText('comments')->nullable(); // comentarios de la reprogramacion
+            $table->unsignedBigInteger('consultant_id')->nullable(); // FK a users_db.users (asesor)
+            $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK a banks_db.loss_adjusters (liquidador)
+            $table->boolean('message_sent')->default(false); // Indica si se envió notificación al cliente
+            $table->boolean('message_confirmed')->default(false); // Indica si el cliente confirmó la visita
         });
     }
 
