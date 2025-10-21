@@ -539,7 +539,7 @@ class CaseController extends BaseApiController
         return $this->success($case->refresh(), "Caso {$code} actualizado correctamente", 200);
     }
 
-    public function filterByCollectionDate(Request $request)
+    public function filterByPaymentDate(Request $request)
     {
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
@@ -548,13 +548,13 @@ class CaseController extends BaseApiController
 
         if ($startDate && $endDate) {
             // Filtrar entre fechas
-            $query->whereBetween('collection_date', [Carbon::parse($startDate)->startOfDay(), Carbon::parse($endDate)->endOfDay()]);
+            $query->whereBetween('probable_payment_date', [Carbon::parse($startDate)->startOfDay(), Carbon::parse($endDate)->endOfDay()]);
         } elseif ($startDate) {
             // Filtrar por una fecha específica (día completo)
-            $query->whereDate('collection_date', Carbon::parse($startDate)->toDateString());
+            $query->whereDate('probable_payment_date', Carbon::parse($startDate)->toDateString());
         } elseif ($endDate) {
             // Si solo se pasa end_date, filtrar por ese día
-            $query->whereDate('collection_date', Carbon::parse($endDate)->toDateString());
+            $query->whereDate('probable_payment_date', Carbon::parse($endDate)->toDateString());
         } else {
             return $this->error('Debe proporcionar al menos una fecha (start_date o end_date)', 400);
         }

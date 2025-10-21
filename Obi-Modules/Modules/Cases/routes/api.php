@@ -64,7 +64,7 @@ Route::post('cases/{case}/substate', [CaseSubstateController::class, 'update'])-
 Route::get('cases/{case}/comments', [CaseController::class, 'getCommentsByCaseId'])->whereNumber('case');
 Route::post('cases/{case}/comments', [CaseController::class, 'StoreCommentForCase'])->whereNumber('case');
 Route::patch('cases/code/{code}', [CaseController::class, 'UpdateCaseByCode']);
-Route::get('cases/filter-by-collection-date', [CaseController::class, 'filterByCollectionDate']);
+Route::get('cases/filter-by-payment-date', [CaseController::class, 'filterByPaymentDate']);
 
 
 // REST para Agreement
