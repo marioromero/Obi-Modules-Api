@@ -8,6 +8,7 @@ use Modules\Schedules\Models\Schedule;
 use Illuminate\Support\Facades\DB;
 use Modules\Schedules\app\Http\Requests\StoreScheduleRequest;
 use Modules\Schedules\app\Http\Requests\UpdateScheduleRequest;
+use Modules\Schedules\Models\ScheduleDetail;
 
 class ScheduleController extends BaseApiController
 {
@@ -57,10 +58,10 @@ class ScheduleController extends BaseApiController
     //Listar todas las programaciones de un caso (vigente primero)
     public function indexScheduleByCaseId($caseId)
     {
-        $schedules = Schedule::on($this->conn)
-            ->where('case_id', $caseId)
-            ->orderByDesc('id')
-            ->get();
+         $schedules = ScheduleDetail::on($this->conn) // <- CAMBIO: ScheduleDetail
+         ->where('case_id', $caseId)
+         ->orderByDesc('id')
+         ->get();
 
         return $this->success($schedules, 'Listado de programaciones del caso');
     }
@@ -101,7 +102,8 @@ class ScheduleController extends BaseApiController
                     'message_confirmed'         => $data['message_confirmed'] ?? false,
                 ]);
 
-                return $this->success($schedule, 'Programación creada correctamente');
+                $detail = ScheduleDetail::on($this->conn)->find($schedule->id);
+                return $this->success($detail, 'Programación creada correctamente');
             }
 
             //Reprogramación
@@ -129,7 +131,8 @@ class ScheduleController extends BaseApiController
                     'message_confirmed'         => $data['message_confirmed'] ?? false,
                 ]);
 
-                return $this->success($new, 'Reprogramación creada correctamente');
+                $detail = ScheduleDetail::on($this->conn)->find($new->id);
+                return $this->success($detail, 'Reprogramación creada correctamente');
             }
 
                 return $this->error('Debe especificar si es una creación o reprogramación', 400);
@@ -160,7 +163,8 @@ class ScheduleController extends BaseApiController
 
         $schedule->update($data);
 
-        return $this->success($schedule->fresh(), 'Programación actualizada correctamente');
+        $detail = ScheduleDetail::on($this->conn)->find($schedule->id);
+        return $this->success($detail, 'Programación actualizada correctamente');
     }
 }
 
