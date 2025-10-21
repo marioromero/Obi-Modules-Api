@@ -539,5 +539,30 @@ class CaseController extends BaseApiController
         return $this->success($case->refresh(), "Caso {$code} actualizado correctamente", 200);
     }
 
+    public function filterByCollectionDate(Request $request)
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $query = CaseEntity::query();
+
+        if ($startDate && $endDate) {
+            // Filtrar entre fechas
+            $query->whereBetween('collection_date', [Carbon::parse($startDate)->startOfDay(), Carbon::parse($endDate)->endOfDay()]);
+        } elseif ($startDate) {
+            // Filtrar por una fecha específica (día completo)
+            $query->whereDate('collection_date', Carbon::parse($startDate)->toDateString());
+        } elseif ($endDate) {
+            // Si solo se pasa end_date, filtrar por ese día
+            $query->whereDate('collection_date', Carbon::parse($endDate)->toDateString());
+        } else {
+            return $this->error('Debe proporcionar al menos una fecha (start_date o end_date)', 400);
+        }
+
+        $cases = $query->get();
+
+        return $this->success($cases, 'Casos filtrados por fecha de pago', 200);
+    }
+
 }
 
