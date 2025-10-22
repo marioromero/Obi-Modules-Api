@@ -78,6 +78,9 @@ class CaseEntityResource extends JsonResource
             'resolution'          => $this->resolution,
             'property_type'       => $this->property_type,
             'contestation_date'   => $this->contestation_date,
+            'schedule_message_sent'      => (bool) ($this->schedule_message_sent ?? false),
+            'schedule_message_confirmed' => (bool) ($this->schedule_message_confirmed ?? false),
+            'schedule_inspection_time'   => $this->schedule_inspection_time,
 
             /* --- Sub-estados del flujo --- */
             'signature_status'    => $this->signature_status,

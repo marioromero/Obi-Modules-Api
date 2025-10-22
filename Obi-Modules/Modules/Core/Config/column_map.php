@@ -70,6 +70,10 @@ return [
             'insurer_id'             => 'Aseguradora (ID)',
             'loss_adjuster_id'       => 'Liquidadora (ID)',
 
+            'schedule_message_sent'      => 'Mensaje enviado',
+            'schedule_message_confirmed' => 'Mensaje confirmado',
+            'schedule_inspection_time'   => 'Hora de visita',
+
             // enums / estados
             'signature_status'       => 'Estado de firma',
             'denounce_status'        => 'Denuncio - estado',

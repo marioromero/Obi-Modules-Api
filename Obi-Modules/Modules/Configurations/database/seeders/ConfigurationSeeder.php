@@ -96,7 +96,8 @@ class ConfigurationSeeder extends Seeder
                     'property_address','inspection_date','accident_number','document_signing_date','complaint_date','collection_date',
                     'budget_sending_date','settlement_report_date','probable_payment_date',
                     'customer_dni','customer_address','customer_commune_name',
-                    'bank_name','assigned_user_name','accident_type_name','agent_name',
+                    'bank_name','schedule_message_sent','schedule_message_confirmed','schedule_inspection_time','assigned_user_name',
+                    'accident_type_name','agent_name',
                     'commune_name','loss_adjuster_name','insurer_name','case_flows_last'
                 ],
 
@@ -256,7 +257,8 @@ class ConfigurationSeeder extends Seeder
                     'recaudacion' => $content['22']['steps']['recaudacion'],
                     'programacion' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','is_duplicated','customer_dni','complaint_date','bank_name','insurer_name',
+                            'code','state','customer_name','customer_id','is_duplicated','customer_dni','complaint_date', 'schedule_message_sent','schedule_message_confirmed','schedule_inspection_time',
+                            'bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
                             'property_address','loss_adjuster_name','phone','inspection_date', 'active_notifications', 'case_flow_last_json'
                         ],
@@ -334,7 +336,8 @@ class ConfigurationSeeder extends Seeder
                     'visita' => [
                         'default' => [
                             'code','state','inspection_date','consultant_name','property_address',
-                            'accident_type_name','customer_name','customer_dni','phone',
+                            'accident_type_name', 'schedule_message_sent','schedule_message_confirmed','schedule_inspection_time',
+                            'customer_name','customer_dni','phone',
                             'bank_name','insurer_name','loss_adjuster_name','accident_number',
                             'date_of_loss','commune_name','active_notifications','case_flow_last_json'
                         ],
