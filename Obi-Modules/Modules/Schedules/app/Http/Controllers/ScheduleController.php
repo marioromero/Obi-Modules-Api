@@ -74,6 +74,7 @@ class ScheduleController extends BaseApiController
             'inspection_time'           => 'nullable|regex:/^\d{2}:\d{2}$/',
             'liquidator_inspector_info' => 'nullable|string',
             'comments'                  => 'nullable|string',
+            'comments_programming'      => 'nullable|string',
             'is_reprogramming'          => 'nullable|boolean',
             'consultant_id'             => 'nullable|integer',
             'loss_adjuster_id'          => 'nullable|integer',
@@ -89,6 +90,14 @@ class ScheduleController extends BaseApiController
 
             $isReprog = (bool)($data['is_reprogramming'] ?? false);
 
+            $globalCommentsProgramming = $data['comments_programming'] ?? ($current->comments_programming ?? null);
+
+            if (array_key_exists('comments_programming', $data)) {
+                Schedule::on($this->conn)
+                    ->where('case_id', $caseId)
+                    ->update(['comments_programming' => $globalCommentsProgramming]);
+            }
+
             //Primera programación
             if (!$current) {
                 $schedule = Schedule::on($this->conn)->create([
@@ -96,6 +105,7 @@ class ScheduleController extends BaseApiController
                     'inspection_date'           => $data['inspection_date'] ?? null,
                     'inspection_time'           => $data['inspection_time'] ?? null,
                     'liquidator_inspector_info' => $data['liquidator_inspector_info'] ?? null,
+                    'comments_programming'      => $globalCommentsProgramming,
                     'consultant_id'             => $data['consultant_id'] ?? null,
                     'loss_adjuster_id'          => $data['loss_adjuster_id'] ?? null,
                     'message_sent'              => $data['message_sent'] ?? false,
@@ -125,6 +135,7 @@ class ScheduleController extends BaseApiController
                     'inspection_time'           => $data['inspection_time'] ?? null,
                     'liquidator_inspector_info' => $data['liquidator_inspector_info'] ?? null,
                     'comments'                  => null,
+                    'comments_programming'      => $globalCommentsProgramming,
                     'consultant_id'             => $data['consultant_id'] ?? null,
                     'loss_adjuster_id'          => $data['loss_adjuster_id'] ?? null,
                     'message_sent'              => $data['message_sent'] ?? false,
@@ -146,6 +157,7 @@ class ScheduleController extends BaseApiController
             'inspection_date'           => 'nullable|date',
             'inspection_time'           => 'nullable|regex:/^\d{2}:\d{2}$/',
             'liquidator_inspector_info' => 'nullable|string',
+            'comments_programming'      => 'nullable|string',
             'consultant_id'             => 'nullable|integer',
             'loss_adjuster_id'          => 'nullable|integer',
             'message_sent'              => 'nullable|boolean',
@@ -160,6 +172,13 @@ class ScheduleController extends BaseApiController
         if (!$schedule) {
             return $this->error('No existe programación vigente para este caso', 404);
         }
+
+         if (array_key_exists('comments_programming', $data)) {
+             $value = $data['comments_programming']; // puede ser null o string
+             Schedule::on($this->conn)
+                 ->where('case_id', $caseId)
+                 ->update(['comments_programming' => $value]);
+         }
 
         $schedule->update($data);
 
