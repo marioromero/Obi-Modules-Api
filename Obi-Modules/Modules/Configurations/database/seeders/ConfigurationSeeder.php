@@ -335,9 +335,9 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'visita' => [
                         'default' => [
-                            'code','state','inspection_date','consultant_name','property_address',
-                            'accident_type_name', 'schedule_message_sent','schedule_message_confirmed','schedule_inspection_time',
-                            'customer_name','customer_dni','phone',
+                            'code','state','inspection_date','schedule_inspection_time','property_address',
+                            'accident_type_name', 'schedule_message_sent','schedule_message_confirmed',
+                            'customer_name','customer_dni','phone','consultant_name',
                             'bank_name','insurer_name','loss_adjuster_name','accident_number',
                             'date_of_loss','commune_name','active_notifications','case_flow_last_json'
                         ],
@@ -347,8 +347,8 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Por asesor: Omar Carrasco',
                                 'color'   => '#4f86ff',
                                 'columns' => [
-                                    'code','state','inspection_date','consultant_name','property_address',
-                                    'accident_type_name','customer_name','customer_dni','phone',
+                                    'code','state','inspection_date','schedule_inspection_time','property_address',
+                                    'accident_type_name','customer_name','customer_dni','phone','consultant_name',
                                     'bank_name','insurer_name','loss_adjuster_name','accident_number',
                                     'date_of_loss','commune_name','active_notifications','case_flow_last_json'
                                 ],
@@ -363,8 +363,8 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Por asesor: Ivette Contreras',
                                 'color'   => '#b36bff',
                                 'columns' => [
-                                    'code','state','inspection_date','consultant_name','property_address',
-                                    'accident_type_name','customer_name','customer_dni','phone',
+                                    'code','state','inspection_date','schedule_inspection_time','property_address',
+                                    'accident_type_name','customer_name','customer_dni','phone','consultant_name',
                                     'bank_name','insurer_name','loss_adjuster_name','accident_number',
                                     'date_of_loss','commune_name','active_notifications','case_flow_last_json'
                                 ],
@@ -379,8 +379,8 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Por asesor: Pablo Yañez',
                                 'color'   => '#18c29c',
                                 'columns' => [
-                                    'code','state','inspection_date','consultant_name','property_address',
-                                    'accident_type_name','customer_name','customer_dni','phone',
+                                    'code','state','inspection_date','schedule_inspection_time','property_address',
+                                    'accident_type_name','customer_name','customer_dni','phone','consultant_name',
                                     'bank_name','insurer_name','loss_adjuster_name','accident_number',
                                     'date_of_loss','commune_name','active_notifications','case_flow_last_json'
                                 ],

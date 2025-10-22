@@ -40,6 +40,7 @@ class UpdateCaseRequest extends FormRequest
             'property_address'     => 'sometimes|nullable|string|max:255',
             'property_type'        => 'sometimes|nullable|string|in:Casa,Departamento,Otro',
             'is_duplicated'        => 'sometimes|nullable|boolean',
+            'comments_programming' => 'sometimes|nullable|string',
 
             /* ─────── Fechas ─────── */
             'complaint_date'         => 'sometimes|nullable|date',
@@ -113,6 +114,8 @@ class UpdateCaseRequest extends FormRequest
             'property_type'    => 'tipo de propiedad',
             'is_duplicated'    => 'duplicado',
             'sent_to_acepta'   => 'enviado a Acepta',
+            'comments_programming' => 'comentarios de la programacion',
+
 
             // Fechas
             'complaint_date'         => 'fecha de denuncio',

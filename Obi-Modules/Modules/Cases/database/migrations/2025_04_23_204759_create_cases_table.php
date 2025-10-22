@@ -35,6 +35,7 @@ return new class extends Migration {
             $table->boolean('is_duplicated')->default(false); // duplicado?
             $table->longText('description')->nullable(); // comentarios
             $table->longText('resolution')->nullable(); // resolucion
+            $table->longText('comments_programming')->nullable(); // comentarios de la programacion
 
             /* ────── Datos core del negocio Traro ────── */
             $table->date('date_of_loss')->nullable(); //fecha del siniestro

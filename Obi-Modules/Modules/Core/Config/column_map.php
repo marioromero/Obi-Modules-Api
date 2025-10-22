@@ -49,6 +49,7 @@ return [
             'is_duplicated'          => 'Duplicado',
             'description'            => 'Descripción',
             'resolution'             => 'Resolución',
+            'comments_programming' => 'Comentarios de programación',
 
             'date_of_loss'           => 'Fecha del siniestro',
             'property_type'          => 'Tipo de propiedad',

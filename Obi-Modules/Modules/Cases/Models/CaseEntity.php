@@ -51,7 +51,7 @@ class CaseEntity extends Model
         // Fechas, datos de siniestro y si existe convenio
         'created_at', 'agreement_id', 'budget_sending_date', 'document_signing_date',
         'date_of_loss', 'contestation_date', 'settlement_report_date', 'probable_payment_date', 'online_collection_date',
-        'property_type', 'property_address', 'inspection_date', 'complaint_date', 'collection_date',
+        'property_type', 'property_address', 'inspection_date', 'complaint_date', 'collection_date', 'comments_programming',
 
         // Montos
         'approved_amount', 'uf_approved',

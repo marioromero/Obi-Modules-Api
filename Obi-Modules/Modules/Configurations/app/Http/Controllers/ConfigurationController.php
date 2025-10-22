@@ -695,18 +695,29 @@ class ConfigurationController extends BaseApiController
         // Excluir casos cerrados
         $where = "({$where}) AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')";
 
-        // Reglas especiales para Recaudación
+        // Reglas especiales para Recaudación y Visita
         $isRecaudacion = ($step === 'recaudacion');
+        $isVisita      = ($step === 'visita');
 
-        $extraWhere = $isRecaudacion
-            ? " AND created_at >= DATE_SUB(NOW(), INTERVAL 2 MONTH)"
-            : "";
+        // ID del usuario que consulta (cast a int para seguridad)
+        $userId = (int) $user->id;
 
-        $orderBy = $isRecaudacion
-            ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
-            : $baseOrder;
+        // ID del usuario que consulta (cast a int para seguridad)
+        $visitOrder = "ORDER BY
+        CASE WHEN consultant_id = {$userId} THEN 0 ELSE 1 END ASC,
+        COALESCE(inspection_date, '9999-12-31') ASC,
+        COALESCE(schedule_inspection_time, '23:59:59') ASC,
+        id DESC";
 
-        $defaultSql = $baseSql . "WHERE {$where}{$extraWhere} {$orderBy}";
+    $extraWhere = $isRecaudacion
+        ? " AND created_at >= DATE_SUB(NOW(), INTERVAL 2 MONTH)"
+        : "";
+
+    $orderBy = $isRecaudacion
+        ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
+        : ($isVisita ? $visitOrder : $baseOrder);
+
+    $defaultSql = $baseSql . "WHERE {$where}{$extraWhere} {$orderBy}";
 
         try {
             $defaultData = DB::connection('cases_db')->select($defaultSql);

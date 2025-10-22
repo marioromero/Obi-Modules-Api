@@ -15,6 +15,8 @@ class CaseEntityResource extends JsonResource
             'state'                => $this->state,
             'overall_status'       => $this->overall_status,
             'created_at'           => $this->created_at,
+            'comments_programming' => $this->comments_programming,
+
 
             /* --- Cliente y ubicación --- */
             'customer_id'            => $this->customer_id,

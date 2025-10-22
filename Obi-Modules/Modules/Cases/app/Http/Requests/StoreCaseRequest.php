@@ -32,6 +32,7 @@ class StoreCaseRequest extends FormRequest
             'property_address'     => 'required|string|max:255',
             'property_type'        => 'required|string|in:Casa,Departamento,Otro',
             'is_duplicated'        => 'required|boolean',
+            'comments_programming' => 'nullable|string',
 
             /* ─────── Fechas ─────── */
             'complaint_date'       => 'nullable|date',
