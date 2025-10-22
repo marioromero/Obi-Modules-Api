@@ -23,7 +23,6 @@ class Schedule extends Model
         'inspection_date',
         'inspection_time',
         'comments',
-        'comments_programming',
         'message_sent',
         'message_confirmed',
     ];

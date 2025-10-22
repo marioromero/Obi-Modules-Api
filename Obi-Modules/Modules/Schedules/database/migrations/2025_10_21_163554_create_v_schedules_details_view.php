@@ -29,7 +29,6 @@ return new class extends Migration
             s.inspection_date,
             s.inspection_time,
             s.comments,
-            s.comments_programming,
             s.message_sent,
             s.message_confirmed,
 
