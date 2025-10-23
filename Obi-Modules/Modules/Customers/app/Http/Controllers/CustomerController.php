@@ -70,6 +70,8 @@ class CustomerController extends BaseApiController
         if ($dni === '') {
             return $this->error('DNI inválido', 422);
         }
+
+        // Normalización básica del RUT
         if (str_contains($dni, '-')) {
             [$num, $dv] = explode('-', $dni, 2);
         } else {
@@ -81,13 +83,23 @@ class CustomerController extends BaseApiController
         if ($num === '' || $dv === '') {
             return $this->error('DNI inválido', 422);
         }
+
         $normalized = $num . '-' . $dv;
 
-        $customer = Customer::query()->where('dni', $normalized)->first();
+        $customer = Customer::query()
+            ->with('assignedAgent:id,name')
+            ->where('dni', $normalized)
+            ->first();
+
         if (! $customer) {
             return $this->success(null, 'No existe', 204);
         }
-        return $this->success($customer, 'Cliente encontrado', 200);
+
+        $data = $customer->toArray();
+        $data['assigned_agent'] = $customer->assigned_agent ?? null;
+        $data['agent_name']     = $customer->assignedAgent->name ?? null;
+
+        return $this->success($data, 'Cliente encontrado', 200);
     }
 
     // Verifica existencia por DNI responde 1 o 0

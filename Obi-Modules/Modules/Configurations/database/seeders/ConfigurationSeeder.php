@@ -335,7 +335,7 @@ class ConfigurationSeeder extends Seeder
                     ],
                     'visita' => [
                         'default' => [
-                            'code','state','inspection_date','schedule_inspection_time','property_address',
+                            'code','state','inspection_date','schedule_inspection_time','property_address','complaint_date',
                             'accident_type_name', 'schedule_message_sent','schedule_message_confirmed',
                             'customer_name','customer_dni','phone','consultant_name',
                             'bank_name','insurer_name','loss_adjuster_name','accident_number',

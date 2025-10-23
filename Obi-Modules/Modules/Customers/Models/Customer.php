@@ -52,7 +52,7 @@ class Customer extends Model
     // Relación de Customer con User asignado (antes user_id) [FK externa]
     public function assignedAgent()
     {
-        return $this->belongsTo(\Modules\Users\Models\User::class, 'assigned_agent');
+        return $this->belongsTo(\Modules\Users\Models\TraroUser::class, 'assigned_agent');
     }
 
     // Alias para compatibilidad: mantiene $customer->user
