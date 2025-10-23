@@ -53,6 +53,8 @@ return new class extends Migration
           sch_last.message_sent       AS schedule_message_sent,
           sch_last.message_confirmed  AS schedule_message_confirmed,
           sch_last.inspection_time    AS schedule_inspection_time,
+          sch_last.liquidator_inspector_info AS schedule_liquidator_inspector_info,
+
 
           /* ───── Último cambio de estado (step log) ───── */
           csl.last_state_change_user_id,
@@ -207,7 +209,8 @@ return new class extends Migration
             s1.case_id,
             s1.message_sent,
             s1.message_confirmed,
-            s1.inspection_time
+            s1.inspection_time,
+            s1.liquidator_inspector_info
           FROM grupoint_obi_scheduling.schedules s1
           JOIN (
             SELECT case_id, MAX(id) AS max_id
