@@ -363,10 +363,9 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Por asesor: Ivette Contreras',
                                 'color'   => '#b36bff',
                                 'columns' => [
-                                    'code','state','inspection_date','schedule_inspection_time','property_address',
-                                    'accident_type_name','customer_name','customer_dni','phone','consultant_name',
-                                    'bank_name','insurer_name','loss_adjuster_name','accident_number',
-                                    'date_of_loss','commune_name','active_notifications','case_flow_last_json'
+                                      'customer_name','accident_type_name','inspection_date','schedule_inspection_time','property_address','phone','commune_name',
+                                      'code','state','customer_id','customer_dni','bank_name',
+                                      'insurer_name','accident_number','loss_adjuster_name','consultant_name'
                                 ],
                                 'sql'     => "WHERE consultant_id = 23
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
