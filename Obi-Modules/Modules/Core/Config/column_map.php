@@ -74,6 +74,7 @@ return [
             'schedule_message_sent'      => 'Mensaje enviado',
             'schedule_message_confirmed' => 'Mensaje confirmado',
             'schedule_inspection_time'   => 'Hora de visita',
+            'schedule_liquidator_inspector_info' => 'Información inspector',
 
             // enums / estados
             'signature_status'       => 'Estado de firma',
