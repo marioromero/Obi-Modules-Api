@@ -257,10 +257,10 @@ class ConfigurationSeeder extends Seeder
                     'recaudacion' => $content['22']['steps']['recaudacion'],
                     'programacion' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','is_duplicated','customer_dni','complaint_date', 'schedule_message_sent','schedule_message_confirmed','schedule_inspection_time',
+                            'code','state','customer_name','customer_id','inspection_date','schedule_inspection_time','consultant_name','is_duplicated','customer_dni','complaint_date','agent_name', 'schedule_message_sent','schedule_message_confirmed',
                             'bank_name','insurer_name',
                             'accident_type_name','accident_number','date_of_loss','commune_name',
-                            'property_address','loss_adjuster_name','phone','inspection_date', 'active_notifications', 'case_flow_last_json'
+                            'property_address','loss_adjuster_name','phone','active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
                             [
