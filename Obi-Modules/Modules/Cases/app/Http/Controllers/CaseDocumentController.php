@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Modules\Cases\Services\CasesDocsStorage;
 use Modules\Core\app\Http\BaseApiController;
 use RuntimeException;
+use Imagick;
 
 class CaseDocumentController extends BaseApiController
 {
@@ -149,6 +150,69 @@ class CaseDocumentController extends BaseApiController
             return $this->error($e->getMessage(), 422);
         } catch (\Throwable $e) {
             return $this->error('Error interno al subir documento', 500);
+        }
+    }
+
+    /**
+     * Sube un nuevo documento desde base64
+     */
+    public function storeBase64(Request $request, string $code)
+    {
+        try {
+            $this->storage->sanitizeCaseCode($code);
+
+            $request->validate([
+                'base64' => 'required|string',
+                'filename' => 'required|string|max:255',
+                'type' => 'required|in:CONTRATO,MANDATO,DOC'
+            ]);
+
+            $base64 = $request->string('base64')->toString();
+            $type = strtoupper($request->string('type')->toString());
+            $filename = $request->string('filename')->toString();
+
+            // Decodificar base64
+            $content = base64_decode($base64);
+            if ($content === false) {
+                return $this->error('Base64 inválido', 422);
+            }
+
+            // Convertir a PDF usando Imagick si está disponible, sino asumir que ya es PDF
+            if (class_exists('Imagick')) {
+                $imagick = new Imagick();
+                $imagick->readImageBlob($content);
+                $imagick->setImageFormat('pdf');
+                $pdfContent = $imagick->getImagesBlob();
+            } else {
+                // Si no hay Imagick, asumir que el base64 ya es un PDF
+                $pdfContent = $content;
+            }
+
+            // Renombrar con prefijo
+            $filename = $type . '_' . $filename . '.pdf';
+
+            // Construir ruta relativa
+            $relativePath = $code . '/' . $filename;
+
+            // Verificar si ya existe y agregar timestamp si es necesario
+            while (Storage::disk('cases-docs')->exists($relativePath)) {
+                $base = pathinfo($filename, PATHINFO_FILENAME);
+                $ext = pathinfo($filename, PATHINFO_EXTENSION);
+                $filename = $base . '_' . time() . '.' . $ext;
+                $relativePath = $code . '/' . $filename;
+            }
+
+            // Guardar archivo
+            $this->storage->put($code, $relativePath, $pdfContent);
+
+            return $this->success(['filename' => $filename], 'Documento subido correctamente', 201);
+
+        } catch (ValidationException $e) {
+            return $this->error('Datos inválidos: ' . $e->getMessage(), 422);
+        } catch (RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        } catch (\Throwable $e) {
+            return $this->error('Error interno al subir documento: ' . $e->getMessage(), 500);
         }
     }
 
