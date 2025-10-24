@@ -539,6 +539,22 @@ class CaseController extends BaseApiController
         return $this->success($case->refresh(), "Caso {$code} actualizado correctamente", 200);
     }
 
+    public function getCaseByCode(string $code)
+    {
+        $case = CaseEntity::where('code', $code)->first();
+
+        if (! $case) {
+            return $this->error("Caso con código {$code} no encontrado", 404);
+        }
+
+        $detail = CaseDetail::find($case->id);
+        if (! $detail) {
+            return $this->error('Caso no encontrado', 404);
+        }
+
+        return $this->success($detail, 'Caso obtenido correctamente', 200);
+    }
+
     public function filterByPaymentDate(Request $request)
     {
         $startDate = $request->query('start_date');
