@@ -32,7 +32,7 @@ return [
             'created_at'             => 'Creado',
             'agreement_id'           => 'Convenio (ID)',
             'property_address'       => 'Dirección de la propiedad',
-            'inspection_date'        => 'Fecha de visita',
+            'inspection_date'        => 'F visita',
             'document_signing_date'  => 'Fecha firma documentos',
             'complaint_date'         => 'Fecha de denuncia',
             'collection_date'        => 'Fecha recaudación',
@@ -44,7 +44,7 @@ return [
             'bank_service_number'    => 'NRO atencion banco',
             'advisory_amount'        => 'Monto asesoría',
             'accident_type_id'       => 'Tipo de siniestro (ID)',
-            'phone'                  => 'Teléfono 1',
+            'phone'                  => 'Teléfono',
             'user_name'              => 'Ejecutivo asignado',
             'is_duplicated'          => 'Duplicado',
             'description'            => 'Descripción',
@@ -73,7 +73,7 @@ return [
 
             'schedule_message_sent'      => 'Mensaje enviado',
             'schedule_message_confirmed' => 'Mensaje confirmado',
-            'schedule_inspection_time'   => 'Hora de visita',
+            'schedule_inspection_time'   => 'Hr visita',
             'schedule_liquidator_inspector_info' => 'Información inspector',
 
             // enums / estados

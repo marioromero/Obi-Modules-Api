@@ -199,7 +199,7 @@ class ConfigurationSeeder extends Seeder
                                               ORDER BY created_at ASC, id ASC",
                             ],
                         ],
-                        'managed_cases' => ['months' => 2, 'target_step' => 'programacion'],
+                        'managed_cases' => ['months' => 12, 'target_step' => 'programacion'],
                     ],
                     'recaudacion' => [
                         'default' => [
@@ -244,7 +244,7 @@ class ConfigurationSeeder extends Seeder
                                          ORDER BY probable_payment_date ASC, id ASC",
                         ],
                     ],
-                        'managed_cases' => ['months' => 2, 'target_step' => null],
+                        'managed_cases' => ['months' => 12, 'target_step' => null],
                     ],
                 ],
             ];
@@ -331,7 +331,7 @@ class ConfigurationSeeder extends Seeder
                                         ORDER BY created_at DESC, id DESC",
                         ],
                         ],
-                        'managed_cases' => ['months' => 2, 'target_step' => 'visita'],
+                        'managed_cases' => ['months' => 12, 'target_step' => 'visita'],
                     ],
                     'visita' => [
                         'default' => [
@@ -386,7 +386,7 @@ class ConfigurationSeeder extends Seeder
                                               ORDER BY COALESCE(inspection_date, '9999-12-31') ASC, id DESC",
                             ],
                         ],
-                        'managed_cases' => ['months' => 2, 'target_step' => 'presupuesto'],
+                        'managed_cases' => ['months' => 12, 'target_step' => 'presupuesto'],
                     ],
                 ],
             ];
@@ -423,7 +423,7 @@ class ConfigurationSeeder extends Seeder
                                               ORDER BY inspection_date ASC, id ASC",
                             ],
                         ],
-                        'managed_cases' => ['months' => 2, 'target_step' => 'liquidacion'],
+                        'managed_cases' => ['months' => 12, 'target_step' => 'liquidacion'],
                     ],
                     // 5) Liquidación
                     'liquidacion' => [
@@ -446,7 +446,7 @@ class ConfigurationSeeder extends Seeder
                                               ORDER BY created_at ASC, id ASC",
                             ],
                         ],
-                        'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
+                        'managed_cases' => ['months' => 12, 'target_step' => 'recaudacion'],
                     ],
                     // 6) Recaudación
                     'recaudacion' => $content['22']['steps']['recaudacion'],
@@ -480,7 +480,7 @@ class ConfigurationSeeder extends Seeder
                                               ORDER BY inspection_date ASC, id ASC",
                             ],
                         ],
-                        'managed_cases' => ['months' => 2, 'target_step' => 'liquidacion'],
+                        'managed_cases' => ['months' => 12, 'target_step' => 'liquidacion'],
                     ],
 
                     'liquidacion' => [
@@ -501,7 +501,7 @@ class ConfigurationSeeder extends Seeder
                                               ORDER BY created_at ASC, id ASC",
                             ],
                         ],
-                        'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
+                        'managed_cases' => ['months' => 12, 'target_step' => 'recaudacion'],
                     ],
                 ],
             ];
@@ -532,7 +532,7 @@ class ConfigurationSeeder extends Seeder
                                           ORDER BY inspection_date ASC, id ASC",
                         ],
                     ],
-                    'managed_cases' => ['months' => 2, 'target_step' => 'liquidacion'],
+                    'managed_cases' => ['months' => 12, 'target_step' => 'liquidacion'],
                 ],
 
                 'liquidacion' => [
@@ -553,7 +553,7 @@ class ConfigurationSeeder extends Seeder
                                           ORDER BY created_at ASC, id ASC",
                         ],
                     ],
-                    'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
+                    'managed_cases' => ['months' => 12, 'target_step' => 'recaudacion'],
                 ],
 
                  'recaudacion' => [
@@ -587,7 +587,7 @@ class ConfigurationSeeder extends Seeder
                             'sql'     => "ORDER BY created_at DESC, id DESC",
                         ],
                     ],
-                    'managed_cases' => ['months' => 2, 'target_step' => 'recaudacion'],
+                    'managed_cases' => ['months' => 12, 'target_step' => 'recaudacion'],
                 ],
             ],
         ];
