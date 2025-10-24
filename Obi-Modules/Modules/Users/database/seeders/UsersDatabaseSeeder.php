@@ -14,6 +14,7 @@ class UsersDatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserStatusSeeder::class,
+            ModelLogsSeeder::class,
             EventSeeder::class,
             UserSeeder::class,
             UserLogSeeder::class,

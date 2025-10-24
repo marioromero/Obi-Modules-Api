@@ -12,10 +12,11 @@ return new class extends Migration
     {
         Schema::create('user_logs', function (Blueprint $table) {
             $table->id();
-            $table->dateTime('timestamp');
-            $table->string('datails', 250);
-            $table->unsignedBigInteger('user_id'); // FK to users
-            $table->unsignedBigInteger('event_id'); // FK to events
+            $table->dateTime('timestamp')->useCurrent();
+            $table->longText('details');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('model_id');
+            $table->unsignedBigInteger('event_id');
         });
     }
 

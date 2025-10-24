@@ -6,6 +6,7 @@ use Modules\Users\app\Http\Controllers\RoleController;
 use Modules\Users\app\Http\Controllers\UserStatusController;
 use Modules\Users\app\Http\Controllers\EventController;
 use Modules\Users\app\Http\Controllers\UserLogController;
+use Modules\Users\app\Http\Controllers\ModelController;
 
 Route::get('/ping-users', fn() => response()->json(['pong' => 'Users']))->name('Users.ping');
 
@@ -51,4 +52,13 @@ Route::post('user-logs', [UserLogController::class, 'store']);
 Route::put('user-logs/{userLog}', [UserLogController::class, 'update']);
 Route::patch('user-logs/{userLog}', [UserLogController::class, 'patch']);
 Route::delete('user-logs/{userLog}', [UserLogController::class, 'destroy']);
+Route::post('user-logs/save', [UserLogController::class, 'save']);
 
+
+// REST para Model
+Route::get('models', [ModelController::class, 'index']);
+Route::get('models/{model}', [ModelController::class, 'show']);
+Route::post('models', [ModelController::class, 'store']);
+Route::put('models/{model}', [ModelController::class, 'update']);
+Route::patch('models/{model}', [ModelController::class, 'patch']);
+Route::delete('models/{model}', [ModelController::class, 'destroy']);

@@ -17,12 +17,11 @@ class UserLog extends Model
 
     protected $fillable = [
         'timestamp',
-        'datails',
+        'details',
         'user_id',
+        'model_id',
         'event_id',
     ];
-
-    /** RELACIONES INTERNAS **/
 
     // Relación de UserLog con User (un UserLog pertenece a un User)
     public function user()
@@ -35,6 +34,11 @@ class UserLog extends Model
     public function event()
     {
         return $this->belongsTo(Event::class, 'event_id');
+    }
+
+    public function model()
+    {
+        return $this->belongsTo(ModelLog::class, 'model_id');
     }
 }
 
