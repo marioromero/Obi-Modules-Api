@@ -116,7 +116,7 @@ class ConfigurationSeeder extends Seeder
                 '5' => [
                     'code','state','customer_name','customer_id','customer_dni','accident_type_name','agent_name',
                     'created_at','accident_number','commune_name','property_address','bank_name',
-                    'document_signing_date','consultant_id', 'consultant_name', 'approved_amount',
+                    'document_signing_date','consultant_id', 'consultant_name', 'approved_amount','amount_paid',
                     'inspection_date','visit_status','budget_status','decision_status',
                     'settlement_report_date','date_of_loss','contestation_date',
                     'insurer_name','loss_adjuster_name','property_type',
@@ -156,11 +156,10 @@ class ConfigurationSeeder extends Seeder
                                 'name'    => 'Estado en proceso sin firmas',
                                 'color'   => '#ff8878',
                                 'columns' => ['code','state','customer_name','customer_id','phone','agent_name','is_duplicated','created_at','bank_name','commune_name','accident_type_name'],
-                                'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Ingreso'
-                                              AND signature_status IN ('generado','enviado a acepta','notificado')
-                                              AND document_signing_date IS NULL
-                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at ASC, id ASC",
+                                 'sql'     => "WHERE signature_status IN ('generado','enviado a acepta','notificado')
+                                  AND document_signing_date IS NULL
+                                  AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                  ORDER BY created_at ASC, id ASC",
                             ],
                             [
                                 'key'     => 'configuration_2',
@@ -170,33 +169,31 @@ class ConfigurationSeeder extends Seeder
                                     'code','state','customer_name','customer_id','accident_type_name',
                                     'bank_name','is_duplicated','commune_name','document_signing_date'
                                 ],
-                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Denuncio'
-                                              AND complaint_date IS NULL
-                                              AND (
-                                                    (fecha_firma_contrato IS NOT NULL AND fecha_firma_mandato IS NOT NULL)
-                                                    OR (
-                                                         fecha_firma_contrato IS NULL
-                                                     AND fecha_firma_mandato  IS NULL
-                                                     AND LOWER(signature_status) = 'firmados'
-                                                    )
-                                                  )
-                                              AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
-                                              ORDER BY COALESCE(document_signing_date,
-                                                                GREATEST(fecha_firma_contrato, fecha_firma_mandato)) ASC,
-                                                       id ASC",
+                                 'sql'     => "WHERE complaint_date IS NULL
+                                      AND (
+                                            (fecha_firma_contrato IS NOT NULL AND fecha_firma_mandato IS NOT NULL)
+                                            OR (
+                                                 fecha_firma_contrato IS NULL
+                                             AND fecha_firma_mandato  IS NULL
+                                             AND LOWER(signature_status) = 'firmados'
+                                            )
+                                          )
+                                      AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')
+                                      ORDER BY COALESCE(document_signing_date,
+                                                        GREATEST(fecha_firma_contrato, fecha_firma_mandato)) ASC,
+                                               id ASC",
                             ],
                             [
                                 'key'     => 'configuration_3',
                                 'name'    => 'Solo un documento firmado',
                                 'color'   => '#ffa94d',
                                 'columns' => [
-                                    'code','state','customer_name','customer_id','created_at','bank_name','commune_name','accident_type_name','signature_status'
+                                    'code','state','customer_name','customer_id','created_at','bank_name','commune_name','agent_name','accident_type_name','signature_status'
                                 ],
-                                'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Ingreso'
-                                              AND signature_status IN ('contrato pendiente','mandato pendiente')
-                                              AND document_signing_date IS NULL
-                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
-                                              ORDER BY created_at ASC, id ASC",
+                               'sql'     => "WHERE signature_status IN ('contrato pendiente','mandato pendiente')
+                                  AND document_signing_date IS NULL
+                                  AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                  ORDER BY created_at ASC, id ASC",
                             ],
                         ],
                         'managed_cases' => ['months' => 12, 'target_step' => 'programacion'],
@@ -337,7 +334,7 @@ class ConfigurationSeeder extends Seeder
                         'default' => [
                             'inspection_date','schedule_inspection_time','customer_name',
                             'property_address','commune_name','phone','accident_type_name',
-                            'schedule_liquidator_inspector_info','loss_adjuster_name'
+                            'schedule_liquidator_inspector_info','loss_adjuster_name','consultant_name'
                         ],
                         'filters' => [
                             [
@@ -347,7 +344,7 @@ class ConfigurationSeeder extends Seeder
                                 'columns' => [
                                     'inspection_date','schedule_inspection_time','customer_name',
                                     'property_address','commune_name','phone','accident_type_name',
-                                    'schedule_liquidator_inspector_info','loss_adjuster_name'
+                                    'schedule_liquidator_inspector_info','loss_adjuster_name','consultant_name'
                                 ],
                                 'sql'     => "WHERE consultant_id = 5
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
@@ -362,7 +359,7 @@ class ConfigurationSeeder extends Seeder
                                 'columns' => [
                                     'inspection_date','schedule_inspection_time','customer_name',
                                     'property_address','commune_name','phone','accident_type_name',
-                                    'schedule_liquidator_inspector_info','loss_adjuster_name'
+                                    'schedule_liquidator_inspector_info','loss_adjuster_name','consultant_name'
                                 ],
                                 'sql'     => "WHERE consultant_id = 23
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
@@ -377,7 +374,7 @@ class ConfigurationSeeder extends Seeder
                                 'columns' => [
                                     'inspection_date','schedule_inspection_time','customer_name',
                                     'property_address','commune_name','phone','accident_type_name',
-                                    'schedule_liquidator_inspector_info','loss_adjuster_name'
+                                    'schedule_liquidator_inspector_info','loss_adjuster_name','consultant_name'
                                 ],
                                 'sql'     => "WHERE consultant_id = 11
                                               AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
@@ -572,9 +569,10 @@ class ConfigurationSeeder extends Seeder
                             'name'    => 'Cierre de mes',
                             'color'   => '#f48fb1',
                             'columns' => ['customer_name','customer_id','document_signing_date','agent_name'],
-                            'sql'     => "WHERE document_signing_date >= DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01')
-                                          AND document_signing_date <  DATE_FORMAT(CURDATE(), '%Y-%m-01')
-                                          ORDER BY document_signing_date ASC, id ASC",
+                            'sql'     => "ORDER BY
+                                            CASE WHEN document_signing_date IS NULL THEN 1 ELSE 0 END,
+                                            document_signing_date DESC,
+                                            id DESC",
                         ],
                         [
                             'key'     => 'configuration_2',

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use Modules\Cases\Models\CaseEntity;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 
 class StatsController extends BaseApiController
 {
@@ -65,17 +66,34 @@ class StatsController extends BaseApiController
         $todayDay           = $now->day;
         $prevMonthSameDay   = $prevMonth->copy()->day(min($todayDay, $prevMonth->daysInMonth));
 
+        // ── NUEVO: cláusula reusable para excluir clientes con "test" ─────────────────
+        $casesTable   = (new CaseEntity)->getTable();
+        $customersDb  = Config::get('database.connections.customers_db.database');
+        $notTestCustomersSql = "
+            NOT EXISTS (
+            SELECT 1
+            FROM {$customersDb}.customers cust
+            WHERE cust.id = {$casesTable}.customer_id
+              AND LOWER(CONCAT_WS(' ',
+                    COALESCE(cust.full_name, ''),
+                    COALESCE(cust.name, ''),
+                    COALESCE(cust.lastname, '')
+              )) LIKE '%test%'
+            )
+        ";
+
         // Métricas base para todos los roles
         $metrics = [
             // Casos ingresados
-            'cases_created_current_month'           => CaseEntity::whereBetween('created_at', [$startCurrentMonth, $now])->count(),
-            'cases_created_last_thirty_days'        => CaseEntity::where('created_at', '>=', $startLastThirty)->count(),
-            'cases_created_previous_month'          => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $endPreviousMonth])->count(),
-            'cases_created_to_date_previous_month'  => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $prevMonthSameDay])->count(),
+            'cases_created_current_month'           => CaseEntity::whereBetween('created_at', [$startCurrentMonth, $now])->whereRaw($notTestCustomersSql)->count(),
+            'cases_created_last_thirty_days'        => CaseEntity::where('created_at', '>=', $startLastThirty)->whereRaw($notTestCustomersSql)->count(),
+            'cases_created_previous_month'          => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $endPreviousMonth])->whereRaw($notTestCustomersSql)->count(),
+            'cases_created_to_date_previous_month'  => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $prevMonthSameDay])->whereRaw($notTestCustomersSql)->count(),
 
             // Casos cerrados (mes actual)
             'closed_cases' => CaseEntity::where('overall_status', 'cerrado')
                 ->whereBetween('created_at', [$startCurrentMonth, $now])
+                ->whereRaw($notTestCustomersSql)
                 ->count(),
 
             // Casos cobrados en recaudación (mes actual)
@@ -85,6 +103,7 @@ class StatsController extends BaseApiController
                 })
                 ->where('payment_status', 'pagado')
                 ->whereBetween('created_at', [$startCurrentMonth, $now])
+                ->whereRaw($notTestCustomersSql)
                 ->count(),
 
             // Casos en pasos fulminantes (NO cerrados) (mes actual)
@@ -98,6 +117,7 @@ class StatsController extends BaseApiController
                       ->orWhere('overall_status', '<>', 'cerrado');
                 })
                 ->whereBetween('created_at', [$startCurrentMonth, $now])
+                ->whereRaw($notTestCustomersSql)
                 ->count(),
 
             // Casos en recaudación pendientes de pago (mes actual)
@@ -110,6 +130,7 @@ class StatsController extends BaseApiController
                       ->orWhere('payment_status', '!=', 'pagado');
                 })
                 ->whereBetween('created_at', [$startCurrentMonth, $now])
+                ->whereRaw($notTestCustomersSql)
                 ->count(),
         ];
 
@@ -120,7 +141,7 @@ class StatsController extends BaseApiController
                 $rangeEnd   = $this->firstDayCurrentMonth();
 
                 //Listado de pagos (suma total de todos los montos pagados) – total tabla
-                $metrics['total_paid_amount'] = (int) (CaseEntity::sum('amount_paid') ?? 0);
+                $metrics['total_paid_amount'] = (int) (CaseEntity::whereRaw($notTestCustomersSql)->sum('amount_paid') ?? 0);
 
                 //Casos ingresados por mes (últimos 12 meses) + TOTAL
                 $metrics['cases_created_by_month_last_12'] = $this->monthlyCountWithTotal('created_at', $rangeStart, $rangeEnd);
@@ -168,12 +189,28 @@ class StatsController extends BaseApiController
         $table      = (new CaseEntity)->getTable();
         $connection = (new CaseEntity)->getConnectionName();
 
+        // cláusula reusable para excluir clientes con "test"
+        $customersDb  = Config::get('database.connections.customers_db.database');
+        $notTestCustomersSql = "
+             NOT EXISTS (
+            SELECT 1
+            FROM {$customersDb}.customers cust
+            WHERE cust.id = {$table}.customer_id
+              AND LOWER(CONCAT_WS(' ',
+                    COALESCE(cust.full_name, ''),
+                    COALESCE(cust.name, ''),
+                    COALESCE(cust.lastname, '')
+              )) LIKE '%test%'
+            )
+        ";
+
         $sql = "
             SELECT YEAR($column) AS year, MONTH($column) AS month, COUNT(*) AS count
             FROM $table
             WHERE $column IS NOT NULL
               AND $column >= ?
               AND $column <  ?
+              AND {$notTestCustomersSql}
             GROUP BY YEAR($column), MONTH($column)
 
             UNION ALL
@@ -183,6 +220,7 @@ class StatsController extends BaseApiController
             WHERE $column IS NOT NULL
               AND $column >= ?
               AND $column <  ?
+              AND {$notTestCustomersSql}
             ORDER BY (year = 'TOTAL'), year, month
         ";
 
