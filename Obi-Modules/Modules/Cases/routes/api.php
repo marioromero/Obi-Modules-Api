@@ -89,15 +89,21 @@ Route::get('cases/{code}/documents/preview', [CaseDocumentController::class, 'pr
 
 
 // REST para Stats
-Route::get('stats', [StatsController::class, 'index']);
-Route::get('stats/{stats}', [StatsController::class, 'show']);
-Route::post('stats', [StatsController::class, 'store']);
-Route::put('stats/{stats}', [StatsController::class, 'update']);
-Route::patch('stats/{stats}', [StatsController::class, 'patch']);
-Route::delete('stats/{stats}', [StatsController::class, 'destroy']);
-Route::get('stats/amount-paid/{year?}/{month?}', [StatsController::class, 'statsAmountPaid']);
-Route::get('stats/cases-created/{year?}/{month?}/{agent?}', [StatsController::class, 'statsCasesCreated']);
-Route::get('stats/cases-signed/{year?}/{month?}', [StatsController::class, 'statsCasesSigned']);
-Route::get('stats/inspections/{year?}/{month?}/{advisor?}', [StatsController::class, 'statsCasesInspected']);
-Route::get('stats/budgets-sent/{year?}/{month?}', [StatsController::class, 'statsBudgetsSent']);
-Route::get('stats/complaints/{year?}/{month?}', [StatsController::class, 'statsComplaints']);
+Route::get('stats/amount-paid/{year?}/{month?}', [StatsController::class, 'statsAmountPaid'])
+    ->where(['year' => '[0-9]+', 'month' => '[0-9]+']);
+Route::get('stats/cases-created/{year?}/{month?}/{agent?}', [StatsController::class, 'statsCasesCreated'])
+    ->where(['year' => '[0-9]+', 'month' => '[0-9]+', 'agent' => '[0-9]+']);
+Route::get('stats/cases-signed/{year?}/{month?}', [StatsController::class, 'statsCasesSigned'])
+    ->where(['year' => '[0-9]+', 'month' => '[0-9]+']);
+Route::get('stats/inspections/{year?}/{month?}/{advisor?}', [StatsController::class, 'statsCasesInspected'])
+    ->where(['year' => '[0-9]+', 'month' => '[0-9]+', 'advisor' => '[0-9]+']);
+Route::get('stats/budgets-sent/{year?}/{month?}', [StatsController::class, 'statsBudgetsSent'])
+    ->where(['year' => '[0-9]+', 'month' => '[0-9]+']);
+Route::get('stats/complaints/{year?}/{month?}', [StatsController::class, 'statsComplaints'])
+    ->where(['year' => '[0-9]+', 'month' => '[0-9]+']);
+Route::get('stats-entities', [StatsController::class, 'index']);
+Route::get('stats-entities/{stats}', [StatsController::class, 'show']);
+Route::post('stats-entities', [StatsController::class, 'store']);
+Route::put('stats-entities/{stats}', [StatsController::class, 'update']);
+Route::patch('stats-entities/{stats}', [StatsController::class, 'patch']);
+Route::delete('stats-entities/{stats}', [StatsController::class, 'destroy']);

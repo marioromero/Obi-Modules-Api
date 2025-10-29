@@ -62,28 +62,28 @@ class StatsController extends BaseApiController
         $this->assertYearMonth($year, $month);
         [$start, $end] = $this->buildDateRange($year, $month);
 
-        $column = 'probable_payment_date';
+        $casesTable = (new CaseEntity)->getTable();
 
         $q = CaseEntity::query()
-            ->whereNotNull($column)
-            ->whereRaw($this->notTestCustomersSql((new CaseEntity)->getTable()));
+            ->whereRaw($this->notTestCustomersSql($casesTable))
+            ->where('amount_paid', '>', 0);
 
         if ($start && $end) {
-            $q->whereBetween($column, [$start, $end]);
+            $q->where(function ($w) use ($start, $end) {
+                $w->whereBetween('probable_payment_date', [$start, $end])
+                  ->orWhere(function ($w2) use ($start, $end) {
+                      $w2->whereNull('probable_payment_date')
+                         ->whereBetween('created_at', [$start, $end]);
+                  });
+            });
         }
-
         $value = (int) ($q->sum('amount_paid') ?? 0);
 
         return $this->success([
-            'metric'          => 'amount_paid',
-            'year'            => $year,
-            'month'           => $month,
-            'value'           => $value,
-            'filters_applied' => [
-                'exclude_test_customers' => true,
-                'date_column'            => $column,
-            ],
-        ], 'Listado de pagos (amount_paid) por probable_payment_date', 200);
+            'year'  => $year,
+            'month' => $month,
+            'value' => $value,
+        ], 'Listado de pagos', 200);
     }
 
     // Metodo que devuelve el conteo de casos creados (created_at) con filtro opcional por ejecutivo
@@ -115,15 +115,11 @@ class StatsController extends BaseApiController
         $value = (int) $q->count();
 
         return $this->success([
-            'metric'          => 'cases_created',
             'year'            => $year,
             'month'           => $month,
             'agent'           => $agent,
             'value'           => $value,
-            'filters_applied' => [
-                'exclude_test_customers' => true,
-            ],
-        ], 'Casos ingresados (created_at)', 200);
+        ], 'Casos ingresados', 200);
     }
 
     // Metodo que devuelve el conteo de casos firmados (document_signing_date)
@@ -145,14 +141,10 @@ class StatsController extends BaseApiController
         $value = (int) $q->count();
 
         return $this->success([
-            'metric'          => 'cases_signed',
             'year'            => $year,
             'month'           => $month,
             'value'           => $value,
-            'filters_applied' => [
-                'exclude_test_customers' => true,
-            ],
-        ], 'Casos firmados (document_signing_date)', 200);
+        ], 'Casos firmados', 200);
     }
 
     // Metodo que devuelve el conteo de inspecciones (inspection_date) con filtro opcional por asesor
@@ -179,15 +171,11 @@ class StatsController extends BaseApiController
         $value = (int) $q->count();
 
         return $this->success([
-            'metric'          => 'cases_inspected',
             'year'            => $year,
             'month'           => $month,
             'advisor'         => $advisor,
             'value'           => $value,
-            'filters_applied' => [
-                'exclude_test_customers' => true,
-            ],
-        ], 'Casos visitados (inspection_date)', 200);
+        ], 'Casos visitados', 200);
     }
 
     // Metodo que devuelve el conteo de presupuestos enviados (budget_sending_date)
@@ -209,14 +197,10 @@ class StatsController extends BaseApiController
         $value = (int) $q->count();
 
         return $this->success([
-            'metric'          => 'budgets_sent',
             'year'            => $year,
             'month'           => $month,
             'value'           => $value,
-            'filters_applied' => [
-                'exclude_test_customers' => true,
-            ],
-        ], 'Presupuestos enviados (budget_sending_date)', 200);
+        ], 'Presupuestos enviados', 200);
     }
 
     // Metodo que devuelve el conteo de denuncios (complaint_date)
@@ -238,14 +222,10 @@ class StatsController extends BaseApiController
         $value = (int) $q->count();
 
         return $this->success([
-            'metric'          => 'complaints',
             'year'            => $year,
             'month'           => $month,
             'value'           => $value,
-            'filters_applied' => [
-                'exclude_test_customers' => true,
-            ],
-        ], 'Casos denunciados (complaint_date)', 200);
+        ], 'Casos denunciados', 200);
     }
 
     // Helpers internos
