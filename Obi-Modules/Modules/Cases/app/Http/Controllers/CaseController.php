@@ -89,7 +89,9 @@ class CaseController extends BaseApiController
         $cases = CaseDetail::query()
             ->where('agent_id', $agent->id)
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+            ->unique('id')
+            ->values();
 
         $columnsEn = [];
         try {

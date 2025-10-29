@@ -201,7 +201,7 @@ class ConfigurationSeeder extends Seeder
                     'recaudacion' => [
                         'default' => [
                             'code','state','customer_name','phone','customer_id','settlement_report_date','probable_payment_date',
-                            'approved_amount','advisory_amount','amount_owed','accident_number',
+                            'approved_amount','advisory_amount','amount_owed','accident_number','amount_paid',
                             'bank_name','accident_type_name','collection_date','payment_status', 'active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
@@ -209,7 +209,7 @@ class ConfigurationSeeder extends Seeder
                             'key'     => 'configuration_1',
                             'name'    => 'En cobranza sin pago',
                             'color'   => '#91B684',
-                            'columns' => ['code','state','customer_name','phone','customer_id','approved_amount','advisory_amount','bank_name','probable_payment_date','collection_date','payment_status'],
+                            'columns' => ['code','state','customer_name','phone','customer_id','approved_amount','advisory_amount','amount_paid','bank_name','probable_payment_date','collection_date','payment_status'],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Recaudacion'
                                           AND LOWER(payment_status) = 'cobranza'
                                           AND collection_date IS NOT NULL

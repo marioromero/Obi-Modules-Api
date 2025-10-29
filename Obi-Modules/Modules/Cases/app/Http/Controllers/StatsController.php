@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Cases\app\Http\Controllers;
+
 use Modules\Core\app\Http\BaseApiController;
 use Modules\Cases\Models\Stats;
 use Illuminate\Http\JsonResponse;
@@ -12,7 +13,6 @@ use Illuminate\Support\Facades\Config;
 
 class StatsController extends BaseApiController
 {
-
     public function index()
     {
         $paginator = Stats::paginate(15);
@@ -26,7 +26,7 @@ class StatsController extends BaseApiController
 
     public function store(Request $request)
     {
-        $data   = $request->validate(['name' => 'required|string']);
+        $data  = $request->validate(['name' => 'required|string']);
         $stats = Stats::create($data);
 
         return $this->success($stats, 'Stats creado correctamente', 201);
@@ -54,185 +54,258 @@ class StatsController extends BaseApiController
         return $this->success(null, 'Stats eliminado correctamente', 204);
     }
 
-    //Metricas por rol
-     public function statsByRole(int $roleId): JsonResponse
+    // Endpoints de métricas
+
+    // Metodo que devuelve la suma de amount_paid filtrando por probable_payment_date
+    public function statsAmountPaid(?int $year = null, ?int $month = null): JsonResponse
     {
-        $now                = Carbon::now();
-        $startCurrentMonth  = $now->copy()->startOfMonth();
-        $startLastThirty    = $now->copy()->subDays(30);
-        $prevMonth          = $now->copy()->subMonth();
-        $startPreviousMonth = $prevMonth->copy()->startOfMonth();
-        $endPreviousMonth   = $prevMonth->copy()->endOfMonth();
-        $todayDay           = $now->day;
-        $prevMonthSameDay   = $prevMonth->copy()->day(min($todayDay, $prevMonth->daysInMonth));
+        $this->assertYearMonth($year, $month);
+        [$start, $end] = $this->buildDateRange($year, $month);
 
-        // ── NUEVO: cláusula reusable para excluir clientes con "test" ─────────────────
-        $casesTable   = (new CaseEntity)->getTable();
-        $customersDb  = Config::get('database.connections.customers_db.database');
-        $notTestCustomersSql = "
-            NOT EXISTS (
-            SELECT 1
-            FROM {$customersDb}.customers cust
-            WHERE cust.id = {$casesTable}.customer_id
-              AND LOWER(CONCAT_WS(' ',
-                    COALESCE(cust.full_name, ''),
-                    COALESCE(cust.name, ''),
-                    COALESCE(cust.lastname, '')
-              )) LIKE '%test%'
-            )
-        ";
+        $column = 'probable_payment_date';
 
-        // Métricas base para todos los roles
-        $metrics = [
-            // Casos ingresados
-            'cases_created_current_month'           => CaseEntity::whereBetween('created_at', [$startCurrentMonth, $now])->whereRaw($notTestCustomersSql)->count(),
-            'cases_created_last_thirty_days'        => CaseEntity::where('created_at', '>=', $startLastThirty)->whereRaw($notTestCustomersSql)->count(),
-            'cases_created_previous_month'          => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $endPreviousMonth])->whereRaw($notTestCustomersSql)->count(),
-            'cases_created_to_date_previous_month'  => CaseEntity::whereBetween('created_at', [$startPreviousMonth, $prevMonthSameDay])->whereRaw($notTestCustomersSql)->count(),
+        $q = CaseEntity::query()
+            ->whereNotNull($column)
+            ->whereRaw($this->notTestCustomersSql((new CaseEntity)->getTable()));
 
-            // Casos cerrados (mes actual)
-            'closed_cases' => CaseEntity::where('overall_status', 'cerrado')
-                ->whereBetween('created_at', [$startCurrentMonth, $now])
-                ->whereRaw($notTestCustomersSql)
-                ->count(),
-
-            // Casos cobrados en recaudación (mes actual)
-            'cases_paid_in_collection' => CaseEntity::where(function ($q) {
-                    $q->where('state', 'like', '%Recaudacion%')
-                      ->orWhere('state', 'like', '%Recaudación%');
-                })
-                ->where('payment_status', 'pagado')
-                ->whereBetween('created_at', [$startCurrentMonth, $now])
-                ->whereRaw($notTestCustomersSql)
-                ->count(),
-
-            // Casos en pasos fulminantes (NO cerrados) (mes actual)
-            'cases_in_closing_steps' => CaseEntity::where(function ($q) {
-                    foreach (['Cancelado','Desistido','DesistidoSinVisita'] as $step) {
-                        $q->orWhere('state', 'like', "%{$step}%");
-                    }
-                })
-                ->where(function ($q) {
-                    $q->whereNull('overall_status')
-                      ->orWhere('overall_status', '<>', 'cerrado');
-                })
-                ->whereBetween('created_at', [$startCurrentMonth, $now])
-                ->whereRaw($notTestCustomersSql)
-                ->count(),
-
-            // Casos en recaudación pendientes de pago (mes actual)
-            'cases_pending_collection' => CaseEntity::where(function ($q) {
-                    $q->where('state', 'like', '%Recaudacion%')
-                      ->orWhere('state', 'like', '%Recaudación%');
-                })
-                ->where(function ($q) {
-                    $q->whereNull('payment_status')
-                      ->orWhere('payment_status', '!=', 'pagado');
-                })
-                ->whereBetween('created_at', [$startCurrentMonth, $now])
-                ->whereRaw($notTestCustomersSql)
-                ->count(),
-        ];
-
-        // Extensiones por rol
-        switch ($roleId) {
-            case 1: // Administrador
-                $rangeStart = $this->firstDayMinus12Months();
-                $rangeEnd   = $this->firstDayCurrentMonth();
-
-                //Listado de pagos (suma total de todos los montos pagados) – total tabla
-                $metrics['total_paid_amount'] = (int) (CaseEntity::whereRaw($notTestCustomersSql)->sum('amount_paid') ?? 0);
-
-                //Casos ingresados por mes (últimos 12 meses) + TOTAL
-                $metrics['cases_created_by_month_last_12'] = $this->monthlyCountWithTotal('created_at', $rangeStart, $rangeEnd);
-
-                //Casos firmados por mes (últimos 12 meses) + TOTAL
-                $metrics['document_signed_by_month_last_12'] = $this->monthlyCountWithTotal('document_signing_date', $rangeStart, $rangeEnd);
-
-                //Casos visitados por mes (últimos 12 meses) + TOTAL
-                $metrics['inspections_by_month_last_12'] = $this->monthlyCountWithTotal('inspection_date', $rangeStart, $rangeEnd);
-
-                //Presupuestos enviados por mes (últimos 12 meses) + TOTAL
-                $metrics['budgets_sent_by_month_last_12'] = $this->monthlyCountWithTotal('budget_sending_date', $rangeStart, $rangeEnd);
-
-                //Casos denunciados por mes (últimos 12 meses) + TOTAL
-                $metrics['complaints_by_month_last_12'] = $this->monthlyCountWithTotal('complaint_date', $rangeStart, $rangeEnd);
-                break;
-
-            // case 2: // Otro rol (ejemplo)
-            //     // aquí agregas/eliminas métricas específicas para ese rol
-            //     break;
-
-            default:
-                // Para roles no mapeados, devolvemos solo las métricas base
-                break;
+        if ($start && $end) {
+            $q->whereBetween($column, [$start, $end]);
         }
 
-        return $this->success($metrics, 'Estadísticas para métricas de casos por rol', 200);
+        $value = (int) ($q->sum('amount_paid') ?? 0);
+
+        return $this->success([
+            'metric'          => 'amount_paid',
+            'year'            => $year,
+            'month'           => $month,
+            'value'           => $value,
+            'filters_applied' => [
+                'exclude_test_customers' => true,
+                'date_column'            => $column,
+            ],
+        ], 'Listado de pagos (amount_paid) por probable_payment_date', 200);
     }
 
-    //Helper: primer día del mes de hace 12 meses (incluye ese día).
-    private function firstDayMinus12Months(): string
+    // Metodo que devuelve el conteo de casos creados (created_at) con filtro opcional por ejecutivo
+    public function statsCasesCreated(?int $year = null, ?int $month = null, ?int $agent = null): JsonResponse
     {
-        return Carbon::now()->subMonthsNoOverflow(12)->startOfMonth()->toDateString();
+        $this->assertYearMonth($year, $month);
+        [$start, $end] = $this->buildDateRange($year, $month);
+
+        $casesTable = (new CaseEntity)->getTable();
+
+        $q = CaseEntity::query()
+            ->whereRaw($this->notTestCustomersSql($casesTable));
+
+        if ($start && $end) {
+            $q->whereBetween('created_at', [$start, $end]);
+        }
+
+        // Filtro por ejecutivo: customers.assigned_agent debe ser igual a {agent}
+        if (!is_null($agent)) {
+            $customersDb = Config::get('database.connections.customers_db.database');
+            $q->whereExists(function ($sub) use ($customersDb, $casesTable, $agent) {
+                $sub->select(DB::raw(1))
+                    ->from("{$customersDb}.customers as cust")
+                    ->whereRaw("cust.id = {$casesTable}.customer_id")
+                    ->where('cust.assigned_agent', '=', (int) $agent);
+            });
+        }
+
+        $value = (int) $q->count();
+
+        return $this->success([
+            'metric'          => 'cases_created',
+            'year'            => $year,
+            'month'           => $month,
+            'agent'           => $agent,
+            'value'           => $value,
+            'filters_applied' => [
+                'exclude_test_customers' => true,
+            ],
+        ], 'Casos ingresados (created_at)', 200);
     }
 
-    //Helper: primer día del mes actual (excluye mes en curso en las series).
-    private function firstDayCurrentMonth(): string
+    // Metodo que devuelve el conteo de casos firmados (document_signing_date)
+    public function statsCasesSigned(?int $year = null, ?int $month = null): JsonResponse
     {
-        return Carbon::now()->startOfMonth()->toDateString();
+        $this->assertYearMonth($year, $month);
+        [$start, $end] = $this->buildDateRange($year, $month);
+
+        $column = 'document_signing_date';
+
+        $q = CaseEntity::query()
+            ->whereNotNull($column)
+            ->whereRaw($this->notTestCustomersSql((new CaseEntity)->getTable()));
+
+        if ($start && $end) {
+            $q->whereBetween($column, [$start, $end]);
+        }
+
+        $value = (int) $q->count();
+
+        return $this->success([
+            'metric'          => 'cases_signed',
+            'year'            => $year,
+            'month'           => $month,
+            'value'           => $value,
+            'filters_applied' => [
+                'exclude_test_customers' => true,
+            ],
+        ], 'Casos firmados (document_signing_date)', 200);
     }
 
-    //Construye serie por mes para los últimos 12 meses (excluye mes en curso) + fila TOTAL,
-    private function monthlyCountWithTotal(string $column, string $start, string $end): array
+    // Metodo que devuelve el conteo de inspecciones (inspection_date) con filtro opcional por asesor
+    public function statsCasesInspected(?int $year = null, ?int $month = null, ?int $advisor = null): JsonResponse
     {
-        $table      = (new CaseEntity)->getTable();
-        $connection = (new CaseEntity)->getConnectionName();
+        $this->assertYearMonth($year, $month);
+        [$start, $end] = $this->buildDateRange($year, $month);
 
-        // cláusula reusable para excluir clientes con "test"
-        $customersDb  = Config::get('database.connections.customers_db.database');
-        $notTestCustomersSql = "
-             NOT EXISTS (
-            SELECT 1
-            FROM {$customersDb}.customers cust
-            WHERE cust.id = {$table}.customer_id
-              AND LOWER(CONCAT_WS(' ',
-                    COALESCE(cust.full_name, ''),
-                    COALESCE(cust.name, ''),
-                    COALESCE(cust.lastname, '')
-              )) LIKE '%test%'
+        $column = 'inspection_date';
+
+        $q = CaseEntity::query()
+            ->whereNotNull($column)
+            ->whereRaw($this->notTestCustomersSql((new CaseEntity)->getTable()));
+
+        if ($start && $end) {
+            $q->whereBetween($column, [$start, $end]);
+        }
+
+        // Filtro por asesor: cases.consultant_id debe ser igual a {advisor}
+        if (!is_null($advisor)) {
+            $q->where('consultant_id', (int) $advisor);
+        }
+
+        $value = (int) $q->count();
+
+        return $this->success([
+            'metric'          => 'cases_inspected',
+            'year'            => $year,
+            'month'           => $month,
+            'advisor'         => $advisor,
+            'value'           => $value,
+            'filters_applied' => [
+                'exclude_test_customers' => true,
+            ],
+        ], 'Casos visitados (inspection_date)', 200);
+    }
+
+    // Metodo que devuelve el conteo de presupuestos enviados (budget_sending_date)
+    public function statsBudgetsSent(?int $year = null, ?int $month = null): JsonResponse
+    {
+        $this->assertYearMonth($year, $month);
+        [$start, $end] = $this->buildDateRange($year, $month);
+
+        $column = 'budget_sending_date';
+
+        $q = CaseEntity::query()
+            ->whereNotNull($column)
+            ->whereRaw($this->notTestCustomersSql((new CaseEntity)->getTable()));
+
+        if ($start && $end) {
+            $q->whereBetween($column, [$start, $end]);
+        }
+
+        $value = (int) $q->count();
+
+        return $this->success([
+            'metric'          => 'budgets_sent',
+            'year'            => $year,
+            'month'           => $month,
+            'value'           => $value,
+            'filters_applied' => [
+                'exclude_test_customers' => true,
+            ],
+        ], 'Presupuestos enviados (budget_sending_date)', 200);
+    }
+
+    // Metodo que devuelve el conteo de denuncios (complaint_date)
+    public function statsComplaints(?int $year = null, ?int $month = null): JsonResponse
+    {
+        $this->assertYearMonth($year, $month);
+        [$start, $end] = $this->buildDateRange($year, $month);
+
+        $column = 'complaint_date';
+
+        $q = CaseEntity::query()
+            ->whereNotNull($column)
+            ->whereRaw($this->notTestCustomersSql((new CaseEntity)->getTable()));
+
+        if ($start && $end) {
+            $q->whereBetween($column, [$start, $end]);
+        }
+
+        $value = (int) $q->count();
+
+        return $this->success([
+            'metric'          => 'complaints',
+            'year'            => $year,
+            'month'           => $month,
+            'value'           => $value,
+            'filters_applied' => [
+                'exclude_test_customers' => true,
+            ],
+        ], 'Casos denunciados (complaint_date)', 200);
+    }
+
+    // Helpers internos
+
+    // Metodo que valida coherencia de year y month (month=0 se considera sin mes)
+    private function assertYearMonth(?int &$year, ?int &$month): void
+    {
+        // Normalizamos month=0 como null para permitir rutas tipo /{year}/0
+        if ($month === 0) {
+            $month = null;
+        }
+
+        if (!is_null($month) && is_null($year)) {
+            abort(422, 'If month is provided, year is required.');
+        }
+        if (!is_null($year) && ($year < 2000 || $year > 2100)) {
+            abort(422, 'Invalid year.');
+        }
+        if (!is_null($month) && ($month < 1 || $month > 12)) {
+            abort(422, 'Invalid month.');
+        }
+    }
+
+    // Metodo que construye el rango [inicio, fin-exclusivo] segun year/month (month=0 => sin mes)
+    private function buildDateRange(?int $year, ?int $month): array
+    {
+        // Historico sin filtros
+        if (is_null($year) && is_null($month)) {
+            return [null, null];
+        }
+
+        // Solo año
+        if (!is_null($year) && is_null($month)) {
+            $start = Carbon::create($year, 1, 1, 0, 0, 0);
+            $end   = (clone $start)->addYear();
+            return [$start, $end];
+        }
+
+        // Año y mes especifico
+        $start = Carbon::create($year, $month, 1, 0, 0, 0);
+        $end   = (clone $start)->addMonth();
+        return [$start, $end];
+    }
+
+    // Metodo que devuelve una clausula NOT EXISTS para excluir clientes con "test" en su nombre
+    private function notTestCustomersSql(string $casesTable): string
+    {
+        $customersDb = Config::get('database.connections.customers_db.database');
+
+        return "
+            NOT EXISTS (
+                SELECT 1
+                FROM {$customersDb}.customers cust
+                WHERE cust.id = {$casesTable}.customer_id
+                  AND LOWER(CONCAT_WS(' ',
+                        COALESCE(cust.full_name, ''),
+                        COALESCE(cust.name, ''),
+                        COALESCE(cust.lastname, '')
+                  )) LIKE '%test%'
             )
         ";
-
-        $sql = "
-            SELECT YEAR($column) AS year, MONTH($column) AS month, COUNT(*) AS count
-            FROM $table
-            WHERE $column IS NOT NULL
-              AND $column >= ?
-              AND $column <  ?
-              AND {$notTestCustomersSql}
-            GROUP BY YEAR($column), MONTH($column)
-
-            UNION ALL
-
-            SELECT 'TOTAL' AS year, NULL AS month, COUNT(*) AS count
-            FROM $table
-            WHERE $column IS NOT NULL
-              AND $column >= ?
-              AND $column <  ?
-              AND {$notTestCustomersSql}
-            ORDER BY (year = 'TOTAL'), year, month
-        ";
-
-        $rows = DB::connection($connection)->select($sql, [$start, $end, $start, $end]);
-
-        // Normalizamos tipos
-        return array_map(function ($r) {
-            return [
-                'year'  => is_numeric($r->year) ? (int)$r->year : (string)$r->year, // 'TOTAL' o año numérico
-                'month' => $r->month === null ? null : (int)$r->month,
-                'count' => (int)$r->count,
-            ];
-        }, $rows);
     }
 }

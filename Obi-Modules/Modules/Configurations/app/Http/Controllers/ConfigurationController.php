@@ -278,7 +278,9 @@ class ConfigurationController extends BaseApiController
         $rows = $query
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->get();
+            ->get()
+            ->unique('id')
+            ->values();
 
         $cases = $rows->map(function ($row) use ($columns, $safeJsonDecode) {
             $record = ['id' => $row->id];
