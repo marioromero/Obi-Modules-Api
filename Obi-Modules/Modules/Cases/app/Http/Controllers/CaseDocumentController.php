@@ -115,7 +115,7 @@ class CaseDocumentController extends BaseApiController
              $this->storage->sanitizeCaseCode($code);
 
              $request->validate([
-                 'file' => 'required|file|max:20480|mimes:pdf,doc,docx,jpg,jpeg,png', // 10MB max
+                 'file' => 'required|file|max:20480|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx', // 10MB max
                  'filename' => 'sometimes|string|max:255',
                  'type' => 'required|in:CONTRATO,MANDATO,DOC'
              ]);
