@@ -585,10 +585,19 @@ class ConfigurationController extends BaseApiController
                 return $out;
             }, $rows);
         };
+        // Eliminar duplicados
+        $dedupRows = function (array $rows): array {
+            return collect($rows)->unique('id')->values()->all();
+        };
+
+        // Helper para evitar los registros "Test" y deerivados
+        $filterOutTest = function (array $rows): array {
+            return array_values(array_filter($rows, fn($r) => stripos($r->customer_name ?? '', 'test') === false));
+        };
 
         // 4.1 Calcular managed_cases (reutilizable para default y para filter)
         $calcManagedCases = function (string $step, array $stepCfg, array $defaultColumnsEn) use (
-            $stateCond, $baseSql, $baseOrder, $enrichWithCustomerData, $projectRows
+            $stateCond, $baseSql, $baseOrder, $enrichWithCustomerData, $projectRows,$dedupRows,$filterOutTest
         ) {
             $managedMonths = (int)($stepCfg['managed_cases']['months'] ?? 2);
             $targetStep    = $stepCfg['managed_cases']['target_step'] ?? null;
@@ -610,6 +619,8 @@ class ConfigurationController extends BaseApiController
                 } catch (\Throwable $e) {
                     $managedData = [];
                 }
+                $managedData = $dedupRows($managedData);
+                $managedData = $filterOutTest($managedData);
                 $managedData = $enrichWithCustomerData($managedData);
                 $managedData = $projectRows($managedData, $defaultColumnsEn);
             }
@@ -634,6 +645,8 @@ class ConfigurationController extends BaseApiController
                     } catch (\Throwable $e) {
                         $managedData = [];
                     }
+                    $managedData = $dedupRows($managedData);
+                    $managedData = $filterOutTest($managedData);
                     $managedData = $enrichWithCustomerData($managedData);
                     $managedData = $projectRows($managedData, $defaultColumnsEn);
                 }
@@ -664,6 +677,8 @@ class ConfigurationController extends BaseApiController
                 return $this->error("Error al ejecutar el filtro '{$key}': " . $e->getMessage(), 422);
             }
 
+            $rows = $dedupRows($rows);
+            $rows = $filterOutTest($rows);
             $rows = $enrichWithCustomerData($rows);
             $rows = $projectRows($rows, $columnsEn);
 
@@ -727,6 +742,8 @@ class ConfigurationController extends BaseApiController
             return $this->error("Error al ejecutar default del paso '{$step}': " . $e->getMessage(), 422);
         }
 
+        $defaultData = $dedupRows($defaultData);
+        $defaultData = $filterOutTest($defaultData);
         $defaultData = $enrichWithCustomerData($defaultData);
         $defaultData = $projectRows($defaultData, $defaultColumnsEn);
 
