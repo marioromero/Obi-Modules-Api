@@ -25,7 +25,7 @@ class CaseDocumentController extends BaseApiController
     {
         try {
             $recursive = $request->boolean('recursive', true);
-            $onlyPdf = $request->boolean('only_pdf', true);
+            $onlyPdf = $request->boolean('only_pdf', false);
 
             $list = $this->storage->list($code, $recursive, $onlyPdf);
 
