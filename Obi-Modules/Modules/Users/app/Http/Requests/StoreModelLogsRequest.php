@@ -14,7 +14,7 @@ class StoreModelLogsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id'           => ['required','integer','min:1'],
+            'user_id'           => ['nullable','integer','min:1'],
             'model_id'          => ['required','integer','min:1'],
             'event_id'          => ['required','integer','min:1'],
             'details'           => ['required'],

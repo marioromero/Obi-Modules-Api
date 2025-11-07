@@ -14,7 +14,7 @@ return new class extends Migration
             $table->id();
             $table->dateTime('timestamp')->useCurrent();
             $table->longText('details');
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger('model_id');
             $table->unsignedBigInteger('event_id');
         });

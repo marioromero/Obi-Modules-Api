@@ -23,6 +23,11 @@ class UserLog extends Model
         'event_id',
     ];
 
+    protected $casts = [
+        'timestamp' => 'datetime',
+        'details'   => 'array',
+    ];
+
     // Relación de UserLog con User (un UserLog pertenece a un User)
     public function user()
     {
