@@ -53,7 +53,9 @@ Route::put('user-logs/{userLog}', [UserLogController::class, 'update']);
 Route::patch('user-logs/{userLog}', [UserLogController::class, 'patch']);
 Route::delete('user-logs/{userLog}', [UserLogController::class, 'destroy']);
 Route::post('user-logs/save', [UserLogController::class, 'save']);
-
+Route::get('user-logs/logs-by-user/{userId}', [UserLogController::class, 'logsByUser']);
+Route::get('user-logs/logs-by-action/{eventId}', [UserLogController::class, 'logsByAction']);
+Route::get('user-logs/logs-by-entity/{modelId}/{entityId}', [UserLogController::class, 'logsByEntity']);
 
 // REST para Model
 Route::get('models', [ModelController::class, 'index']);
