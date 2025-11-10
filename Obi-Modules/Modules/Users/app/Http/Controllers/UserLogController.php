@@ -169,15 +169,20 @@ class UserLogController extends BaseApiController
 
             $descripcion = trim(implode("\n", $descLines));
             if ($descripcion === '') continue;
-            if (\Illuminate\Support\Str::startsWith($descripcion, 'Evento:')
-                && !\Illuminate\Support\Str::contains($descripcion, 'login')) {
+
+            // Permitimos "Evento:" si es login o delete
+            if (Str::startsWith($descripcion, 'Evento:')
+                && !Str::contains($descripcion, 'login')
+                && !Str::contains(strtolower($descripcion), 'delete')) {
                 continue;
             }
 
             $out[] = [
-                'date'       => $fecha,             // dd/mm/aaaa
-                'time'        => $hora,              // HH:mm:ss
-                'user'     => $usuario ?? '----', // fallback
+                'date'        => $fecha,
+                'time'        => $hora,
+                'user'        => $usuario ?? '----',
+                'model_id'    => (int) ($r->model_id ?? 0),
+                'event_id'    => (int) ($r->event_id ?? 0),
                 'description' => $descripcion,
             ];
         }
@@ -185,7 +190,7 @@ class UserLogController extends BaseApiController
         return $this->success($out, 'Logs por usuario');
     }
 
-    // Logs por accion
+    // Logs por acción
     public function logsByAction(int $eventId): \Illuminate\Http\JsonResponse
     {
         if ($eventId <= 0) {
@@ -209,15 +214,19 @@ class UserLogController extends BaseApiController
 
             $descripcion = trim(implode("\n", $descLines));
             if ($descripcion === '') continue;
-            if (\Illuminate\Support\Str::startsWith($descripcion, 'Evento:')
-                && !\Illuminate\Support\Str::contains($descripcion, 'login')) {
+
+            if (Str::startsWith($descripcion, 'Evento:')
+                && !Str::contains($descripcion, 'login')
+                && !Str::contains(strtolower($descripcion), 'delete')) {
                 continue;
             }
 
             $out[] = [
-                'date'       => $fecha,
+                'date'        => $fecha,
                 'time'        => $hora,
-                'user'     => $usuario ?? '----',
+                'user'        => $usuario ?? '----',
+                'model_id'    => (int) ($r->model_id ?? 0),
+                'event_id'    => (int) ($r->event_id ?? 0),
                 'description' => $descripcion,
             ];
         }
@@ -225,7 +234,7 @@ class UserLogController extends BaseApiController
         return $this->success($out, 'Logs por acción');
     }
 
-    // Logs por entidad (modelId + entityId)
+    // Logs por entidad (modelId + entityId) combinando user_logs y case_step_logs (si aplica)
     public function logsByEntity(int $modelId, int $entityId): \Illuminate\Http\JsonResponse
     {
         if ($modelId <= 0 || $entityId <= 0) {
@@ -240,22 +249,32 @@ class UserLogController extends BaseApiController
             ->orderByDesc('id')
             ->get();
 
-        // 2) Filtrar por entity_id (SOLO desde details)
+        // 2) Filtrar por entity_id buscando SIEMPRE en details.before/after/id
         $userLogs = [];
         foreach ($rows as $r) {
-            $det = $this->decodeJson($r->details ?? null);
+            $match = false;
 
-            // preferimos AFTER.id → BEFORE.id → id (raíz)
-            $cand = \Illuminate\Support\Arr::get($det, 'after.id',
-                    \Illuminate\Support\Arr::get($det, 'before.id',
-                    \Illuminate\Support\Arr::get($det, 'id')));
+            if (isset($r->entity_pk) && $r->entity_pk) {
+                $match = ((int)$r->entity_pk) === $entityId;
+            } else {
+                $det    = $this->decodeJson($r->details ?? null);
+                $before = is_array($det['before'] ?? null) ? $det['before'] : [];
+                $after  = is_array($det['after']  ?? null) ? $det['after']  : [];
 
-            // sin id en details => no es un log de entidad (p.ej., auth)
-            if (!is_scalar($cand)) continue;
+                $cand = Arr::get($after, 'id',
+                Arr::get($before, 'id',
+                Arr::get($det, 'id',
+                Arr::get($after, 'entity_id',
+                Arr::get($before, 'entity_id',
+                Arr::get($det, 'entity_id'))))));
 
-            if ((int)$cand === $entityId) {
-                $userLogs[] = $r;
+
+                if (is_scalar($cand)) {
+                    $match = ((int)$cand) === $entityId;
+                }
             }
+
+            if ($match) $userLogs[] = $r;
         }
 
         // 3) ¿Es 'case'? -> traer case_step_logs
@@ -283,18 +302,18 @@ class UserLogController extends BaseApiController
         $map   = $this->columnMap();
         $items = [];
 
-        // 4) Transformar user_logs (diffs campo a campo)
+        // 4) Transformar user_logs
         foreach ($userLogs as $r) {
             [$fecha, $hora] = $this->formatDateTime($r->timestamp);
-            $usuario        = $this->resolveUserName($r->user_id);
-            $descLines      = $this->buildDescriptionFromUserLogRow($r, $map);
+            $usuario   = $this->resolveUserName($r->user_id);
+            $descLines = $this->buildDescriptionFromUserLogRow($r, $map);
 
             $descripcion = trim(implode("\n", $descLines));
             if ($descripcion === '') continue;
 
-            // Filtra el fallback "Evento: ..." salvo login
-            if (\Illuminate\Support\Str::startsWith($descripcion, 'Evento:')
-                && !\Illuminate\Support\Str::contains($descripcion, 'login')) {
+            if (Str::startsWith($descripcion, 'Evento:')
+                && !Str::contains($descripcion, 'login')
+                && !Str::contains(strtolower($descripcion), 'delete')) {
                 continue;
             }
 
@@ -302,63 +321,60 @@ class UserLogController extends BaseApiController
                 'date'        => $fecha,
                 'time'        => $hora,
                 'user'        => $usuario ?? '----',
+                'model_id'    => (int) ($r->model_id ?? 0),
+                'event_id'    => (int) ($r->event_id ?? 0),
                 'description' => $descripcion,
                 '_ts'         => $this->tsValue($r->timestamp),
                 '_id'         => (int)$r->id,
             ];
         }
 
-        // 5) Transformar case_step_logs (cambios de estado/subestado + payload *_from/_to)
+        // 5) Transformar case_step_logs (si aplica)
         foreach ($caseSteps as $s) {
             [$fecha, $hora] = $this->formatDateTime($s->created_at);
             $usuario         = $this->resolveUserName($s->user_id ?? null);
 
             $lines = [];
-
-            // Etiquetas (forzamos español para subestado si no existe en column_map)
-            $labelState = $this->labelFor('state', $map, 'case');      // → "Estado"
-            $labelSub   = $this->labelFor('substate', $map, 'case');   // si no existe, cae a "Substate"
-            if ($labelSub === 'Substate') $labelSub = 'Subestado';
-
             // Estado
             $fromState = $s->from_state ?? null;
             $toState   = $s->to_state ?? null;
             if ($this->changed($fromState, $toState)) {
-                $lines[] = 'Cambió '.$labelState.' de '.$this->prettyValueForDiff('state', $fromState).' a '.$this->prettyValueForDiff('state', $toState);
+                $lines[] = 'Cambió '.$this->labelFor('state', $map).' de '.$this->humanValue($fromState).' a '.$this->humanValue($toState);
             }
-
             // Subestado
             $fromSub = $s->from_sub ?? $s->from_substate ?? null;
             $toSub   = $s->to_sub ?? $s->to_substate ?? null;
             if ($this->changed($fromSub, $toSub)) {
-                $lines[] = 'Cambió '.$labelSub.' de '.$this->humanValue($fromSub).' a '.$this->humanValue($toSub);
+                $lines[] = 'Cambió '.$this->labelFor('substate', $map).' de '.$this->humanValue($fromSub).' a '.$this->humanValue($toSub);
             }
-
             // Payload pares *_from/*_to
             $payload = $this->decodeJson($s->payload ?? null);
             if (is_array($payload)) {
                 foreach ($payload as $k => $v) {
-                    if (\Illuminate\Support\Str::endsWith($k, '_from')) {
-                        $base = \Illuminate\Support\Str::beforeLast($k, '_from');
+                    if (Str::endsWith($k, '_from')) {
+                        $base = Str::beforeLast($k, '_from');
                         $from = $v;
                         $to   = $payload[$base.'_to'] ?? null;
                         if ($this->changed($from, $to)) {
-                            $lines[] = 'Cambió '.$this->labelFor($base, $map, 'case').' de '.$this->humanValue($from).' a '.$this->humanValue($to);
+                            $label = $this->labelFor($base, $map);
+                            $label = str_replace(' (ID)', '', $label);
+                            $lines[] = 'Cambió '.$label.' de '.$this->humanValue($from).' a '.$this->humanValue($to);
                         }
                     }
                 }
             }
 
-            // Evita líneas vacías o con ---- a ----
-            $lines = array_values(array_filter($lines, function ($ln) {
-                return !\Illuminate\Support\Str::contains($ln, '---- a ----');
-            }));
-            if (empty($lines)) continue;
+            // Si no hay nada útil, no añadimos
+            if (empty($lines) || (count($lines) === 1 && Str::contains($lines[0], '---- a ----'))) {
+                continue;
+            }
 
             $items[] = [
                 'date'        => $fecha,
                 'time'        => $hora,
                 'user'        => $usuario ?? '----',
+                'model_id'    => (int) $modelId,
+                'event_id'    => null,
                 'description' => implode("\n", $lines),
                 '_ts'         => $this->tsValue($s->created_at),
                 '_id'         => (int)($s->id ?? 0),
@@ -371,8 +387,7 @@ class UserLogController extends BaseApiController
             return $b['_ts'] <=> $a['_ts'];
         });
 
-        // 7) Limpiar metacampos
-        $items = array_map(fn($x) => \Illuminate\Support\Arr::except($x, ['_ts','_id']), $items);
+        $items = array_map(fn($x) => Arr::except($x, ['_ts','_id']), $items);
 
         return $this->success($items, 'Logs por entidad');
     }
