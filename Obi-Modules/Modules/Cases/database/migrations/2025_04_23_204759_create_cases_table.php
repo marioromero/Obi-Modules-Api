@@ -60,6 +60,9 @@ return new class extends Migration {
             $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
             $table->unsignedBigInteger('insurer_id')->nullable(); // FK to banks_db.insurers
             $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK to banks_db.loss_adjusters
+
+            $table->timestamp('updated_at')->nullable()->useCurrentOnUpdate(); // timestamp
+            $table->boolean('softdeleted')->default(false); // sofdeleted
         });
     }
 

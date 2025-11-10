@@ -14,6 +14,8 @@ return new class extends Migration
             $table->id();
             $table->string('name', 50);
             $table->boolean('is_visible')->default(true);
+            $table->timestamps();
+            $table->boolean('softdeleted')->default(false);
         });
     }
 

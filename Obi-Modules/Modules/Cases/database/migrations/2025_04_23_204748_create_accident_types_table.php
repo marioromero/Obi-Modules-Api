@@ -13,6 +13,8 @@ return new class extends Migration
         Schema::create('accident_types', function (Blueprint $table) {
             $table->id();
             $table->string('name', 60);
+            $table->timestamps();
+            $table->boolean('softdeleted')->default(false);
         });
     }
 

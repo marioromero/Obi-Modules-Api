@@ -32,6 +32,8 @@ return new class extends Migration
             $table->unsignedBigInteger('commune_id')->nullable();
             $table->unsignedBigInteger('assigned_agent')->nullable();
             $table->longText('comments')->nullable();
+            $table->timestamps();
+            $table->boolean('softdeleted')->default(false);
         });
     }
 
