@@ -13,7 +13,7 @@ class LossAdjuster extends Model
 
     protected $connection = 'banks_db';
     protected $table = 'loss_adjusters';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'name',

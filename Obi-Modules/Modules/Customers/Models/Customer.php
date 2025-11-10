@@ -14,7 +14,7 @@ class Customer extends Model
 
     protected $connection = 'customers_db';
     protected $table = 'customers';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'name',

@@ -13,7 +13,7 @@ class Bank extends Model
 
     protected $connection = 'banks_db';
     protected $table = 'banks';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'name',

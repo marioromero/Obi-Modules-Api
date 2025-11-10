@@ -13,7 +13,7 @@ class Insurer extends Model
 
     protected $connection = 'banks_db';
     protected $table = 'insurers';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'name',

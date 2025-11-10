@@ -14,7 +14,7 @@ class AccidentType extends Model
 
     protected $connection = 'cases_db';
     protected $table = 'accident_types';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = ['name'];
 

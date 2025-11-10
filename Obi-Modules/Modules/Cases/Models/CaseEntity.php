@@ -40,7 +40,7 @@ class CaseEntity extends Model
     /* ───────── Configuración básica ───────── */
     protected $connection = 'cases_db';
     protected $table      = 'cases';
-    public    $timestamps = false;            // usamos created_at manual
+    public    $timestamps = true;            // usamos created_at manual
 
 
     /* ───────── Campos rellenables ───────── */
