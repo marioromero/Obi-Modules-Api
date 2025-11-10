@@ -48,4 +48,17 @@ class AccidentTypeController extends BaseApiController
         $accidentType->delete();
         return $this->success(null, 'Tipo de siniestro eliminado correctamente', 200);
     }
+
+    public function softDelete(AccidentType $accidentType)
+    {
+        DB::connection('cases_db')
+            ->table($accidentType->getTable())
+            ->where('id', $accidentType->id)
+            ->update([
+                'softdeleted' => DB::raw('1 - softdeleted'),
+                'updated_at'  => now(),
+            ]);
+
+        return $this->success($accidentType->refresh(), 'Tipo de accidente actualizado (softdeleted toggled).', 200);
+    }
 }

@@ -21,6 +21,7 @@ Route::get('accident-types/{accidentType}', [AccidentTypeController::class, 'sho
 Route::put('accident-types/{accidentType}', [AccidentTypeController::class, 'update'])->whereNumber('accidentType');
 Route::patch('accident-types/{accidentType}', [AccidentTypeController::class, 'patch'])->whereNumber('accidentType');
 Route::delete('accident-types/{accidentType}', [AccidentTypeController::class, 'destroy'])->whereNumber('accidentType');
+Route::patch('accident-types/{accidentType}/soft-delete', [AccidentTypeController::class, 'softDelete'])->whereNumber('accidentType');
 
 
 // REST para CaseStatus
@@ -66,6 +67,7 @@ Route::post('cases/{case}/comments', [CaseController::class, 'StoreCommentForCas
 Route::patch('cases/code/{code}', [CaseController::class, 'UpdateCaseByCode']);
 Route::get('cases/code/{code}', [CaseController::class, 'getCaseByCode']);
 Route::get('cases/filter-by-payment-date', [CaseController::class, 'filterByPaymentDate']);
+Route::patch('cases/{case}/soft-delete', [CaseController::class, 'softDelete'])->whereNumber('case');
 
 
 // REST para Agreement
@@ -76,7 +78,7 @@ Route::put('agreements/{agreement}', [AgreementController::class, 'update']);
 Route::patch('agreements/{agreement}', [AgreementController::class, 'patch']);
 Route::delete('agreements/{agreement}', [AgreementController::class, 'destroy']);
 
-
+// REST para Documents
 Route::get('cases/{code}/documents', [CaseDocumentController::class, 'index']);
 Route::post('cases/{code}/documents', [CaseDocumentController::class, 'store']);
 Route::post('cases/{code}/documents/base64', [CaseDocumentController::class, 'storeBase64']);

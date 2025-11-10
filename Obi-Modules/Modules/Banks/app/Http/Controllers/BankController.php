@@ -5,6 +5,7 @@ namespace Modules\Banks\app\Http\Controllers;
 use Illuminate\Http\Request;
 use Modules\Banks\Models\Bank;
 use Modules\Core\app\Http\BaseApiController;
+use Illuminate\Support\Facades\DB;
 
 class BankController extends BaseApiController
 {
@@ -47,5 +48,18 @@ class BankController extends BaseApiController
     {
         $bank->delete();
         return $this->success(null, 'Banco eliminado correctamente', 200);
+    }
+
+    public function softDelete(Bank $bank)
+    {
+        DB::connection('banks_db')
+            ->table($bank->getTable())
+            ->where('id', $bank->id)
+            ->update([
+                'softdeleted' => DB::raw('1 - softdeleted'),
+                'updated_at'  => now(),
+            ]);
+
+        return $this->success($bank->refresh(), 'Banco actualizado (softdeleted toggled).', 200);
     }
 }

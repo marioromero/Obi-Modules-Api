@@ -10,6 +10,7 @@ use Modules\Customers\Models\Customer;
 use Modules\Customers\Models\CustomerDetail;
 use Modules\Users\Models\TraroUser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Modules\Core\app\Helpers\ColumnMap;
 
 
@@ -61,6 +62,19 @@ class CustomerController extends BaseApiController
 
         $customer->delete();
         return $this->success(null, 'Cliente eliminado exitosamente', 200);
+    }
+
+    public function softDelete(Customer $customer)
+    {
+        DB::connection('customers_db')
+            ->table($customer->getTable())
+            ->where('id', $customer->id)
+            ->update([
+                'softdeleted' => DB::raw('1 - softdeleted'),
+                'updated_at'  => now(),
+            ]);
+
+        return $this->success($customer->refresh(), 'Cliente actualizado (softdeleted toggled).', 200);
     }
 
     // DNI exacto → devuelve objeto completo

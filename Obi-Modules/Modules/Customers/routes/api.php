@@ -21,6 +21,7 @@ Route::get('customers/search/dni/{dni}',[CustomerController::class,'customersByD
 Route::get('customers/search/name/{q}',[CustomerController::class,'customersByName'])->name('customers.search.name');
 Route::get('customers/by-agent/{agent}',[CustomerController::class,'getCustomersByAgent'])->whereNumber('agent')->name('customers.by-agent');
 Route::patch('customers/{customer}/status', [CustomerController::class, 'updateStatusForCustomer'])->whereNumber('customer');
+Route::patch('customers/{customer}/soft-delete', [CustomerController::class, 'softDelete'])->whereNumber('customer');
 
 // REST para CustomerStatus
 Route::get('customer-statuses', [CustomerStatusController::class, 'index']);

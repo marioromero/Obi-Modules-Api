@@ -81,6 +81,19 @@ class CaseController extends BaseApiController
         return $this->success(null, 'Caso eliminado exitosamente', 200);
     }
 
+    public function softDelete(CaseEntity $case)
+    {
+        DB::connection('cases_db')
+            ->table($case->getTable())
+            ->where('id', $case->id)
+            ->update([
+                'softdeleted' => DB::raw('1 - softdeleted'),
+                'updated_at'  => now(),
+            ]);
+
+        return $this->success($case->refresh(), 'Caso actualizado (softdeleted toggled).', 200);
+    }
+
                             //Endpoints para lógica de negocio de TRARO
 
     //Trae los casos asociados a los clientes a los cuales está asignado el ID del ejecutivo

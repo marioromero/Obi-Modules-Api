@@ -6,6 +6,7 @@ use Modules\Core\app\Http\BaseApiController;
 use Illuminate\Http\Request;
 use Modules\Banks\Models\LossAdjuster;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 
 class LossAdjusterController extends BaseApiController
@@ -50,6 +51,19 @@ class LossAdjusterController extends BaseApiController
     {
         $lossAdjuster->delete();
         return $this->success(null, 'Liquidadora eliminada correctamente', 200);
+    }
+
+    public function softDelete(LossAdjuster $lossAdjuster)
+    {
+        DB::connection('banks_db')
+            ->table($lossAdjuster->getTable())
+            ->where('id', $lossAdjuster->id)
+            ->update([
+                'softdeleted' => DB::raw('1 - softdeleted'),
+                'updated_at'  => now(),
+            ]);
+
+        return $this->success($lossAdjuster->refresh(), 'Liquidadora actualizada (softdeleted toggled).', 200);
     }
 }
 

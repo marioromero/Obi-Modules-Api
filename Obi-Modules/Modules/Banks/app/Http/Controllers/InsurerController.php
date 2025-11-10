@@ -6,6 +6,7 @@ use Modules\Core\app\Http\BaseApiController;
 use Illuminate\Http\Request;
 use Modules\Banks\Models\Insurer;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class InsurerController extends BaseApiController
 {
@@ -49,6 +50,19 @@ class InsurerController extends BaseApiController
     {
         $insurer->delete();
         return $this->success(null, 'Aseguradora eliminada correctamente', 200);
+    }
+
+    public function softDelete(Insurer $insurer)
+    {
+        DB::connection('banks_db')
+            ->table($insurer->getTable())
+            ->where('id', $insurer->id)
+            ->update([
+                'softdeleted' => DB::raw('1 - softdeleted'),
+                'updated_at'  => now(),
+            ]);
+
+        return $this->success($insurer->refresh(), 'Aseguradora actualizada (softdeleted toggled).', 200);
     }
 }
 
