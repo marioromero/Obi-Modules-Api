@@ -77,6 +77,12 @@ class Customer extends Model
      */
     protected static function booted(): void
     {
+        // excluye los registros con softdeleted = 1
+        static::addGlobalScope('exclude_softdeleted', function ($query) {
+            $query->where('softdeleted', 0);
+        });
+
+        // setea los tags por defecto al crear un cliente
         static::creating(function (self $customer) {
             if (is_null($customer->tags)) {
                 $customer->tags = TagModel::where('is_active', true)
@@ -89,5 +95,12 @@ class Customer extends Model
                     ->toArray();
             }
         });
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return static::withoutGlobalScope('exclude_softdeleted')
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->firstOrFail();
     }
 }

@@ -304,25 +304,38 @@ public function transitionToWithComments(string $stateClass, ?string $comments =
      /**
      * Genera el código TR<n> justo antes del INSERT.
      */
-    protected static function booted(): void
+   protected static function booted(): void
     {
+        // excluye los casos con softdeleted = 1
+        static::addGlobalScope('exclude_softdeleted', function ($query) {
+            $query->where('softdeleted', 0);
+        });
+
+        // generar código TRXXXX incremental
         static::creating(function (self $case): void {
 
             if ($case->code) {
-                return;        // ya viene seteado
+                return; // ya viene seteado
             }
 
             DB::connection('cases_db')->transaction(function () use ($case) {
 
-                $max = DB::connection('cases_db')  // << conexión explícita
-                         ->table('cases')
-                         ->where('code', 'like', 'TR%')
-                         ->lockForUpdate()
-                         ->max(DB::raw('CAST(SUBSTRING(code,3) AS UNSIGNED)'));
+                $max = DB::connection('cases_db')  // conexión explícita
+                    ->table('cases')
+                    ->where('code', 'like', 'TR%')
+                    ->lockForUpdate()
+                    ->max(DB::raw('CAST(SUBSTRING(code,3) AS UNSIGNED)'));
 
                 $next       = ($max ?? 0) + 1;
                 $case->code = 'TR' . $next;
             });
         });
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return static::withoutGlobalScope('exclude_softdeleted')
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->firstOrFail();
     }
 }

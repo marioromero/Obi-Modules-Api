@@ -23,5 +23,20 @@ class AccidentType extends Model
     {
         return $this->hasMany(CaseEntity::class, 'accident_type_id');
     }
+
+    // Excluir registros con softdeleted = 1
+    protected static function booted()
+    {
+        static::addGlobalScope('exclude_softdeleted', function ($query) {
+            $query->where('softdeleted', 0);
+        });
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return static::withoutGlobalScope('exclude_softdeleted')
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->firstOrFail();
+    }
 }
 

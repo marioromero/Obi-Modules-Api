@@ -106,4 +106,18 @@ class CaseDetail extends Model
         // Devuelve el objeto ya decodificado (gracias al cast 'array')
         return $this->case_flow_last_json ?? null;
     }
+    // Excluir registros que tengan softdeleted = 1
+    protected static function booted()
+    {
+        static::addGlobalScope('exclude_softdeleted', function ($query) {
+            $query->where('softdeleted', 0);
+        });
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return static::withoutGlobalScope('exclude_softdeleted')
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->firstOrFail();
+    }
 }

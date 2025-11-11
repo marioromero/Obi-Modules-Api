@@ -25,5 +25,20 @@ class Bank extends Model
     {
         return $this->hasMany(\Modules\Cases\Models\CaseEntity::class, 'bank_id');
     }
+
+    // Excluir registros con sofdeleted = 1
+    protected static function booted()
+    {
+        static::addGlobalScope('exclude_softdeleted', function ($query) {
+            $query->where('softdeleted', 0);
+        });
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return static::withoutGlobalScope('exclude_softdeleted')
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->firstOrFail();
+    }
 }
 
