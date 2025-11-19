@@ -94,7 +94,14 @@ trait UserLogHelperTrait
 
     protected function formatDateTime($value): array
     {
-        try { $dt = $value ? Carbon::parse($value) : null; } catch (\Throwable $e) { $dt = null; }
+        $tz = config('app.timezone', 'America/Santiago');
+
+        try {
+            $dt = $value ? Carbon::parse($value, $tz) : null;
+        } catch (\Throwable $e) {
+            $dt = null;
+        }
+
         return [
             $dt ? $dt->format('d/m/Y') : '----/--/----',
             $dt ? $dt->format('H:i:s') : '--:--:--',
@@ -104,23 +111,35 @@ trait UserLogHelperTrait
     protected function humanValue($v): string
     {
         if ($v === null) return '----';
+
         if (is_bool($v)) return $v ? 'Sí' : 'No';
         if (is_numeric($v)) return (string)$v;
+
         if (is_string($v)) {
             $t = trim($v);
             if ($t === '') return '----';
+
+            // Intentar tratarlo como fecha/hora
             try {
-                $dt = Carbon::parse($t);
+                $tz = config('app.timezone', 'America/Santiago');
+                $dt = Carbon::parse($t, $tz);
+
                 if ($dt && $dt->year >= 1900 && $dt->year <= 2100) {
-                    return strpos($t, ':') !== false
+                    return str_contains($t, ':')
                         ? $dt->format('d/m/Y H:i')
                         : $dt->format('d/m/Y');
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+                // no era fecha, seguimos abajo
+            }
+
+            // No era fecha → devolver texto tal cual
             return $t;
         }
+
         return json_encode($v, JSON_UNESCAPED_UNICODE);
     }
+
 
     /** -----------------------------------------------------------
      *  MODELOS Y EVENTOS
@@ -225,9 +244,25 @@ trait UserLogHelperTrait
         if (is_string($v)) {
             $t = trim($v);
             if ($t === '') return null;
+
+            // Números en string
             if (is_numeric($t)) {
                 return (strpos($t, '.') === false) ? (int)$t : (float)$t;
             }
+
+            // Fechas
+            try {
+                $tz = config('app.timezone', 'America/Santiago');
+                $dt = Carbon::parse($t, $tz);
+                if ($dt && $dt->year >= 1900 && $dt->year <= 2100) {
+                    // comparar por instante, no por formato
+                    return $dt->getTimestamp();
+                }
+            } catch (\Throwable $e) {
+                // no es fecha → seguimos
+            }
+
+            // cualquier otro string
             return $t;
         }
 
@@ -271,15 +306,28 @@ trait UserLogHelperTrait
 
     protected function changed($a, $b): bool
     {
-        if ($a === $b) return false;
-        if ((is_scalar($a) || $a === null) && (is_scalar($b) || $b === null)) return $a !== $b;
+        // Para escalares (incluyendo strings de fecha), usamos normalizeForCompare
+        if ((is_scalar($a) || $a === null) && (is_scalar($b) || $b === null)) {
+            $na = $this->normalizeForCompare($a);
+            $nb = $this->normalizeForCompare($b);
+
+            return $na !== $nb;
+        }
+
+        // Para arrays/objetos, comparamos por JSON
         return json_encode($a, JSON_UNESCAPED_UNICODE) !== json_encode($b, JSON_UNESCAPED_UNICODE);
     }
 
+
     protected function tsValue($value): int
     {
-        try { return $value ? Carbon::parse($value)->getTimestamp() : 0; }
-        catch (\Throwable $e) { return 0; }
+        try {
+            if (!$value) return 0;
+            $tz = config('app.timezone', 'America/Santiago');
+            return Carbon::parse($value, $tz)->getTimestamp();
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 
     protected function resolveForeignLabel(string $key, $value): ?string

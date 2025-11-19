@@ -2,64 +2,71 @@
 
 namespace Modules\Core\Providers;
 
-use App\Console\Commands\ProjectReset;
-use App\Console\Commands\StateScaffold;
-use App\Console\Commands\WipeAllDatabases;
-use Illuminate\Support\ServiceProvider;
-use Nwidart\Modules\Traits\PathNamespace;
-use Modules\Core\app\Support\Services\ServiceHandlerException;
-use Modules\Core\app\Services\MindicadorService;
+use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
 
-/**
- * Service‑provider del módulo Core.
- * Centraliza helpers, traits y cualquier binding común.
- */
 class CoreServiceProvider extends ServiceProvider
 {
-    use PathNamespace;
-
     protected string $name = 'Core';
-    protected string $nameLower = 'core';
+
+    protected string $moduleNameLower = 'core';
 
     /**
-     * Registrar servicios (bindings) en el contenedor.
-     * De momento está vacío, pero aquí podrías añadir singletons:
+     * Called before routes are registered.
      *
-     * $this->app->singleton(DateFormatter::class, fn () => new DateFormatter('America/Santiago'));
-     */
-    public function register(): void
-    {
-        $this->app->singleton(ServiceHandlerException::class);
-        $this->app->singleton(MindicadorService::class);
-        // Registrar otros providers de Core si los agregas
-        // $this->app->register(EventServiceProvider::class);
-        // $this->app->register(RouteServiceProvider::class);
-
-        // Carga el mapeo de columnas del módulo Core
-            $this->mergeConfigFrom(base_path('Modules/Core/Config/column_map.php'), 'column_map');
-    }
-
-    /**
-     * Código que se ejecuta cuando la app termina de arrancar.
-     * Útil para listeners globales, macros, etc.
+     * Register any model bindings or pattern based filters.
      */
     public function boot(): void
     {
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                StateScaffold::class,
-                WipeAllDatabases::class,
-                ProjectReset::class
-            ]);
-        }
+        parent::boot();
     }
 
     /**
-     * Lista de servicios que provee (opcional).
+     * Define the routes for the application.
      */
-    public function provides(): array
+    public function map(): void
     {
-        return [];
+        $this->mapApiRoutes();
+        $this->mapWebRoutes();
+    }
+
+    /**
+     * Define the "web" routes for the application.
+     *
+     * These routes all receive session state, CSRF protection, etc.
+     */
+    protected function mapWebRoutes(): void
+    {
+        Route::middleware('web')
+            ->group(module_path($this->moduleNameLower, '/routes/web.php'));
+    }
+
+    /**
+     * Define the "api" routes for the application.
+     *
+     * Estas rutas son típicamente stateless.
+     */
+    protected function mapApiRoutes(): void
+    {
+        // 1) Prefijo global (/obi/api)
+        $gateway = config('api.gateway_prefix');
+
+        // 2) Array de versiones por módulo
+        $versions = config('api.versions');
+
+        // 3) Versión por defecto si no existe entrada específica
+        $defaultVersion = config('api.default_version');
+
+        // 4) El "slug" de tu módulo, coincide con $this->moduleNameLower (en este caso "core")
+        $module = $this->moduleNameLower;
+
+        // 5) Buscamos la versión de "core" o usamos la default
+        $version = Arr::get($versions, $module, $defaultVersion);
+
+        Route::middleware('api')
+            ->as('api.') // nombres api.xxx
+            ->prefix("{$gateway}/{$module}/{$version}") // ej. obi/api/core/v1
+            ->group(module_path($this->moduleNameLower, 'routes/api.php'));
     }
 }
-

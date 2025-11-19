@@ -3,6 +3,7 @@
     "Geography": true,
     "Clients": true,
     "Cases": true,
+    "Core": true,
     "Banks": true,
     "Reports": true,
     "Appointments": true,

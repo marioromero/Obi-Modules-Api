@@ -50,8 +50,8 @@ class ConfigurationSeeder extends Seeder
         //    Mapea cada estado general de caso a su array de usuarios encargados
         $userResponsibilities = [
             'Denuncio'     => ['user_assigned' => [21, 22, 11, 4, 5]],
-            'Programacion' => ['user_assigned' => [21, 4, 5, 11, 22,23]],
-            'Visita'       => ['user_assigned' => [21, 5, 4, 11, 22,23]],
+            'Programacion' => ['user_assigned' => [21, 4, 5, 11, 22,23,31]],
+            'Visita'       => ['user_assigned' => [21, 5, 4, 11, 22,23,31]],
             'Presupuesto'  => ['user_assigned' => [11, 5, 4, 22, 21]],
             'Liquidacion'  => ['user_assigned' => [5, 11, 4, 21, 22]],
             'Recaudacion'  => ['user_assigned' => [21, 4, 5, 11, 22]],
@@ -303,6 +303,20 @@ class ConfigurationSeeder extends Seeder
                                               ORDER BY created_at DESC, id DESC",
                             ],
                             [
+                                'key'     => 'configuration_6',
+                                'name'    => 'Por asesor: Israel Guerrero',
+                                'color'   => '#FF576B',
+                                'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
+                                              'accident_type_name','accident_number','date_of_loss','commune_name',
+                                              'property_address','loss_adjuster_name','phone','inspection_date',
+                                              'consultant_name'],
+                                'sql'     => "WHERE consultant_id = 31
+                                              AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Programacion'
+                                              AND scheduling_status IN ('pendiente','en proceso')
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY created_at DESC, id DESC",
+                            ],
+                            [
                                 'key'     => 'configuration_4',
                                 'name'    => 'Denuncio realizado sin fecha de visita',
                                 'color'   => '#ff6d6d',
@@ -334,7 +348,7 @@ class ConfigurationSeeder extends Seeder
                         'default' => [
                             'inspection_date','schedule_inspection_time','customer_name',
                             'property_address','commune_name','phone','accident_type_name',
-                            'schedule_liquidator_inspector_info','loss_adjuster_name','consultant_name'
+                            'schedule_liquidator_inspector_info','loss_adjuster_name','consultant_name','schedule_message_sent','schedule_message_confirmed'
                         ],
                         'filters' => [
                             [
@@ -382,6 +396,21 @@ class ConfigurationSeeder extends Seeder
                                               AND (overall_status IS NULL OR overall_status <> 'cerrado')
                                               ORDER BY COALESCE(inspection_date, '9999-12-31') ASC, id DESC",
                             ],
+                            [
+                                'key'     => 'configuration_4',
+                                'name'    => 'Por asesor: Israel Guerrero',
+                                'color'   => '#FF576B',
+                                'columns' => [
+                                    'inspection_date','schedule_inspection_time','customer_name',
+                                    'property_address','commune_name','phone','accident_type_name',
+                                    'schedule_liquidator_inspector_info','loss_adjuster_name','consultant_name'
+                                ],
+                                'sql'     => "WHERE consultant_id = 31
+                                              AND SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Visita'
+                                              AND visit_status IN ('pendiente','en proceso')
+                                              AND (overall_status IS NULL OR overall_status <> 'cerrado')
+                                              ORDER BY COALESCE(inspection_date, '9999-12-31') ASC, id DESC",
+                            ],
                         ],
                         'managed_cases' => ['months' => 12, 'target_step' => 'presupuesto'],
                     ],
@@ -402,7 +431,7 @@ class ConfigurationSeeder extends Seeder
                     // 4) Presupuesto
                     'presupuesto' => [
                         'default' => [
-                            'code','state','customer_name','customer_id','agent_name','document_signing_date','budget_sending_date','is_duplicated',
+                            'code','state','customer_name','customer_id','property_address','agent_name','document_signing_date','budget_sending_date','is_duplicated',
                             'commune_name','inspection_date','loss_adjuster_name','accident_number','accident_type_name', 'active_notifications', 'case_flow_last_json'
                         ],
                         'filters' => [
@@ -410,7 +439,7 @@ class ConfigurationSeeder extends Seeder
                                 'key'     => 'configuration_1',
                                 'name'    => 'Sin presupuesto enviado y con fecha de visita',
                                 'color'   => '#ffb74d',
-                                'columns' => ['code','state','customer_name','customer_id','agent_name','document_signing_date',
+                                'columns' => ['code','state','customer_name','customer_id','property_address','agent_name','document_signing_date',
                                              'budget_sending_date','is_duplicated','commune_name','inspection_date',
                                              'loss_adjuster_name','accident_number','accident_type_name'],
                                 'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = 'Presupuesto'

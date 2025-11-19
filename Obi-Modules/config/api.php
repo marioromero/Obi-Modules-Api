@@ -19,6 +19,7 @@ return [
         'schedules'  => env('API_VERSION_SCHEDULES',  'v1'),
         'mailing'    => env('API_VERSION_MAILING',    'v1'),
         'configurations'    => env('API_VERSION_CONFIGURATIONS',    'v1'),
+        'core'       => env('API_VERSION_CORE', 'v1'),
     ],
     
     /*
