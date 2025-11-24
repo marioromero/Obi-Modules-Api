@@ -20,6 +20,7 @@ class SoftdeleteController extends BaseApiController
         $data = $rows->map(function ($row) {
             return [
                 'entity_type' => $row->entity_type,
+                'entity_id'   => $row->entity_id,    
                 'deleted_at'  => $row->deleted_at,
                 'user'        => $row->deleted_by_user_name,
                 'detail'      => $this->buildDetail($row),
