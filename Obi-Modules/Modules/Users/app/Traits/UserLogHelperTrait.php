@@ -217,13 +217,12 @@ trait UserLogHelperTrait
     protected function diffSkipKeys(): array
     {
         return [
-            'description',
-            'sent_to_acepta',
             'available_notifications',
             'active_notifications',
-            'schedule_message_sent',
-            'schedule_message_confirmed',
-            'schedule_liquidator_inspector_info',
+            'is_enabled',
+            'updated_at',
+            'softdeleted',
+            'sent_to_acepta',
         ];
     }
 
@@ -384,8 +383,46 @@ trait UserLogHelperTrait
         }
     }
 
+    protected function prettyTagsString(string $t): string
+    {
+        $t = trim($t);
+        $t = trim($t, "[] \t\n\r\0\x0B");
+
+        if ($t === '') {
+            return '----';
+        }
+
+        $active = [];
+
+        if (preg_match_all('/name:([^,]+),enabled:(true|false)/', $t, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) {
+                $name    = trim($m[1]);
+                $enabled = strtolower($m[2]) === 'true';
+
+                if ($enabled && $name !== '') {
+                    $active[] = $name;
+                }
+            }
+        }
+
+        if (empty($active)) {
+            return '----';
+        }
+
+        return implode(', ', $active);
+    }
+
     protected function prettyValueForDiff(string $key, $v): string
     {
+        // 🔹 NUEVO: campos tipo flag que queremos ver como Sí / No
+        if ($key === 'sent_to_acepta') {
+            $b = $this->boolish($v); // interpreta 1, 0, "1", "0", "true", "false"
+            if ($b !== null) {
+                return $b ? 'Sí' : 'No';
+            }
+            // si no se puede interpretar como booleano, sigue el flujo normal
+        }
+
         // 🔸 Booleanos tipo is_active, is_duplicated, etc.
         if (str_starts_with($key, 'is_')) {
             $b = $this->boolish($v);
@@ -405,15 +442,51 @@ trait UserLogHelperTrait
             }
         }
 
-        // 🔹 NUEVO: traducir arrays de usuarios asignados
+        // 🔹 Caso especial: strings de etiquetas tipo [name:...,enabled:true,color:...]
+        if (is_string($v)) {
+            $t = trim($v);
+            if ($t !== '' && str_contains($t, 'name:') && str_contains($t, 'enabled:')) {
+                return $this->prettyTagsString($t);
+            }
+        }
+
+        // 🔹 Arrays: usuarios asignados, tags, etc.
         if (is_array($v)) {
-            // Caso común {"user_assigned":[21,22,11,...]}
+
+            // 1) Detectar si es un array de etiquetas: [ [name, enabled, color], ... ]
+            if ($key === 'tags') {
+                $tagNames = [];
+
+                foreach ($v as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+
+                    $name = trim((string)($item['name'] ?? $item['label'] ?? ''));
+                    $enabled = array_key_exists('enabled', $item)
+                        ? (bool)$item['enabled']
+                        : true; // si no trae enabled, asumimos true
+
+                    if ($enabled && $name !== '') {
+                        $tagNames[] = $name;
+                    }
+                }
+
+                if (empty($tagNames)) {
+                    return '----';
+                }
+
+                // Ej: "Con comentarios, Deudor"
+                return implode(', ', $tagNames);
+            }
+
+            // 2) Caso común {"user_assigned":[21,22,11,...]}
             if (isset($v['user_assigned']) && is_array($v['user_assigned'])) {
                 $names = $this->resolveUserNamesByIds($v['user_assigned']);
                 return 'Usuarios asignados: '.implode(', ', $names);
             }
 
-            // Si es un array simple de IDs numéricos [21,22,11,...]
+            // 3) Si es un array simple de IDs numéricos [21,22,11,...]
             $allInts = true;
             foreach ($v as $i) {
                 if (!is_int($i) && !(is_string($i) && ctype_digit($i))) {
@@ -426,12 +499,80 @@ trait UserLogHelperTrait
                 return implode(', ', $names);
             }
 
-            // Cualquier otro array → salida genérica legible
+            // 4) Cualquier otro array → salida genérica legible
             return trim(str_replace(['{','}','"'], '', json_encode($v, JSON_UNESCAPED_UNICODE)));
         }
 
         // 🔸 Fallback: valor normal
         return $this->humanValue($v);
+    }
+
+    // para mostrar legibles los comentarios
+    protected function buildCommentDiffLines($beforeDesc, $afterDesc): array
+    {
+        $beforeComments = [];
+        $afterComments  = [];
+
+        // Extraer comments de BEFORE
+        if (is_array($beforeDesc) && isset($beforeDesc['comments']) && is_array($beforeDesc['comments'])) {
+            $beforeComments = $beforeDesc['comments'];
+        }
+
+        // Extraer comments de AFTER
+        if (is_array($afterDesc) && isset($afterDesc['comments']) && is_array($afterDesc['comments'])) {
+            $afterComments = $afterDesc['comments'];
+        }
+
+        // Si after no tiene comentarios, no hay nada que loguear
+        if (empty($afterComments)) {
+            return [];
+        }
+
+        // 🔹 Normalizar comentarios de "before" para comparar (clave: date|user|content)
+        $seen = [];
+        foreach ($beforeComments as $c) {
+            if (!is_array($c)) continue;
+
+            $date    = trim((string)($c['date'] ?? ''));
+            $user    = trim((string)($c['user'] ?? ''));
+            $content = trim((string)($c['content'] ?? ''));
+
+            // si está todo vacío, lo ignoramos
+            if ($date === '' && $user === '' && $content === '') continue;
+
+            $key = $date.'|'.$user.'|'.$content;
+            $seen[$key] = true;
+        }
+
+        $lines = [];
+
+        // 🔹 Buscar comentarios que están en "after" y no estaban en "before"
+        foreach ($afterComments as $c) {
+            if (!is_array($c)) continue;
+
+            $date    = trim((string)($c['date'] ?? ''));
+            $user    = trim((string)($c['user'] ?? ''));
+            $content = trim((string)($c['content'] ?? ''));
+
+            if ($date === '' && $user === '' && $content === '') continue;
+
+            $key = $date.'|'.$user.'|'.$content;
+
+            if (isset($seen[$key])) {
+                // Ya existía antes → no es nuevo
+                continue;
+            }
+
+            if ($content === '') {
+                // no tiene texto, no vale la pena mostrarlo
+                continue;
+            }
+
+            // Línea simple y clara
+            $lines[] = 'Agregó el comentario: "'.$content.'"';
+        }
+
+        return $lines;
     }
 
     /** -----------------------------------------------------------
@@ -452,9 +593,7 @@ trait UserLogHelperTrait
 
         $eventName = strtolower($this->resolveEventName((int)($row->event_id ?? 0)) ?: '');
 
-        // ─────────────────────────────────────────────────────────────
         //  A) Formato especial para AUTH (login success / failed)
-        // ─────────────────────────────────────────────────────────────
         if ($modelKey === 'auth') {
             $who       = $this->resolveUserName($row->user_id ?? null);
             $attempted = $detRaw['attempted'] ?? null;
@@ -476,14 +615,28 @@ trait UserLogHelperTrait
             // Si es otro evento auth no mapeado, caemos a fallback al final
         }
 
-        // ─────────────────────────────────────────────────────────────
         //  B) Diffs normales (create/update) con BEFORE/AFTER
-        // ─────────────────────────────────────────────────────────────
-        if (!empty($before) || !empty($after)) {
+            if (!empty($before) || !empty($after)) {
             $keys = array_unique(array_merge(array_keys($before), array_keys($after)));
 
             foreach ($keys as $k) {
                 if (in_array($k, $skip, true)) continue;
+
+                // 🔹 TRATAMIENTO ESPECIAL PARA DESCRIPTION (comentarios)
+                if ($k === 'description') {
+                    $commentLines = $this->buildCommentDiffLines(
+                        $before[$k] ?? null,
+                        $after[$k] ?? null
+                    );
+
+                    if (!empty($commentLines)) {
+                        // Sumamos las líneas de comentarios nuevos a las líneas del log
+                        $lines = array_merge($lines, $commentLines);
+                    }
+
+                    // No queremos que description pase por el diff genérico
+                    continue;
+                }
 
                 $hasBefore = array_key_exists($k, $before);
                 $hasAfter  = array_key_exists($k, $after);
@@ -550,9 +703,7 @@ trait UserLogHelperTrait
             return $lines;
         }
 
-        // ─────────────────────────────────────────────────────────────
         //  D) Fallback informativo
-        // ─────────────────────────────────────────────────────────────
        $entityId = $before['id'] ?? $after['id'] ?? $detRaw['id']
          ?? ($before['entity_id'] ?? $after['entity_id'] ?? $detRaw['entity_id'] ?? null);
 
@@ -564,16 +715,6 @@ trait UserLogHelperTrait
                 return $lines;
             }
             $lines[] = "Creó {$human}";
-            return $lines;
-        }
-
-        // Si es "update" sin diffs detectables
-        if (str_starts_with($eventName, 'update') || $eventName === 'updated') {
-            if ($entityId) {
-                $lines[] = "Actualizó {$human} id {$entityId}";
-                return $lines;
-            }
-            $lines[] = "Actualizó {$human}";
             return $lines;
         }
 

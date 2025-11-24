@@ -114,6 +114,11 @@ class UserLogController extends BaseApiController
                 break;
         }
 
+        $details = $this->normalizeDetailsTimestamps(
+        $details,
+        isset($data['model_id']) ? (int)$data['model_id'] : 0
+        );
+
         // 3) Guardar
         $log = UserLog::create([
             'user_id'  => isset($data['user_id'])  ? (int)$data['user_id']  : null,
@@ -390,6 +395,142 @@ class UserLogController extends BaseApiController
         $items = array_map(fn($x) => Arr::except($x, ['_ts','_id']), $items);
 
         return $this->success($items, 'Logs por entidad');
+    }
+
+    //Normaliza created_at / updated_at dentro de details[before] y details[after]
+    private function normalizeDetailsTimestamps(array $details, int $modelId): array
+    {
+        // 1) Resolver nombre de modelo desde model_logs (usa tu propia lógica)
+        $modelName = null;
+        try {
+            $modelName = DB::connection('users_db')
+                ->table('model_logs')
+                ->where('id', $modelId)
+                ->value('name');
+        } catch (\Throwable $e) {
+            $modelName = null;
+        }
+
+        if (!$modelName) {
+            // Si no sabemos qué modelo es, solo aplicamos formateo suave (por si acaso)
+            return $this->simpleNormalizeDetailsTimestamps($details);
+        }
+
+        $key = strtolower(trim($modelName)); // ej: "case", "customer", "bank", ...
+
+        // 2) Mapear a conexión + tabla de la entidad real
+        $map = [
+            'case'      => ['cases_db',      'cases'],
+            'customer'  => ['customers_db',  'customers'],
+            'user'      => ['users_db',      'users'],
+            'bank'      => ['banks_db',      'banks'],
+            'insurer'   => ['banks_db',      'insurers'],
+            'loss_adjuster' => ['banks_db',  'loss_adjusters'],
+            // agrega aquí otros modelos si los logueas (agreements, accident_types, etc.)
+        ];
+
+        if (!isset($map[$key])) {
+            // Si no sabemos dónde vive, caemos al formateo suave
+            return $this->simpleNormalizeDetailsTimestamps($details);
+        }
+
+        [$conn, $table] = $map[$key];
+
+        // 3) Descubrir el ID de la entidad desde details
+        $entityId = null;
+
+        if (isset($details['after']) && is_array($details['after'])) {
+            $entityId = $details['after']['id'] ?? $details['after']['entity_id'] ?? null;
+        }
+        if (!$entityId && isset($details['before']) && is_array($details['before'])) {
+            $entityId = $details['before']['id'] ?? $details['before']['entity_id'] ?? null;
+        }
+
+        $entityId = (int) $entityId;
+        if ($entityId <= 0) {
+            // sin id, no podemos consultar BD → formateo suave
+            return $this->simpleNormalizeDetailsTimestamps($details);
+        }
+
+        // 4) Leer created_at / updated_at reales desde la tabla de la entidad
+        $row = null;
+        try {
+            $row = DB::connection($conn)
+                ->table($table)
+                ->where('id', $entityId)
+                ->select(['created_at', 'updated_at'])
+                ->first();
+        } catch (\Throwable $e) {
+            $row = null;
+        }
+
+        if (!$row) {
+            // Si no existe la fila (raro), al menos formateamos lo que llegue
+            return $this->simpleNormalizeDetailsTimestamps($details);
+        }
+
+        $tz      = config('app.timezone', 'America/Santiago');
+        $created = null;
+        $updated = null;
+
+        try {
+            if (!empty($row->created_at)) {
+                $created = Carbon::parse($row->created_at)->setTimezone($tz)->format('d/m/Y H:i:s');
+            }
+        } catch (\Throwable $e) {}
+
+        try {
+            if (!empty($row->updated_at)) {
+                $updated = Carbon::parse($row->updated_at)->setTimezone($tz)->format('d/m/Y H:i:s');
+            }
+        } catch (\Throwable $e) {}
+
+        // 5) Sobrescribir en before/after para que SIEMPRE coincidan con la entidad real
+        foreach (['before', 'after'] as $side) {
+            if (!isset($details[$side]) || !is_array($details[$side])) {
+                continue;
+            }
+
+            if ($created !== null) {
+                $details[$side]['created_at'] = $created;
+            }
+            if ($updated !== null) {
+                $details[$side]['updated_at'] = $updated;
+            }
+        }
+
+        return $details;
+    }
+
+    //formatea created_at/updated_at a d/m/Y H:i:s America/Santiago.
+    private function simpleNormalizeDetailsTimestamps(array $details): array
+    {
+        $tz = config('app.timezone', 'America/Santiago');
+
+        foreach (['before', 'after'] as $side) {
+            if (!isset($details[$side]) || !is_array($details[$side])) {
+                continue;
+            }
+
+            foreach (['created_at', 'updated_at'] as $field) {
+                if (
+                    !array_key_exists($field, $details[$side]) ||
+                    $details[$side][$field] === null ||
+                    $details[$side][$field] === ''
+                ) {
+                    continue;
+                }
+
+                try {
+                    $dt = Carbon::parse($details[$side][$field])->setTimezone($tz);
+                    $details[$side][$field] = $dt->format('d/m/Y H:i:s');
+                } catch (\Throwable $e) {
+                    // dejamos el valor tal cual
+                }
+            }
+        }
+
+        return $details;
     }
 }
 
