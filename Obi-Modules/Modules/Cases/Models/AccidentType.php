@@ -18,6 +18,11 @@ class AccidentType extends Model
 
     protected $fillable = ['name'];
 
+    protected $casts = [
+        'created_at' => 'datetime:d/m/Y H:i:s',
+        'updated_at' => 'datetime:d/m/Y H:i:s',
+    ];
+
     // Relación de AccidentType con CaseEntity (un tipo de accidente tiene muchos casos)
     public function cases()
     {

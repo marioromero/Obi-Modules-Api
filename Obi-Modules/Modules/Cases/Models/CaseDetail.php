@@ -34,8 +34,12 @@ class CaseDetail extends Model
         'description' => 'array',
         // JSON de la vista
         'step_logs_json'       => 'array',
-        'case_flows_json'      => 'array', //
-        'case_flow_last_json'  => 'array', //
+        'case_flows_json'      => 'array', 
+        'case_flow_last_json'  => 'array',
+        'created_at' => 'datetime:d/m/Y H:i:s',
+        'updated_at' => 'datetime:d/m/Y H:i:s',
+
+
     ];
 
     /* Ocultar raw JSONs que no quieres exponer tal cual */

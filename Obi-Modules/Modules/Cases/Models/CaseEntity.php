@@ -14,7 +14,6 @@ class CaseEntity extends Model
 {
     protected $casts = [
             'state' => CaseEntityState::class,
-            // fechas paso 6  (formato ISO string <-> Carbon)
             'probable_payment_date'  => 'date:Y-m-d',
             'collection_date'        => 'date:Y-m-d',
             'online_collection_date' => 'date:Y-m-d',
@@ -30,6 +29,10 @@ class CaseEntity extends Model
             'approved_amount' => 'integer',
             'advisory_amount' => 'integer',
             'uf_approved'     => 'float',
+
+            // timestamp
+            'created_at' => 'datetime:d/m/Y H:i:s',
+            'updated_at' => 'datetime:d/m/Y H:i:s',
     ];
 
     use HasStates;

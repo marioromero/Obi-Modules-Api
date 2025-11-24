@@ -15,6 +15,11 @@ class TraroUser extends Authenticatable
     // Ajusta los campos según tu esquema real
     protected $fillable = ['id', 'name', 'username', 'password', 'email', 'gender', 'status_id', 'role_id'];
 
+    protected $casts = [
+        'created_at' => 'datetime:d/m/Y H:i:s',
+        'updated_at' => 'datetime:d/m/Y H:i:s',
+    ];
+
     //Relaciones
     public function schedules()
     {

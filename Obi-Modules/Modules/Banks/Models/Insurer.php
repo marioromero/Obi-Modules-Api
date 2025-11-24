@@ -20,6 +20,12 @@ class Insurer extends Model
         'is_visible',
     ];
 
+    protected $casts = [
+        'created_at' => 'datetime:d/m/Y H:i:s',
+        'updated_at' => 'datetime:d/m/Y H:i:s',
+    ];
+
+
     // Una aseguradora puede tener muchos casos
     public function cases()
     {

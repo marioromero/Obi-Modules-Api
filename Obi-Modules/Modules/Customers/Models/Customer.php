@@ -41,6 +41,8 @@ class Customer extends Model
 
     protected $casts = [
         'tags' => 'array',   // JSON ⇄ array automáticamente
+        'created_at' => 'datetime:d/m/Y H:i:s',
+        'updated_at' => 'datetime:d/m/Y H:i:s',
     ];
 
     // Relación de Customer con Commune (un Customer pertenece a una Commune) [FK externa]
