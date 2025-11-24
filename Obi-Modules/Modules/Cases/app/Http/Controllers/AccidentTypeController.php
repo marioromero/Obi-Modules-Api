@@ -5,6 +5,7 @@ namespace Modules\Cases\app\Http\Controllers;
 use Modules\Core\app\Http\BaseApiController;
 use Illuminate\Http\Request;
 use Modules\Cases\Models\AccidentType;
+use Illuminate\Support\Facades\DB;
 
 class AccidentTypeController extends BaseApiController
 {
