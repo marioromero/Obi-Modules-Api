@@ -62,6 +62,40 @@ class ConfigurationSeeder extends Seeder
             ['content' => json_encode($userResponsibilities, JSON_UNESCAPED_UNICODE)]
         );
 
+        // 4.1) Ejecutivos disponibles para asignación (Agent_available)
+        $agentTypeId = DB::connection('configurations_db')
+            ->table('types')
+            ->where('name', 'Agent_available')
+            ->value('id');
+
+        if ($agentTypeId) {
+            $agentsAvailable = [
+                'user_available' => [3, 7, 8, 9, 10, 12, 13, 14, 18],
+            ];
+
+            DB::connection('configurations_db')->table('configurations')->updateOrInsert(
+                ['type_id' => $agentTypeId],
+                ['content' => json_encode($agentsAvailable, JSON_UNESCAPED_UNICODE)]
+            );
+        }
+
+        // 4.2) Asesores disponibles para asignación (Consultant_available)
+        $consultantTypeId = DB::connection('configurations_db')
+            ->table('types')
+            ->where('name', 'Consultant_available')
+            ->value('id');
+
+        if ($consultantTypeId) {
+            $consultantsAvailable = [
+                'user_available' => [5, 11, 23, 31],
+            ];
+
+            DB::connection('configurations_db')->table('configurations')->updateOrInsert(
+                ['type_id' => $consultantTypeId],
+                ['content' => json_encode($consultantsAvailable, JSON_UNESCAPED_UNICODE)]
+            );
+        }
+
         // 5) Columns_by_rol
         $columnsByRolTypeId = DB::connection('configurations_db')->table('types')->where('name', 'Columns_by_rol')->value('id');
 
@@ -70,34 +104,34 @@ class ConfigurationSeeder extends Seeder
                 // 1 = Administrador
                 '1' => [
                     'code','state','customer_name','customer_id','customer_dni','accident_type_name',
-                    'created_at','commune_name','property_address','accident_number','bank_name',
+                    'created_at','is_duplicated','commune_name','property_address','accident_number','bank_name',
                     'document_signing_date','approved_amount',
                     'assigned_user_name','consultant_name','agent_name',
                     'payment_status','amount_owed','amount_paid','advisory_amount',
-                    'probable_payment_date','overall_status',
+                    'probable_payment_date','overall_status','softdeleted',
                     'signature_status','created_by_name','case_flows_last'
                 ],
 
                 // 2 = Ejecutivo
                 '2' => [
                     'code','state','customer_name','customer_id','customer_dni','accident_type_name','agent_name',
-                    'created_at','commune_name','property_address','bank_name',
+                    'created_at','is_duplicated','commune_name','property_address','bank_name',
                     'document_signing_date','approved_amount',
                     'assigned_user_name','signature_status','denounce_status',
                     'scheduling_status','visit_status','budget_status','decision_status',
                     'payment_status','inspection_date','budget_sending_date',
-                    'settlement_report_date','contestation_date','probable_payment_date',
+                    'settlement_report_date','contestation_date','probable_payment_date','softdeleted',
                     'accident_number','bank_service_number','case_flows_last'
                 ],
 
                 // 3 = Coordinador
                 '3' => [
-                    'code','state','customer_name','customer_id','created_at',
+                    'code','state','customer_name','customer_id','created_at','is_duplicated',
                     'property_address','inspection_date','accident_number','document_signing_date','complaint_date','collection_date',
                     'budget_sending_date','settlement_report_date','probable_payment_date',
                     'customer_dni','customer_address','customer_commune_name',
                     'bank_name','schedule_message_sent','schedule_message_confirmed','schedule_inspection_time','assigned_user_name',
-                    'accident_type_name','agent_name',
+                    'accident_type_name','agent_name','softdeleted',
                     'commune_name','loss_adjuster_name','insurer_name','case_flows_last'
                 ],
 
@@ -108,18 +142,18 @@ class ConfigurationSeeder extends Seeder
                     'accident_type_name','bank_name','agent_name','document_signing_date','agreement_name',
                     'bank_service_number','complaint_date','accident_number','is_duplicated',
                     'insurer_name','loss_adjuster_name','inspection_date','budget_sending_date',
-                    'settlement_report_date','probable_payment_date','collection_date',
+                    'settlement_report_date','probable_payment_date','collection_date','softdeleted',
                     'amount_owed','amount_paid','online_collection_date','case_flows_last'
                 ],
 
                 // 5 = Asesor
                 '5' => [
                     'code','state','customer_name','customer_id','customer_dni','accident_type_name','agent_name',
-                    'created_at','accident_number','commune_name','property_address','bank_name',
+                    'created_at','is_duplicated','accident_number','commune_name','property_address','bank_name',
                     'document_signing_date','consultant_id', 'consultant_name', 'approved_amount','amount_paid',
                     'inspection_date','visit_status','budget_status','decision_status',
                     'settlement_report_date','date_of_loss','contestation_date',
-                    'insurer_name','loss_adjuster_name','property_type',
+                    'insurer_name','loss_adjuster_name','property_type','softdeleted',
                     'uf_approved','advisory_amount','case_flows_last'
                 ],
             ];

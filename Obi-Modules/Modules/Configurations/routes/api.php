@@ -30,3 +30,7 @@ Route::get   ('configurations/columns-by-role/{roleId}',[ConfigurationController
 Route::get('configurations/filters-by-user/{user}', [ConfigurationController::class, 'filtersByUsers'])->whereNumber('user');
 Route::get('configurations/filters-by-user/{user}/cases/{key}',[ConfigurationController::class, 'filterCasesByKey'])->whereNumber('user');
 Route::get('users/{user}/filters-columns/{paso}/{filter?}', [ConfigurationController::class, 'getUsersFiltersAndColumns'])->name('configurations.users.filters-columns');
+Route::get   ('configurations/agents-available',  [ConfigurationController::class, 'getAgentsAvailable']);
+Route::patch ('configurations/agents-available',  [ConfigurationController::class, 'updateAgentsAvailable']);
+Route::get   ('configurations/consultants-available',  [ConfigurationController::class, 'getConsultantsAvailable']);
+Route::patch ('configurations/consultants-available',  [ConfigurationController::class, 'updateConsultantsAvailable']);

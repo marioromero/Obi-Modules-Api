@@ -763,4 +763,291 @@ class ConfigurationController extends BaseApiController
             'managed_cases'=> $managedBlock,
         ], 'Default del paso', 200);
     }
+
+    public function getAgentsAvailable()
+    {
+        $configConnection = (new Configuration)->getConnectionName() ?: 'configurations_db';
+
+        // 1) Obtener type_id de Agent_available
+        $typeId = DB::connection($configConnection)
+            ->table('types')
+            ->where('name', 'Agent_available')
+            ->value('id');
+
+        if (! $typeId) {
+            return $this->error("No existe el type 'Agent_available' en la conexión '{$configConnection}'.", 422);
+        }
+
+        // 2) Cargar configuración
+        $row = Configuration::where('type_id', $typeId)->first();
+        if (! $row) {
+            return $this->error("No hay configuración para 'Agent_available' (type_id={$typeId}).", 422);
+        }
+
+        // 3) Normalizar contenido
+        $normalizeContent = function ($value): array {
+            if (! is_array($value)) {
+                if (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    $value   = $decoded ?: [];
+                } else {
+                    $value = (array) $value;
+                }
+            }
+            return $value;
+        };
+
+        // 4) Normalizador de IDs (misma lógica que responsibilities)
+        $normalizeIds = function ($value): array {
+            if (is_string($value)) {
+                $value = array_map('trim', explode(',', $value));
+            }
+            if (! is_array($value)) return [];
+            $ids = [];
+            foreach ($value as $item) {
+                if (is_array($item) && array_key_exists('id', $item)) {
+                    $ids[] = (int) $item['id'];
+                } elseif (is_object($item) && isset($item->id)) {
+                    $ids[] = (int) $item->id;
+                } elseif (is_numeric($item)) {
+                    $ids[] = (int) $item;
+                }
+            }
+            return array_values(array_unique(array_filter($ids, fn($v) => $v > 0)));
+        };
+
+        $content    = $normalizeContent($row->content ?? []);
+        $selectedIds = $normalizeIds(
+            $content['user_assigned'] ?? $content['user_available'] ?? $content
+        );
+
+        // 5) Usuarios activos
+        $activeUsers = TraroUser::select('id', 'name')
+            ->where('status_id', 1)
+            ->orderBy('name', 'asc')
+            ->get()
+            ->keyBy('id');
+
+        // 6) Asignados (según config)
+        $assigned = collect($selectedIds)->map(function ($id) use ($activeUsers) {
+            return [
+                'id'   => (int) $id,
+                'name' => $activeUsers[$id]->name ?? null,
+            ];
+        })->values()->all();
+
+        // 7) Disponibles = activos - seleccionados
+        $available = $activeUsers->keys()
+            ->diff($selectedIds)
+            ->values()
+            ->map(fn ($id) => [
+                'id'   => (int) $id,
+                'name' => $activeUsers[$id]->name,
+            ])->all();
+
+        return $this->success([
+            'user_assigned'  => $assigned,
+            'user_available' => $available,
+        ], 'Ejecutivos disponibles para asignación obtenidos correctamente');
+    }
+
+    public function updateAgentsAvailable(Request $request)
+    {
+        $configConnection = (new Configuration)->getConnectionName() ?: 'configurations_db';
+
+        // 1) type_id
+        $typeId = DB::connection($configConnection)
+            ->table('types')
+            ->where('name', 'Agent_available')
+            ->value('id');
+
+        if (! $typeId) {
+            return $this->error("No existe el type 'Agent_available' en la conexión '{$configConnection}'.", 422);
+        }
+
+        $row = Configuration::where('type_id', $typeId)->first();
+        if (! $row) {
+            return $this->error("No hay configuración para 'Agent_available' (type_id={$typeId}).", 422);
+        }
+
+        // 2) Normalizador de IDs
+        $normalizeIds = function ($value): array {
+            if (is_string($value)) {
+                $value = array_map('trim', explode(',', $value));
+            }
+            if (! is_array($value)) return [];
+            $ids = [];
+            foreach ($value as $item) {
+                if (is_array($item) && array_key_exists('id', $item)) {
+                    $ids[] = (int) $item['id'];
+                } elseif (is_object($item) && isset($item->id)) {
+                    $ids[] = (int) $item->id;
+                } elseif (is_numeric($item)) {
+                    $ids[] = (int) $item;
+                }
+            }
+            return array_values(array_unique(array_filter($ids, fn($v) => $v > 0)));
+        };
+
+        // 3) Payload esperado:
+        // { "user_assigned": [3,7,8,...] }
+        // o directamente: [3,7,8,...]
+        $incoming = $request->input('user_assigned', $request->all());
+
+        $ids = is_array($incoming) && array_key_exists('user_assigned', $incoming)
+            ? $normalizeIds($incoming['user_assigned'])
+            : $normalizeIds($incoming);
+
+        // 4) Guardar con clave 'user_assigned'
+        $row->content = ['user_assigned' => $ids];
+        $row->save();
+
+        return $this->success(
+            $row->content,
+            'Ejecutivos disponibles para asignación actualizados correctamente'
+        );
+    }
+
+    public function getConsultantsAvailable()
+    {
+        $configConnection = (new Configuration)->getConnectionName() ?: 'configurations_db';
+
+        // 1) Obtener type_id de Consultant_available
+        $typeId = DB::connection($configConnection)
+            ->table('types')
+            ->where('name', 'Consultant_available')
+            ->value('id');
+
+        if (! $typeId) {
+            return $this->error("No existe el type 'Consultant_available' en la conexión '{$configConnection}'.", 422);
+        }
+
+        // 2) Cargar configuración
+        $row = Configuration::where('type_id', $typeId)->first();
+        if (! $row) {
+            return $this->error("No hay configuración para 'Consultant_available' (type_id={$typeId}).", 422);
+        }
+
+        // 3) Normalizar contenido
+        $normalizeContent = function ($value): array {
+            if (! is_array($value)) {
+                if (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    $value   = $decoded ?: [];
+                } else {
+                    $value = (array) $value;
+                }
+            }
+            return $value;
+        };
+
+        // 4) Normalizador de IDs
+        $normalizeIds = function ($value): array {
+            if (is_string($value)) {
+                $value = array_map('trim', explode(',', $value));
+            }
+            if (! is_array($value)) return [];
+            $ids = [];
+            foreach ($value as $item) {
+                if (is_array($item) && array_key_exists('id', $item)) {
+                    $ids[] = (int) $item['id'];
+                } elseif (is_object($item) && isset($item->id)) {
+                    $ids[] = (int) $item->id;
+                } elseif (is_numeric($item)) {
+                    $ids[] = (int) $item;
+                }
+            }
+            return array_values(array_unique(array_filter($ids, fn($v) => $v > 0)));
+        };
+
+        $content     = $normalizeContent($row->content ?? []);
+        $selectedIds = $normalizeIds(
+            $content['user_assigned'] ?? $content['user_available'] ?? $content
+        );
+
+        // 5) Usuarios activos
+        $activeUsers = TraroUser::select('id', 'name')
+            ->where('status_id', 1)
+            ->orderBy('name', 'asc')
+            ->get()
+            ->keyBy('id');
+
+        // 6) Asignados
+        $assigned = collect($selectedIds)->map(function ($id) use ($activeUsers) {
+            return [
+                'id'   => (int) $id,
+                'name' => $activeUsers[$id]->name ?? null,
+            ];
+        })->values()->all();
+
+        // 7) Disponibles
+        $available = $activeUsers->keys()
+            ->diff($selectedIds)
+            ->values()
+            ->map(fn ($id) => [
+                'id'   => (int) $id,
+                'name' => $activeUsers[$id]->name,
+            ])->all();
+
+        return $this->success([
+            'user_assigned'  => $assigned,
+            'user_available' => $available,
+        ], 'Asesores disponibles para asignación obtenidos correctamente');
+    }
+
+    public function updateConsultantsAvailable(Request $request)
+    {
+        $configConnection = (new Configuration)->getConnectionName() ?: 'configurations_db';
+
+        // 1) type_id
+        $typeId = DB::connection($configConnection)
+            ->table('types')
+            ->where('name', 'Consultant_available')
+            ->value('id');
+
+        if (! $typeId) {
+            return $this->error("No existe el type 'Consultant_available' en la conexión '{$configConnection}'.", 422);
+        }
+
+        $row = Configuration::where('type_id', $typeId)->first();
+        if (! $row) {
+            return $this->error("No hay configuración para 'Consultant_available' (type_id={$typeId}).", 422);
+        }
+
+        // 2) Normalizador de IDs
+        $normalizeIds = function ($value): array {
+            if (is_string($value)) {
+                $value = array_map('trim', explode(',', $value));
+            }
+            if (! is_array($value)) return [];
+            $ids = [];
+            foreach ($value as $item) {
+                if (is_array($item) && array_key_exists('id', $item)) {
+                    $ids[] = (int) $item['id'];
+                } elseif (is_object($item) && isset($item->id)) {
+                    $ids[] = (int) $item->id;
+                } elseif (is_numeric($item)) {
+                    $ids[] = (int) $item;
+                }
+            }
+            return array_values(array_unique(array_filter($ids, fn($v) => $v > 0)));
+        };
+
+        // 3) Payload:
+        // { "user_assigned": [5,11,23,31] } o directamente [5,11,23,31]
+        $incoming = $request->input('user_assigned', $request->all());
+
+        $ids = is_array($incoming) && array_key_exists('user_assigned', $incoming)
+            ? $normalizeIds($incoming['user_assigned'])
+            : $normalizeIds($incoming);
+
+        // 4) Guardar
+        $row->content = ['user_assigned' => $ids];
+        $row->save();
+
+        return $this->success(
+            $row->content,
+            'Asesores disponibles para asignación actualizados correctamente'
+        );
+    }
 }

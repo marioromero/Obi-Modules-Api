@@ -19,6 +19,8 @@ class TypeSeeder extends Seeder
             ['name' => 'User_responsabilities'],
             ['name' => 'Columns_by_rol'],
             ['name' => 'States_machine'],
+            ['name' => 'Agent_available'],
+            ['name' => 'Consultant_available'],
         ]);
     }
 }
