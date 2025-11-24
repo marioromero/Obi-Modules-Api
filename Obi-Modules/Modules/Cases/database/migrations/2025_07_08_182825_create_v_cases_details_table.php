@@ -217,7 +217,8 @@ return new class extends Migration
             FROM grupoint_obi_scheduling.schedules
             GROUP BY case_id
           ) sm ON sm.case_id = s1.case_id AND sm.max_id = s1.id
-        ) sch_last ON sch_last.case_id = c.id;
+        ) sch_last ON sch_last.case_id = c.id
+        WHERE c.softdeleted = 0;
         SQL);
     }
 
