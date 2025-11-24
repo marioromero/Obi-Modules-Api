@@ -230,4 +230,46 @@ class CustomerController extends BaseApiController
             'Estado del cliente actualizado correctamente'
         );
     }
+
+    //Reasignacion masiva de clientes a un nuevo agente
+    public function customerReassignment(Request $request, int $agent)
+    {
+        //El body debe ser un array de IDs, que sean numéricos y evitar duplicados
+        $ids = $request->all();
+
+        if (!is_array($ids) || empty($ids)) {
+            return $this->error('Debe enviar un array de IDs de clientes.', 422);
+        }
+
+        $normalizedIds = [];
+
+        foreach ($ids as $id) {
+            if (!is_numeric($id)) {
+                return $this->error('Todos los IDs deben ser numéricos.', 422);
+            }
+
+            $normalizedIds[] = (int) $id;
+        }
+
+        $normalizedIds = array_values(array_unique($normalizedIds));
+
+        //Validar que el agente exista
+        $userConnection = (new \Modules\Users\Models\TraroUser)->getConnectionName() ?: 'traro_db';
+
+        $agentExists = DB::connection($userConnection)
+            ->table('users')
+            ->where('id', $agent)
+            ->exists();
+
+        if (! $agentExists) {
+            return $this->error("El agente con ID {$agent} no existe.", 404);
+        }
+
+        //Reasignar clientes al nuevo agente
+        $affected = Customer::whereIn('id', $normalizedIds)->update([
+            'assigned_agent' => $agent,
+        ]);
+
+        return $this->success([], 'Clientes reasignados correctamente');
+    }
 }
