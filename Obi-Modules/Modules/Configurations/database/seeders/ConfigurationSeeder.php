@@ -109,7 +109,12 @@ class ConfigurationSeeder extends Seeder
                     'assigned_user_name','consultant_name','agent_name',
                     'payment_status','amount_owed','amount_paid','advisory_amount',
                     'probable_payment_date','overall_status','softdeleted',
-                    'signature_status','created_by_name','case_flows_last'
+                    'signature_status','created_by_name','case_flows_last','inspection_date',
+                    'complaint_date','collection_date','budget_sending_date','settlement_report_date','online_collection_date',
+                    'bank_service_number','phone','user_name','date_of_loss','property_type','contestation_date',
+                    'created_by','assigned_user','uf_approved','amount_owed_including_vat','denounce_status',
+                    'scheduling_status','visit_status','budget_status','decision_status','customer_address',
+                    'customer_commune_name','insurer_name','loss_adjuster_name','priority_name','agreement_name',
                 ],
 
                 // 2 = Ejecutivo
