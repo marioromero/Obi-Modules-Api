@@ -12,6 +12,7 @@ use Modules\Cases\Models\CaseDetail;
 use Modules\Core\app\Http\BaseApiController;
 use Modules\Cases\Models\CaseEntity;
 use Carbon\Carbon;
+use Modules\Cases\Support\CasesCache;
 use Illuminate\Validation\ValidationException;
 use Modules\Configurations\Models\Configuration;
 use Illuminate\Support\Facades\DB;
@@ -83,15 +84,51 @@ class CaseController extends BaseApiController
 
     public function softDelete(CaseEntity $case)
     {
-        DB::connection('cases_db')
-            ->table($case->getTable())
-            ->where('id', $case->id)
-            ->update([
-                'softdeleted' => DB::raw('1 - softdeleted'),
-                'updated_at'  => now(),
-            ]);
+        $case->softdeleted = $case->softdeleted ? 0 : 1;
+        $case->updated_at  = now();
 
-        return $this->success($case->refresh(), 'Caso actualizado (softdeleted toggled).', 200);
+        $case->save();
+
+        // 🔁 Sincronizar inmediatamente el cache para este caso
+        CasesCache::syncOne($case->id);
+
+        return $this->success($case, 'Caso actualizado (softdeleted toggled).', 200);
+    }
+
+    public function refreshCache(int $caseId)
+    {
+        try {
+            // 1) Leer desde la vista completa (si existe)
+            $row = DB::connection('cases_db')
+                ->table('v_cases_details')
+                ->where('id', $caseId)
+                ->first();
+
+            // 2) Cargar cache actual
+            $all = \Modules\Cases\Support\CasesCache::getAllCasesRaw();
+
+            if ($row) {
+                // 3) Si existe en la vista → reemplazar / actualizar
+                $all[$caseId] = (array) $row;
+            } else {
+                // 4) Si NO existe (softdeleted = 1) → eliminar del cache
+                unset($all[$caseId]);
+            }
+
+            // 5) Guardar cache actualizado
+            \Modules\Cases\Support\CasesCache::storeAllCases($all);
+
+            return $this->success(
+                ['case_id' => $caseId],
+                'Cache del caso actualizado correctamente'
+            );
+
+        } catch (\Throwable $e) {
+            return $this->error(
+                'No se pudo refrescar el cache del caso: ' . $e->getMessage(),
+                500
+            );
+        }
     }
 
                             //Endpoints para lógica de negocio de TRARO
