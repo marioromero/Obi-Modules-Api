@@ -333,6 +333,9 @@ public function transitionToWithComments(string $stateClass, ?string $comments =
                 $case->code = 'TR' . $next;
             });
         });
+
+        //Observers
+        static::observe(\Modules\Cases\Observers\CaseEntityObserver::class);
     }
 
     public function resolveRouteBinding($value, $field = null)
