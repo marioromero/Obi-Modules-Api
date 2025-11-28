@@ -68,7 +68,7 @@ Route::patch('cases/code/{code}', [CaseController::class, 'UpdateCaseByCode']);
 Route::get('cases/code/{code}', [CaseController::class, 'getCaseByCode']);
 Route::get('cases/filter-by-payment-date', [CaseController::class, 'filterByPaymentDate']);
 Route::patch('cases/{case}/soft-delete', [CaseController::class, 'softDelete'])->whereNumber('case');
-
+Route::post('cases/{caseId}/refresh-cache', [CaseController::class, 'refreshCache']);
 
 // REST para Agreement
 Route::get('agreements', [AgreementController::class, 'index']);
