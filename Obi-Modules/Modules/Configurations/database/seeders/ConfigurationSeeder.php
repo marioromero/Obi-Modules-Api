@@ -315,7 +315,7 @@ class ConfigurationSeeder extends Seeder
                             ],
                             [
                                 'key'     => 'configuration_2',
-                                'name'    => 'Por asesor: Ivette Contreras',
+                                'name'    => 'Por asesor: Ivett Contreras',
                                 'color'   => '#b36bff',
                                 'columns' => ['code','state','customer_name','customer_id','customer_dni','bank_name','insurer_name',
                                               'accident_type_name','accident_number','date_of_loss','commune_name',
@@ -407,7 +407,7 @@ class ConfigurationSeeder extends Seeder
                             ],
                             [
                                 'key'     => 'configuration_2',
-                                'name'    => 'Por asesor: Ivette Contreras',
+                                'name'    => 'Por asesor: Ivett Contreras',
                                 'color'   => '#b36bff',
                                 'columns' => [
                                     'inspection_date','schedule_inspection_time','customer_name',
