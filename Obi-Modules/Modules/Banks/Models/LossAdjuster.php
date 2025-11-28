@@ -5,6 +5,8 @@ use Modules\Core\app\Support\Traits\DeletionStrategies;
 use Modules\Schedules\Models\Schedule;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Cases\Support\CasesCache;
+use Illuminate\Support\Facades\Log;
 
 class LossAdjuster extends Model
 {
@@ -42,6 +44,20 @@ class LossAdjuster extends Model
     {
         static::addGlobalScope('exclude_softdeleted', function ($query) {
             $query->where('softdeleted', 0);
+        });
+
+        static::saved(function (self $lossAdjuster): void {
+            try {
+                CasesCache::refreshBy('loss_adjuster', (int) $lossAdjuster->id);
+            } catch (\Throwable $e) {
+                Log::channel('daily')->error('Error refrescando cache de casos desde LossAdjuster::saved', [
+                    'entity_id' => $lossAdjuster->id,
+                    'type'      => 'loss_adjuster',
+                    'exception' => $e->getMessage(),
+                    'line'      => $e->getLine(),
+                    'file'      => $e->getFile(),
+                ]);
+            }
         });
     }
 

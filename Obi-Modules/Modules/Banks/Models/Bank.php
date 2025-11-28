@@ -2,7 +2,8 @@
 
 namespace Modules\Banks\Models;
 use Modules\Core\app\Support\Traits\DeletionStrategies;
-
+use Modules\Cases\Support\CasesCache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -37,6 +38,20 @@ class Bank extends Model
     {
         static::addGlobalScope('exclude_softdeleted', function ($query) {
             $query->where('softdeleted', 0);
+        });
+
+        static::saved(function (self $bank): void {
+            try {
+                CasesCache::refreshBy('bank', (int) $bank->id);
+            } catch (\Throwable $e) {
+                Log::channel('daily')->error('Error refrescando cache de casos desde Bank::saved', [
+                    'entity_id' => $bank->id,
+                    'type'      => 'bank',
+                    'exception' => $e->getMessage(),
+                    'line'      => $e->getLine(),
+                    'file'      => $e->getFile(),
+                ]);
+            }
         });
     }
 

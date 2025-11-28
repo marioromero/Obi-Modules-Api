@@ -2,7 +2,8 @@
 
 namespace Modules\Cases\Models;
 use Modules\Core\app\Support\Traits\DeletionStrategies;
-
+use Modules\Cases\Support\CasesCache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Cases\Models\CaseEntity;
@@ -34,6 +35,20 @@ class AccidentType extends Model
     {
         static::addGlobalScope('exclude_softdeleted', function ($query) {
             $query->where('softdeleted', 0);
+        });
+
+        static::saved(function (self $accidentType): void {
+            try {
+                CasesCache::refreshBy('accident_type', (int) $accidentType->id);
+            } catch (\Throwable $e) {
+                Log::channel('daily')->error('Error refrescando cache de casos desde AccidentType::saved', [
+                    'entity_id' => $accidentType->id,
+                    'type'      => 'accident_type',
+                    'exception' => $e->getMessage(),
+                    'line'      => $e->getLine(),
+                    'file'      => $e->getFile(),
+                ]);
+            }
         });
     }
 

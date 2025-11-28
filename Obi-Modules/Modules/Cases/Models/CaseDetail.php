@@ -57,6 +57,17 @@ class CaseDetail extends Model
         'phone',
     ];
 
+    protected $guarded = [];
+
+    /**
+     * Payload oficial para cache: las caracteristicas de la view
+     */
+    public function toCachePayload(): array
+    {
+        // para recortar columnas aquí.
+        return $this->toArray();
+    }
+
     // Accessor: si la view no trae phone, lo busca en customers_db
     public function getPhoneAttribute()
     {

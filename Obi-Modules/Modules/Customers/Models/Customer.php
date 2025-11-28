@@ -6,6 +6,8 @@ use Modules\Core\app\Support\Traits\DeletionStrategies;
 use Modules\Customers\Models\Tag as TagModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Cases\Support\CasesCache;
+use Illuminate\Support\Facades\Log;
 
 class Customer extends Model
 {
@@ -74,9 +76,6 @@ class Customer extends Model
         return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_id');
     }
 
-    /**
-     * Boot: antes de crear, añade las etiquetas activas con enabled=false
-     */
     protected static function booted(): void
     {
         // excluye los registros con softdeleted = 1
@@ -95,6 +94,20 @@ class Customer extends Model
                         'enabled' => false,
                     ])
                     ->toArray();
+            }
+        });
+
+        //Refrescar casos relacionados al guardar un cliente
+        static::saved(function (self $customer) {
+            try {
+                CasesCache::refreshBy('customer', (int) $customer->id);
+            } catch (\Throwable $e) {
+                Log::channel('daily')->error('Error refrescando cache por actualización de customer', [
+                    'id'        => $customer->id,
+                    'exception' => $e->getMessage(),
+                    'line'      => $e->getLine(),
+                    'file'      => $e->getFile(),
+                ]);
             }
         });
     }
