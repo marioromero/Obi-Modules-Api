@@ -31,6 +31,7 @@ return new class extends Migration
             s.comments,
             s.message_sent,
             s.message_confirmed,
+            s.inspection_failed,
 
             /* ───── Nombres resueltos ───── */
             c.code  AS case_code,
