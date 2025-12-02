@@ -79,6 +79,7 @@ class ScheduleController extends BaseApiController
             'loss_adjuster_id'          => 'nullable|integer',
             'message_sent'              => 'nullable|boolean',
             'message_confirmed'         => 'nullable|boolean',
+            'inspection_failed'         => 'nullable|boolean',
         ]);
 
         return DB::connection($this->conn)->transaction(function () use ($caseId, $data) {
@@ -100,6 +101,7 @@ class ScheduleController extends BaseApiController
                     'loss_adjuster_id'          => $data['loss_adjuster_id'] ?? null,
                     'message_sent'              => $data['message_sent'] ?? false,
                     'message_confirmed'         => $data['message_confirmed'] ?? false,
+                    'inspection_failed'         => $data['inspection_failed'] ?? false,
                 ]);
 
                 $detail = ScheduleDetail::on($this->conn)->find($schedule->id);
@@ -129,6 +131,7 @@ class ScheduleController extends BaseApiController
                     'loss_adjuster_id'          => $data['loss_adjuster_id'] ?? null,
                     'message_sent'              => $data['message_sent'] ?? false,
                     'message_confirmed'         => $data['message_confirmed'] ?? false,
+                    'inspection_failed'         => $data['inspection_failed'] ?? false,
                 ]);
 
                 $detail = ScheduleDetail::on($this->conn)->find($new->id);
@@ -150,6 +153,7 @@ class ScheduleController extends BaseApiController
             'loss_adjuster_id'          => 'nullable|integer',
             'message_sent'              => 'nullable|boolean',
             'message_confirmed'         => 'nullable|boolean',
+            'inspection_failed'         => 'nullable|boolean',
         ]);
 
         $schedule = Schedule::on($this->conn)

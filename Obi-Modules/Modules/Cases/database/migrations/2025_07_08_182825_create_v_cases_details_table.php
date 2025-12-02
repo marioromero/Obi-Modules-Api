@@ -52,6 +52,7 @@ return new class extends Migration
           /* ───── ÚLTIMA programación vigente (por caso, MAX(id)) ───── */
           sch_last.message_sent       AS schedule_message_sent,
           sch_last.message_confirmed  AS schedule_message_confirmed,
+          sch_last.inspection_failed  AS schedule_inspection_failed,
           sch_last.inspection_time    AS schedule_inspection_time,
           sch_last.liquidator_inspector_info AS schedule_liquidator_inspector_info,
 
@@ -209,6 +210,7 @@ return new class extends Migration
             s1.case_id,
             s1.message_sent,
             s1.message_confirmed,
+            s1.inspection_failed,
             s1.inspection_time,
             s1.liquidator_inspector_info
           FROM grupoint_obi_scheduling.schedules s1

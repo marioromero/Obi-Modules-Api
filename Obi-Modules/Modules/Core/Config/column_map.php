@@ -73,6 +73,7 @@ return [
 
             'schedule_message_sent'      => 'Mensaje enviado',
             'schedule_message_confirmed' => 'Mensaje confirmado',
+            'schedule_inspection_failed' => 'Visita fallida',
             'schedule_inspection_time'   => 'Hr visita',
             'schedule_liquidator_inspector_info' => 'Información inspector',
             'softdeleted'            => 'Eliminación parcial',

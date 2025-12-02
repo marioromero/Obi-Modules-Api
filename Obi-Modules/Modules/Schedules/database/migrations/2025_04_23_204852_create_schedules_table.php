@@ -21,6 +21,7 @@ return new class extends Migration
             $table->unsignedBigInteger('loss_adjuster_id')->nullable(); // FK a banks_db.loss_adjusters (liquidador)
             $table->boolean('message_sent')->default(false); // Indica si se envió notificación al cliente
             $table->boolean('message_confirmed')->default(false); // Indica si el cliente confirmó la visita
+            $table->boolean('inspection_failed')->default(false); // Visita fallida?
         });
     }
 

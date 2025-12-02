@@ -25,6 +25,7 @@ class Schedule extends Model
         'comments',
         'message_sent',
         'message_confirmed',
+        'inspection_failed',
     ];
 
     public function case()
