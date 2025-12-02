@@ -96,40 +96,22 @@ class CaseController extends BaseApiController
     }
 
     public function refreshCache(int $caseId)
-    {
-        try {
-            // 1) Leer desde la vista completa (si existe)
-            $row = DB::connection('cases_db')
-                ->table('v_cases_details')
-                ->where('id', $caseId)
-                ->first();
+   {
+    try {
+        \Modules\Cases\Support\CasesCache::syncOne($caseId);
 
-            // 2) Cargar cache actual
-            $all = \Modules\Cases\Support\CasesCache::getAllCasesRaw();
+        return $this->success(
+            ['case_id' => $caseId],
+            'Cache del caso actualizado correctamente'
+        );
 
-            if ($row) {
-                // 3) Si existe en la vista → reemplazar / actualizar
-                $all[$caseId] = (array) $row;
-            } else {
-                // 4) Si NO existe (softdeleted = 1) → eliminar del cache
-                unset($all[$caseId]);
-            }
-
-            // 5) Guardar cache actualizado
-            \Modules\Cases\Support\CasesCache::storeAllCases($all);
-
-            return $this->success(
-                ['case_id' => $caseId],
-                'Cache del caso actualizado correctamente'
-            );
-
-        } catch (\Throwable $e) {
-            return $this->error(
-                'No se pudo refrescar el cache del caso: ' . $e->getMessage(),
-                500
-            );
-        }
+    } catch (\Throwable $e) {
+        return $this->error(
+            'No se pudo refrescar el cache del caso: ' . $e->getMessage(),
+            500
+        );
     }
+}
 
                             //Endpoints para lógica de negocio de TRARO
 

@@ -8,6 +8,7 @@ use Modules\Cases\Models\CaseDetail;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Cases\Models\CaseEntity;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CasesCache
 {
@@ -18,15 +19,37 @@ class CasesCache
      * Devuelve TODOS los casos desde cache,
      * asegurando antes que el cache está construido y sincronizado por delta.
      */
-    public static function getAll(): array
+   public static function getAll(): array
     {
+        // 1) Si no existe snapshot -> construirlo completo
         if (! Cache::has(self::CACHE_KEY_ALL)) {
             self::buildAll();
+        } else {
+            // 2) Si existe snapshot, sincronizar delta normalmente
+            self::syncDelta();
         }
 
-        self::syncDelta();
+        $payload = Cache::get(self::CACHE_KEY_ALL, []);
 
-        return Cache::get(self::CACHE_KEY_ALL, []);
+        // 3) SANITY CHECK: si el snapshot es "demasiado chico" respecto a la tabla cases,
+        //    asumimos que alguien lo pisó con datos parciales y reconstruimos completo.
+        try {
+            $totalCases = CaseEntity::withoutGlobalScope('exclude_softdeleted')->count();
+        } catch (\Throwable $e) {
+            // Por seguridad, si falla el count devolvemos lo que haya
+            return $payload;
+        }
+
+        $payloadCount = is_array($payload) ? count($payload) : 0;
+
+        // Si ambos son > 0 y el snapshot tiene menos del 50% de los casos reales, lo consideramos corrupto
+        if ($totalCases > 0 && $payloadCount > 0 && $payloadCount < ($totalCases * 0.5)) {
+
+            self::buildAll();
+            $payload = Cache::get(self::CACHE_KEY_ALL, []);
+        }
+
+        return $payload;
     }
 
     /**
@@ -39,6 +62,10 @@ class CasesCache
     {
         $payload      = [];
         $maxUpdatedAt = null;
+
+        // 👀 Snapshot anterior (si existe), para comparar tamaños
+        $oldPayload = Cache::get(self::CACHE_KEY_ALL, null);
+        $oldCount   = is_array($oldPayload) ? count($oldPayload) : null;
 
         DB::connection('cases_db')
             ->table('v_cases_details')
@@ -82,6 +109,20 @@ class CasesCache
                 }
             });
 
+        $newCount = count($payload);
+
+        // 🔐 Blindaje: si ya teníamos snapshot y el nuevo es MUCHO más chico, no lo pisamos
+        if ($oldCount !== null && $oldCount > 0 && $newCount > 0 && $newCount < ($oldCount * 0.5)) {
+            Log::warning('[CasesCache] buildAll detectó snapshot sospechosamente pequeño. Se mantiene el cache anterior.', [
+                'old_count' => $oldCount,
+                'new_count' => $newCount,
+            ]);
+
+            // NO tocamos cases.all ni cases.last_sync, dejamos todo como estaba
+            return;
+        }
+
+        // Si es la primera vez, o el nuevo tamaño es razonable → actualizar snapshot
         Cache::forever(self::CACHE_KEY_ALL, $payload);
 
         if ($maxUpdatedAt) {
