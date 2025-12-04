@@ -11,6 +11,7 @@ use Modules\Geography\Models\Country;
 use Illuminate\Support\Facades\DB;
 use Modules\Core\app\Helpers\ColumnMap;
 use Modules\Cases\Support\CasesCache;
+use Modules\Configurations\app\Helpers\CasesFiltersHelper;
 class ConfigurationController extends BaseApiController
 {
     public function index()
@@ -477,22 +478,22 @@ class ConfigurationController extends BaseApiController
 
         $userKey = (string) $user->id;
 
-        //Se intenta usar la config propia del usuario para el paso
+        // Config propia del usuario
         $stepCfg = $content[$userKey]['steps'][$step] ?? null;
 
-        // Fallback: si no hay config propia, heredar SOLO default (+ managed_cases) vía User_responsabilities
+        // ------------- FALLBACK de User_responsabilities ----------------
         if (! $stepCfg) {
-            // 1) Cargar User_responsabilities
+
             $respTypeId = DB::connection($configConnection)
                 ->table('types')->where('name', 'User_responsabilities')->value('id');
 
             if (! $respTypeId) {
-                return $this->error("No existe el tipo 'User_responsabilities' en la conexión '{$configConnection}'.", 422);
+                return $this->error("No existe 'User_responsabilities'.", 422);
             }
 
             $respRow = Configuration::where('type_id', $respTypeId)->first();
             if (! $respRow) {
-                return $this->error("No hay configuración para 'User_responsabilities' (type_id={$respTypeId}).", 422);
+                return $this->error("No hay configuración para 'User_responsabilities'.", 422);
             }
 
             $resp = $respRow->content ?? [];
@@ -500,7 +501,6 @@ class ConfigurationController extends BaseApiController
                 $resp = is_string($resp) ? (json_decode($resp, true) ?: []) : (array) $resp;
             }
 
-            // 2) Map de clave de paso: filtros usa minúsculas
             $stepRespKeyMap = [
                 'denuncio'     => 'Denuncio',
                 'programacion' => 'Programacion',
@@ -509,22 +509,23 @@ class ConfigurationController extends BaseApiController
                 'liquidacion'  => 'Liquidacion',
                 'recaudacion'  => 'Recaudacion',
             ];
+
             $stepRespKey = $stepRespKeyMap[$step] ?? null;
             if (! $stepRespKey) {
-                return $this->error("Paso '{$step}' no reconocido en User_responsabilities.", 422);
+                return $this->error("Paso '{$step}' no reconocido.", 422);
             }
 
-            // 3) ¿Usuario asignado al paso?
             $assigned = (array) ($resp[$stepRespKey]['user_assigned'] ?? []);
+
             if ($assigned && in_array((int) $user->id, $assigned, true)) {
-                // Buscar el primer user_id del orden que tenga default en ese paso
+
                 foreach ($assigned as $candidateId) {
+
                     $candKey     = (string) $candidateId;
                     $candStepCfg = $content[$candKey]['steps'][$step] ?? null;
                     $candDefault = is_array($candStepCfg['default'] ?? null) ? $candStepCfg['default'] : null;
 
                     if ($candDefault) {
-                        // Heredar SOLO default y managed_cases
                         $stepCfg = [
                             'default'       => array_values(array_unique($candDefault)),
                             'filters'       => [],
@@ -535,206 +536,83 @@ class ConfigurationController extends BaseApiController
                 }
             }
 
-            // 4) Si aún no hay config ni herencia válida → error
             if (! $stepCfg) {
-                return $this->error("No hay configuración para user_id={$user->id} en el paso '{$step}', ni herencia disponible.", 404);
+                return $this->error("No hay configuración para user_id={$user->id} en paso '{$step}'.", 404);
             }
         }
 
-        // 2) Condición por estado (para default y casos ya manejados)
-        $stateCond = function (string $s): ?string {
-            $label = [
-                'denuncio'     => 'Denuncio',
-                'programacion' => 'Programacion',
-                'visita'       => 'Visita',
-                'presupuesto'  => 'Presupuesto',
-                'liquidacion'  => 'Liquidacion',
-                'recaudacion'  => 'Recaudacion',
-            ][$s] ?? null;
-
-            if (! $label) return null;
-            return "SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) = '{$label}'";
-        };
+        // ---------- HELPERS EXTERNOS app/Helpers/CasesFiltersHelper ----------
+        $stateCond      = fn(string $s) => CasesFiltersHelper::stateCond($s);
+        $dedupRows      = fn(array $rows) => CasesFiltersHelper::dedupRows($rows);
+        $filterOutTest  = fn(array $rows) => CasesFiltersHelper::filterOutTest($rows);
+        $enrich         = fn(array $rows) => CasesFiltersHelper::enrichWithCustomerData($rows);
+        $projectRows    = fn(array $rows, array $cols) => CasesFiltersHelper::projectRows($rows, $cols);
 
         $baseOrder = 'ORDER BY created_at DESC, id DESC';
         $baseSql   = 'SELECT * FROM v_cases_details v ';
 
-        // 3) phone y user_name desde customers_db.v_customers_details
-        $enrichWithCustomerData = function (array $rows): array {
-            if (empty($rows)) return $rows;
-
-            $customerIds = [];
-            foreach ($rows as $r) {
-                if (isset($r->customer_id)) $customerIds[] = (int) $r->customer_id;
-            }
-            $customerIds = array_values(array_unique(array_filter($customerIds)));
-            if (!$customerIds) return $rows;
-
-            $extras = DB::connection('customers_db')
-                ->table('v_customers_details')
-                ->whereIn('id', $customerIds)
-                ->get(['id', 'phone', 'user_name'])
-                ->keyBy('id');
-
-            foreach ($rows as $r) {
-                $cid = isset($r->customer_id) ? (int) $r->customer_id : null;
-                if ($cid && $extras->has($cid)) {
-                    $extra = $extras->get($cid);
-                    if (!isset($r->phone) || $r->phone === null) {
-                        $r->phone = $extra->phone ?? null;
-                    }
-                    if (!isset($r->user_name) || $r->user_name === null) {
-                        $r->user_name = $extra->user_name ?? null;
-                    }
-                }
-            }
-            return $rows;
-        };
-
-        // 4) id + columnas esperadas en el mismo orden
-        $projectRows = function (array $rows, array $columnsEn): array {
-            $selectCols = array_values(array_unique(array_merge(['id'], $columnsEn)));
-            return array_map(function ($r) use ($selectCols) {
-                $out = [];
-                foreach ($selectCols as $c) {
-                    $out[$c] = property_exists($r, $c) ? $r->{$c} : null;
-                }
-                return $out;
-            }, $rows);
-        };
-        // Eliminar duplicados
-        $dedupRows = function (array $rows): array {
-            return collect($rows)->unique('id')->values()->all();
-        };
-
-        // Helper para evitar los registros "Test" y deerivados
-        $filterOutTest = function (array $rows): array {
-            return array_values(array_filter($rows, fn($r) => stripos($r->customer_name ?? '', 'test') === false));
-        };
-
-        // 4.1 Calcular managed_cases (reutilizable para default y para filter)
-        $calcManagedCases = function (string $step, array $stepCfg, array $defaultColumnsEn) use (
-            $stateCond, $baseSql, $baseOrder, $enrichWithCustomerData, $projectRows,$dedupRows,$filterOutTest
-        ) {
-            $managedMonths = (int)($stepCfg['managed_cases']['months'] ?? 2);
-            $targetStep    = $stepCfg['managed_cases']['target_step'] ?? null;
-
-            $managedData = [];
-
-            // Caso especial: Recaudación = "pagados recientes"
-           if ($step === 'recaudacion') {
-            $whereReca = $stateCond('recaudacion');
-            if ($whereReca) {
-                $window = "collection_date >= DATE_SUB(NOW(), INTERVAL {$managedMonths} MONTH)";
-                // Solo pagados y con fecha de pago
-                $status = "LOWER(payment_status) = 'pagado' AND collection_date IS NOT NULL";
-
-                $sql = $baseSql . "WHERE {$whereReca} AND {$status} AND {$window}
-                                   ORDER BY collection_date DESC, id DESC";
-                try {
-                    $managedData = DB::connection('cases_db')->select($sql);
-                } catch (\Throwable $e) {
-                    $managedData = [];
-                }
-                $managedData = $dedupRows($managedData);
-                $managedData = $filterOutTest($managedData);
-                $managedData = $enrichWithCustomerData($managedData);
-                $managedData = $projectRows($managedData, $defaultColumnsEn);
-            }
-            return ['months' => $managedMonths, 'data' => $managedData];
-        }
-
-            // Otros pasos: usar target_step
-            if ($targetStep) {
-                $tWhere = $stateCond($targetStep);
-                if ($tWhere) {
-                    $tWhere = "({$tWhere}) AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')";
-                    $window = "created_at >= DATE_SUB(NOW(), INTERVAL {$managedMonths} MONTH)";
-
-                    $isTargetRecaudacion = (mb_strtolower($targetStep, 'UTF-8') === 'recaudacion');
-                    $mOrderBy = $isTargetRecaudacion
-                        ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
-                        : $baseOrder;
-
-                    $mSql = $baseSql . "WHERE {$tWhere} AND {$window} {$mOrderBy}";
-                    try {
-                        $managedData = DB::connection('cases_db')->select($mSql);
-                    } catch (\Throwable $e) {
-                        $managedData = [];
-                    }
-                    $managedData = $dedupRows($managedData);
-                    $managedData = $filterOutTest($managedData);
-                    $managedData = $enrichWithCustomerData($managedData);
-                    $managedData = $projectRows($managedData, $defaultColumnsEn);
-                }
-            }
-
-            return ['months' => $managedMonths, 'data' => $managedData];
-        };
-
-        // 5) Filtro específico (si viene {filter} en la ruta)
+        // --------------------- FILTER ESPECÍFICO ------------------------
         if ($key) {
+
             $filterCfg = collect($stepCfg['filters'] ?? [])->firstWhere('key', $key);
             if (! $filterCfg) {
-                return $this->error("No existe el filtro '{$key}' en el paso '{$step}'.", 404);
+                return $this->error("No existe el filtro '{$key}'.", 404);
             }
 
-             if ($step === 'recaudacion' && ($filterCfg['key'] ?? null) === 'configuration_3') {
+            // Caso especial: Inspecciones lee la view de schedules
+            if (
+                $step === 'recaudacion'
+                && ($filterCfg['key'] ?? null) === 'configuration_3'
+                && trim((string)($filterCfg['sql'] ?? '')) === '/* handled_in_code */'
+            ) {
+                $columnsEn = array_values(array_map('strval', $filterCfg['columns'] ?? []));
+                $columnsEs = ColumnMap::translate($columnsEn, 'cases');
 
-                 // Columnas necesarias según el seeder
-                 $columnsEn = array_values(array_map('strval', (array)($filterCfg['columns'] ?? [])));
-                 $columnsEs = ColumnMap::translate($columnsEn, 'cases');
+                $sql = "
+                    SELECT *
+                    FROM v_schedules_details
+                    ORDER BY COALESCE(inspection_date, '9999-12-31') DESC, id DESC
+                ";
 
-                 // Consulta flexible: no filtra por ningún consultor
-                 $sql = "
-                     SELECT *
-                     FROM v_schedules_details
-                     ORDER BY
-                         COALESCE(inspection_date, '9999-12-31') DESC,
-                         id DESC
-                 ";
+                try {
+                    $rows = DB::connection('schedules_db')->select($sql);
+                } catch (\Throwable $e) {
+                    return $this->error("Error al ejecutar filtro 'Inspecciones': " . $e->getMessage(), 422);
+                }
 
-                 try {
-                     $rows = DB::connection('schedules_db')->select($sql);
-                 } catch (\Throwable $e) {
-                     return $this->error(
-                         "Error al ejecutar filtro 'Inspecciones': " . $e->getMessage(),
-                         422
-                     );
-                 }
+                $rows = $dedupRows($rows);
+                $rows = $filterOutTest($rows);
+                $rows = $projectRows($rows, $columnsEn);
 
-                 // Reutilizamos tus helpers existentes
-                 $rows = $dedupRows($rows);
-                 $rows = $filterOutTest($rows);
-                 // No enriquecemos desde customers_db porque ya viene customer_name
-                 $rows = $projectRows($rows, $columnsEn);
+                $defaultColumnsEn = array_values(array_unique($stepCfg['default'] ?? []));
+                $managedBlock = CasesFiltersHelper::calcManagedCases(
+                    $step, $stepCfg, $defaultColumnsEn, $baseSql, $baseOrder
+                );
 
-                 // managed_cases funciona igual que siempre
-                 $defaultColumnsEn = array_values(array_unique((array)($stepCfg['default'] ?? [])));
-                 $managedBlock     = $calcManagedCases($step, $stepCfg, $defaultColumnsEn);
+                return $this->success([
+                    'user_id' => (int) $user->id,
+                    'step'    => $step,
+                    'filter'  => [
+                        'key'     => (string) $filterCfg['key'],
+                        'name'    => (string) $filterCfg['name'],
+                        'color'   => $filterCfg['color'] ?? null,
+                        'columns' => $columnsEs,
+                    ],
+                    'data'          => $rows,
+                    'managed_cases' => $managedBlock,
+                ]);
+            }
 
-                 return $this->success([
-                     'user_id'      => (int) $user->id,
-                     'step'         => $step,
-                     'filter'       => [
-                         'key'     => (string) $filterCfg['key'],
-                         'name'    => (string) $filterCfg['name'],
-                         'color'   => $filterCfg['color'] ?? null,
-                         'columns' => $columnsEs,
-                     ],
-                     'data'         => $rows,
-                     'managed_cases'=> $managedBlock,
-                 ], 'Filtro aplicado', 200);
-             }
-
+            // Filtros normales (SQL directo)
             $sqlFrag = trim((string)($filterCfg['sql'] ?? ''));
             if ($sqlFrag === '') {
-                return $this->error("Filtro '{$key}' inválido (sin SQL).", 422);
+                return $this->error("Filtro '{$key}' inválido.", 422);
             }
 
-            $columnsEn = array_values(array_map('strval', (array)($filterCfg['columns'] ?? [])));
+            $columnsEn = array_values(array_map('strval', $filterCfg['columns'] ?? []));
             $columnsEs = ColumnMap::translate($columnsEn, 'cases');
-            $querySql  = $baseSql . $sqlFrag;
+
+            $querySql = $baseSql . $sqlFrag;
 
             try {
                 $rows = DB::connection('cases_db')->select($querySql);
@@ -744,80 +622,75 @@ class ConfigurationController extends BaseApiController
 
             $rows = $dedupRows($rows);
             $rows = $filterOutTest($rows);
-            $rows = $enrichWithCustomerData($rows);
+            $rows = $enrich($rows);
             $rows = $projectRows($rows, $columnsEn);
 
-            // === NUEVO: calcular managed_cases SIN filtrar
-            $defaultColumnsEn = array_values(array_unique((array)($stepCfg['default'] ?? [])));
-            $managedBlock     = $calcManagedCases($step, $stepCfg, $defaultColumnsEn);
+            $defaultColumnsEn = array_values(array_unique($stepCfg['default'] ?? []));
+            $managedBlock = CasesFiltersHelper::calcManagedCases(
+                $step, $stepCfg, $defaultColumnsEn, $baseSql, $baseOrder
+            );
 
             return $this->success([
                 'user_id'      => (int) $user->id,
                 'step'         => $step,
-                'filter'       => [
-                    'key'     => (string) $filterCfg['key'],
-                    'name'    => (string) $filterCfg['name'],
-                    'color'   => $filterCfg['color'] ?? null,
-                    'columns' => $columnsEs,
-                ],
+                'filter'       => ['key' => $filterCfg['key'], 'name' => $filterCfg['name'], 'color' => $filterCfg['color'] ?? null, 'columns' => $columnsEs],
                 'data'         => $rows,
                 'managed_cases'=> $managedBlock,
-            ], 'Filtro aplicado', 200);
+            ]);
         }
 
-        // 6) DEFAULT del paso
-        $defaultColumnsEn = array_values(array_unique((array)($stepCfg['default'] ?? [])));
+        // ---------------------- DEFAULT DEL PASO -------------------------
+        $defaultColumnsEn = array_values(array_unique($stepCfg['default'] ?? []));
         $defaultColumnsEs = ColumnMap::translate($defaultColumnsEn, 'cases');
 
         $where = $stateCond($step);
         if (! $where) {
-            return $this->error("Paso '{$step}' no reconocido para default.", 422);
+            return $this->error("Paso '{$step}' no reconocido.", 422);
         }
 
-        // Excluir casos cerrados
         $where = "({$where}) AND (overall_status IS NULL OR LOWER(overall_status) <> 'cerrado')";
 
-        // Reglas especiales para Recaudación y Visita
         $isRecaudacion = ($step === 'recaudacion');
         $isVisita      = ($step === 'visita');
 
-        // ID del usuario que consulta (cast a int para seguridad)
         $userId = (int) $user->id;
 
-        // ID del usuario que consulta (cast a int para seguridad)
         $visitOrder = "ORDER BY
-        CASE WHEN consultant_id = {$userId} THEN 0 ELSE 1 END ASC,
-        COALESCE(inspection_date, '9999-12-31') ASC,
-        COALESCE(schedule_inspection_time, '23:59:59') ASC,
-        id DESC";
+            CASE WHEN consultant_id = {$userId} THEN 0 ELSE 1 END ASC,
+            COALESCE(inspection_date, '9999-12-31') ASC,
+            COALESCE(schedule_inspection_time, '23:59:59') ASC,
+            id DESC";
 
-    $extraWhere = $isRecaudacion
-        ? " AND created_at >= DATE_SUB(NOW(), INTERVAL 2 MONTH)"
-        : "";
+        $extraWhere = $isRecaudacion
+            ? " AND created_at >= DATE_SUB(NOW(), INTERVAL 2 MONTH)"
+            : "";
 
-    $orderBy = $isRecaudacion
-        ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
-        : ($isVisita ? $visitOrder : $baseOrder);
+        $orderBy = $isRecaudacion
+            ? "ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC"
+            : ($isVisita ? $visitOrder : $baseOrder);
 
-    $defaultSql = $baseSql . "WHERE {$where}{$extraWhere} {$orderBy}";
+        $defaultSql = $baseSql . "WHERE {$where}{$extraWhere} {$orderBy}";
 
         try {
             $defaultData = DB::connection('cases_db')->select($defaultSql);
         } catch (\Throwable $e) {
-            return $this->error("Error al ejecutar default del paso '{$step}': " . $e->getMessage(), 422);
+            return $this->error("Error al ejecutar default: " . $e->getMessage(), 422);
         }
 
         $defaultData = $dedupRows($defaultData);
         $defaultData = $filterOutTest($defaultData);
-        $defaultData = $enrichWithCustomerData($defaultData);
+        $defaultData = $enrich($defaultData);
         $defaultData = $projectRows($defaultData, $defaultColumnsEn);
 
-        $filtersMeta = array_map(function ($f) {
-            return ['key' => $f['key'], 'name' => $f['name'], 'color' => $f['color'] ?? null];
-        }, (array)($stepCfg['filters'] ?? []));
+        $filtersMeta = array_map(fn($f) => [
+            'key'   => $f['key'],
+            'name'  => $f['name'],
+            'color' => $f['color'] ?? null
+        ], $stepCfg['filters'] ?? []);
 
-        // managed_cases usando función común
-        $managedBlock = $calcManagedCases($step, $stepCfg, $defaultColumnsEn);
+        $managedBlock = CasesFiltersHelper::calcManagedCases(
+            $step, $stepCfg, $defaultColumnsEn, $baseSql, $baseOrder
+        );
 
         return $this->success([
             'user_id'      => (int) $user->id,
@@ -826,7 +699,7 @@ class ConfigurationController extends BaseApiController
             'filters'      => $filtersMeta,
             'data'         => $defaultData,
             'managed_cases'=> $managedBlock,
-        ], 'Default del paso', 200);
+        ]);
     }
 
     public function getAgentsAvailable()
