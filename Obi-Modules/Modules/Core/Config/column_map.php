@@ -78,6 +78,9 @@ return [
             'schedule_liquidator_inspector_info' => 'Información inspector',
             'softdeleted'            => 'Eliminación parcial',
 
+            'case_code'              => 'TR',
+            'inspection_failed'      => 'Visita fallida',
+
             // enums / estados
             'signature_status'       => 'Estado de firma',
             'denounce_status'        => 'Denuncio - estado',

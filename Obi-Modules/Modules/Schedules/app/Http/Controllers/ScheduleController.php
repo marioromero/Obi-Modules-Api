@@ -108,17 +108,25 @@ class ScheduleController extends BaseApiController
                 return $this->success($detail, 'Programación creada correctamente');
             }
 
-            //Reprogramación
-            if ($isReprog) {
-                // Agregar comentario solo a la programación anterior
-                if (!empty($data['comments'])) {
-                    $previousComments = trim((string)$current->comments);
-                    $newComment = $previousComments === ''
-                        ? $data['comments']
-                        : $previousComments . "\n" . $data['comments'];
+        // Reprogramación
+        if ($isReprog) {
 
-                    $current->update(['comments' => $newComment]);
-                }
+            // Guardar comentario y/o marcar visita fallida SOLO en la programación anterior
+            if (!empty($data['comments']) || isset($data['inspection_failed'])) {
+
+                $previousComments = trim((string)$current->comments);
+                $newComment = $previousComments === ''
+                    ? ($data['comments'] ?? '')
+                    : ($previousComments . "\n" . ($data['comments'] ?? ''));
+
+                $current->update([
+                    'comments' => $newComment,
+                    // Si viene inspection_failed → úsalo. Si no viene, no modificar.
+                    'inspection_failed' => array_key_exists('inspection_failed', $data)
+                        ? (bool)$data['inspection_failed']
+                        : $current->inspection_failed,
+                ]);
+            }
 
                 //Crear nueva programación
                 $new = Schedule::on($this->conn)->create([
@@ -131,7 +139,7 @@ class ScheduleController extends BaseApiController
                     'loss_adjuster_id'          => $data['loss_adjuster_id'] ?? null,
                     'message_sent'              => $data['message_sent'] ?? false,
                     'message_confirmed'         => $data['message_confirmed'] ?? false,
-                    'inspection_failed'         => $data['inspection_failed'] ?? false,
+                    'inspection_failed'         => false,
                 ]);
 
                 $detail = ScheduleDetail::on($this->conn)->find($new->id);

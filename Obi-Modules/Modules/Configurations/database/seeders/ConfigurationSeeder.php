@@ -629,7 +629,8 @@ class ConfigurationSeeder extends Seeder
                         'bank_name','accident_type_name','collection_date',
                         'payment_status','document_signing_date','agent_name',
                         'commune_name','phone','created_at',
-                        'active_notifications','case_flow_last_json'
+                        'active_notifications','case_flow_last_json', 'inspection_date',
+                        'inspection_failed', 'case_code', 'consultant_name',
                     ],
                     'filters' => [
                         [
@@ -651,12 +652,22 @@ class ConfigurationSeeder extends Seeder
                                 'commune_name','phone','bank_name','created_at','agent_name','accident_type_name'
                             ],
                             'sql'     => "ORDER BY created_at DESC, id DESC",
+                         ],
+                        [
+                            'key'     => 'configuration_3',
+                            'name'    => 'Inspecciones Asesores',
+                            'color'   => '#36A4FF',
+                            'columns' => [
+                                'case_code', 'state', 'customer_name', 'inspection_date', 'inspection_failed', 'consultant_name',
+                            ],
+                            'sql'     => "/* handled_in_code */",
                         ],
                     ],
+
                     'managed_cases' => ['months' => 12, 'target_step' => 'recaudacion'],
-                ],
-            ],
-        ];
+                                ],
+                            ],
+                        ];
 
             // Guardar
             DB::connection('configurations_db')->table('configurations')->updateOrInsert(

@@ -679,6 +679,54 @@ class ConfigurationController extends BaseApiController
                 return $this->error("No existe el filtro '{$key}' en el paso '{$step}'.", 404);
             }
 
+             if ($step === 'recaudacion' && ($filterCfg['key'] ?? null) === 'configuration_3') {
+
+                 // Columnas necesarias según el seeder
+                 $columnsEn = array_values(array_map('strval', (array)($filterCfg['columns'] ?? [])));
+                 $columnsEs = ColumnMap::translate($columnsEn, 'cases');
+
+                 // Consulta flexible: no filtra por ningún consultor
+                 $sql = "
+                     SELECT *
+                     FROM v_schedules_details
+                     ORDER BY
+                         COALESCE(inspection_date, '9999-12-31') DESC,
+                         id DESC
+                 ";
+
+                 try {
+                     $rows = DB::connection('schedules_db')->select($sql);
+                 } catch (\Throwable $e) {
+                     return $this->error(
+                         "Error al ejecutar filtro 'Inspecciones': " . $e->getMessage(),
+                         422
+                     );
+                 }
+
+                 // Reutilizamos tus helpers existentes
+                 $rows = $dedupRows($rows);
+                 $rows = $filterOutTest($rows);
+                 // No enriquecemos desde customers_db porque ya viene customer_name
+                 $rows = $projectRows($rows, $columnsEn);
+
+                 // managed_cases funciona igual que siempre
+                 $defaultColumnsEn = array_values(array_unique((array)($stepCfg['default'] ?? [])));
+                 $managedBlock     = $calcManagedCases($step, $stepCfg, $defaultColumnsEn);
+
+                 return $this->success([
+                     'user_id'      => (int) $user->id,
+                     'step'         => $step,
+                     'filter'       => [
+                         'key'     => (string) $filterCfg['key'],
+                         'name'    => (string) $filterCfg['name'],
+                         'color'   => $filterCfg['color'] ?? null,
+                         'columns' => $columnsEs,
+                     ],
+                     'data'         => $rows,
+                     'managed_cases'=> $managedBlock,
+                 ], 'Filtro aplicado', 200);
+             }
+
             $sqlFrag = trim((string)($filterCfg['sql'] ?? ''));
             if ($sqlFrag === '') {
                 return $this->error("Filtro '{$key}' inválido (sin SQL).", 422);

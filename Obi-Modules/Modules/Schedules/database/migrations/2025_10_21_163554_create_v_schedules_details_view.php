@@ -13,6 +13,7 @@ return new class extends Migration
         $casesDb     = config('database.connections.cases_db.database');      // grupoint_obi_cases
         $banksDb     = config('database.connections.banks_db.database');      // grupoint_obi_banks
         $traroDb     = config('database.connections.traro_db.database');      // grupoint_traro
+        $customersDb = config('database.connections.customers_db.database');  // grupoint_obi_customers
 
         // 1) DROP
         DB::connection($this->connection)->statement('DROP VIEW IF EXISTS `v_schedules_details`');
@@ -34,12 +35,16 @@ return new class extends Migration
             s.inspection_failed,
 
             /* ───── Nombres resueltos ───── */
-            c.code  AS case_code,
-            la.name AS loss_adjuster_name,
-            u.name  AS consultant_name
+            c.customer_id        AS customer_id,    -- ID de cliente
+            c.code               AS case_code,      -- Codigo caso
+            c.state              AS state,          -- Estado
+            cu.name              AS customer_name,  -- Nombre cliente
+            la.name              AS loss_adjuster_name,
+            u.name               AS consultant_name
 
         FROM {$schedulesDb}.schedules s
         LEFT JOIN {$casesDb}.cases          c  ON c.id  = s.case_id
+        LEFT JOIN {$customersDb}.customers  cu ON cu.id = c.customer_id
         LEFT JOIN {$banksDb}.loss_adjusters la ON la.id = s.loss_adjuster_id
         LEFT JOIN {$traroDb}.users          u  ON u.id  = s.consultant_id;
         SQL);
