@@ -172,16 +172,22 @@ class CustomerController extends BaseApiController
     {
         $term = str_replace(['.', ' '], '', trim($dni));
 
-        $results = Customer::query()
-            ->select(['id'])
-            ->selectRaw("CONCAT(dni, ' – ', name, ' ', lastname) AS text")
+        $customers = Customer::query()
             ->where('dni', 'LIKE', "%{$term}%")
-            ->orderBy('dni')
             ->limit(15)
             ->get();
 
+        $results = $customers->map(function ($c) {
+            return [
+                'id'            => $c->id,
+                'text'          => "{$c->dni} – {$c->name} {$c->lastname}",
+                'full_customer' => $c, // objeto completo del cliente
+            ];
+        });
+
         return $this->success($results, 'Clientes encontrados por DNI', 200);
     }
+    
     public function customersByName(string $q)
     {
         // Validación mínima inline
