@@ -28,7 +28,6 @@ return new class extends Migration {
             $table->date('online_collection_date')->nullable(); // fecha cobranza online
             $table->integer('accident_number')->nullable(); // numero de siniestro
             $table->integer('bank_service_number')->nullable(); // numero de atencion
-            $table->integer('advisory_amount')->nullable(); // monto asesoria
             $table->foreignId('accident_type_id')->nullable()->constrained('accident_types'); // tipo de siniestro
 
             /* --- Campos transversales mínimos --- */
@@ -50,11 +49,12 @@ return new class extends Migration {
             $table->unsignedBigInteger('consultant_id')->nullable(); // asesor
 
             /* Montos específicos */
-            $table->integer('approved_amount')->nullable(); // monto aprobado
+            $table->integer('approved_amount')->nullable()->default(0); // monto aprobado
+            $table->integer('advisory_amount')->nullable()->default(0); // monto asesoria
             $table->float('uf_approved', 10, 2)->nullable(); // UF aprobadas
-            $table->integer('amount_owed')->nullable(); // monto adeudado
-            $table->integer('amount_owed_including_vat')->nullable(); // deuda con IVA
-            $table->integer('amount_paid')->nullable(); // monto pagado
+            $table->integer('amount_owed')->nullable()->default(0); // monto adeudado
+            $table->integer('amount_owed_including_vat')->nullable()->default(0); // deuda con IVA
+            $table->integer('amount_paid')->nullable()->default(0); // monto pagado
 
             /* Relaciones con banco, aseguradora y liquidadora */
             $table->unsignedBigInteger('bank_id')->nullable(); // FK to banks_db.banks
