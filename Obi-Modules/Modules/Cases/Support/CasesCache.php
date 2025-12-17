@@ -111,16 +111,18 @@ class CasesCache
 
         $newCount = count($payload);
 
-        // 🔐 Blindaje: si ya teníamos snapshot y el nuevo es MUCHO más chico, no lo pisamos
-        if ($oldCount !== null && $oldCount > 0 && $newCount > 0 && $newCount < ($oldCount * 0.5)) {
-            Log::warning('[CasesCache] buildAll detectó snapshot sospechosamente pequeño. Se mantiene el cache anterior.', [
-                'old_count' => $oldCount,
-                'new_count' => $newCount,
-            ]);
+        // Si el nuevo snapshot tiene menos filas que el snapshot anterior,
+        // significa que hay softdeletes → aceptar SIEMPRE el snapshot nuevo.
+        if ($oldCount !== null && $newCount < $oldCount) {
+            Cache::forever(self::CACHE_KEY_ALL, $payload);
 
-            // NO tocamos cases.all ni cases.last_sync, dejamos todo como estaba
+            if ($maxUpdatedAt) {
+                Cache::forever(self::CACHE_KEY_LAST_SYNC, $maxUpdatedAt->toDateTimeString());
+            }
+
             return;
         }
+
 
         // Si es la primera vez, o el nuevo tamaño es razonable → actualizar snapshot
         Cache::forever(self::CACHE_KEY_ALL, $payload);
@@ -182,13 +184,12 @@ class CasesCache
         foreach ($changed as $case) {
             $id = $case->id;
 
-            // updated_at de la TABLA cases → siempre en formato ISO
+            // 1) Parsear updated_at de la tabla cases
             try {
                 $caseUpdatedAt = $case->updated_at instanceof Carbon
                     ? $case->updated_at
                     : Carbon::parse((string) $case->updated_at);
             } catch (\Throwable $e) {
-                // Si algo raro pasa, seguimos con el siguiente
                 continue;
             }
 
@@ -196,13 +197,14 @@ class CasesCache
                 $maxUpdatedAt = $caseUpdatedAt;
             }
 
-            if ($details->has($id)) {
-                // La vista devuelve fila → actualizar payload
-                $cacheAll[$id] = (array) $details->get($id);
-            } else {
-                // La vista no tiene este id → probablemente softdeleted=1 → lo sacamos del cache
+            // 2) Si la vista NO devuelve el caso → significa softdeleted = 1 → remover SIEMPRE
+            if (! $details->has($id)) {
                 unset($cacheAll[$id]);
+                continue;
             }
+
+            // 3) Si existe en la vista → actualizar payload
+            $cacheAll[$id] = (array) $details->get($id);
         }
 
         Cache::forever(self::CACHE_KEY_ALL, $cacheAll);
