@@ -34,3 +34,10 @@ Route::get   ('configurations/agents-available',  [ConfigurationController::clas
 Route::patch ('configurations/agents-available',  [ConfigurationController::class, 'updateAgentsAvailable']);
 Route::get   ('configurations/consultants-available',  [ConfigurationController::class, 'getConsultantsAvailable']);
 Route::patch ('configurations/consultants-available',  [ConfigurationController::class, 'updateConsultantsAvailable']);
+
+// Rutas para filtros de usuario en configuraciones
+Route::get( 'configurations/user-filters/{user}/{step?}',[ConfigurationController::class, 'indexFilters'])->whereNumber('user');
+Route::get('configurations/user-filters/{user}/{step}/{key}',[ConfigurationController::class, 'showFilters'])->whereNumber('user');
+Route::post('configurations/user-filters/{user}/{step}',[ConfigurationController::class, 'storeFilters'])->whereNumber('user');
+Route::put('configurations/user-filters/{user}/{step}/{key}',[ConfigurationController::class, 'updateFilters'])->whereNumber('user');
+Route::delete('configurations/user-filters/{user}/{step}/{key}',[ConfigurationController::class, 'destroyFilters'])->whereNumber('user');
