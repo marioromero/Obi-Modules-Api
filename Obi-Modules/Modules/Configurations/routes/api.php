@@ -41,3 +41,4 @@ Route::get('configurations/user-filters/{user}/{step}/{key}',[ConfigurationContr
 Route::post('configurations/user-filters/{user}/{step}',[ConfigurationController::class, 'storeFilters'])->whereNumber('user');
 Route::put('configurations/user-filters/{user}/{step}/{key}',[ConfigurationController::class, 'updateFilters'])->whereNumber('user');
 Route::delete('configurations/user-filters/{user}/{step}/{key}',[ConfigurationController::class, 'destroyFilters'])->whereNumber('user');
+Route::post('configurations/user-filters/{user}/{step}/preview',[ConfigurationController::class, 'previewFilters'])->whereNumber('user');

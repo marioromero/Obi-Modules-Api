@@ -1582,4 +1582,181 @@ class ConfigurationController extends BaseApiController
             'filters' => $filters,
         ], 'Filtro eliminado correctamente.');
     }
+
+    // Preview de un filtro (no guarda solo lo previsualiza)
+    public function previewFilters(Request $request, int $user, string $step)
+    {
+        // 1) Normalizar paso
+        $step = UserFiltersHelper::normalizeStep($step);
+        if (! $step) {
+            return $this->error("Paso inválido.", 422);
+        }
+
+        // 2) Validar body (igual que storeFilters)
+        $data = $request->validate([
+            'name'      => 'required|string|max:255',
+            'color'     => 'nullable|string|max:32',
+            'columns'   => 'required|array|min:1',
+            'columns.*' => 'string',
+            'sql'       => 'required|string',
+            'key'       => 'sometimes|string|max:255',
+        ]);
+
+        $userKey = (string) $user;
+
+        // 3) Cargar configuración del usuario (si existe)
+        $rows  = Configuration::where('type_id', 1)->get();
+        $found = UserFiltersHelper::findRowForUser($rows, $user);
+
+        if (! $found) {
+            // Usuario sin config → usar defaults en memoria
+            $content = [
+                $userKey => [
+                    'steps' => [],
+                ],
+            ];
+        } else {
+            $content = $found['content'];
+        }
+
+        // Asegurar estructura del paso (default + filters + managed_cases)
+        $content = UserFiltersHelper::ensureUserStepStructure($content, $user, $step);
+        $stepCfg = $content[$userKey]['steps'][$step];
+
+        // 4) Construir filtro VOLÁTIL (no se guarda)
+        $finalKey = $data['key'] ?? UserFiltersHelper::makeKeyFromName($data['name']);
+
+        $filterCfg = [
+            'key'     => $finalKey,
+            'name'    => $data['name'],
+            'color'   => $data['color'] ?? null,
+            'columns' => array_values($data['columns']),
+            'sql'     => $data['sql'],
+        ];
+
+        // 5) Helpers (idénticos a showFilters)
+        $dedupRows     = fn(array $rows) => CasesFiltersHelper::dedupRows($rows);
+        $filterOutTest = fn(array $rows) => CasesFiltersHelper::filterOutTest($rows);
+        $enrich        = fn(array $rows) => CasesFiltersHelper::enrichWithCustomerData($rows);
+        $projectRows   = fn(array $rows, array $cols) => CasesFiltersHelper::projectRows($rows, $cols);
+
+        $baseOrder = 'ORDER BY created_at DESC, id DESC';
+        $baseSql   = 'SELECT * FROM v_cases_details v ';
+
+        $sqlFrag = trim((string) ($filterCfg['sql'] ?? ''));
+
+        // 6) Caso especial recaudación (handled_in_code)
+        if (
+            $step === 'recaudacion'
+            && ($filterCfg['key'] ?? null) === 'configuration_3'
+            && $sqlFrag === '/* handled_in_code */'
+        ) {
+            $columnsEn = array_values(array_map('strval', $filterCfg['columns'] ?? []));
+
+            foreach (['active_notifications', 'case_flow_last_json'] as $extraCol) {
+                if (in_array($extraCol, $stepCfg['default'] ?? [], true)
+                    && ! in_array($extraCol, $columnsEn, true)
+                ) {
+                    $columnsEn[] = $extraCol;
+                }
+            }
+
+            $columnsEs = ColumnMap::translate($filterCfg['columns'] ?? [], 'cases');
+
+            $sql = "
+                SELECT *
+                FROM v_schedules_details
+                ORDER BY COALESCE(inspection_date, '9999-12-31') DESC, id DESC
+            ";
+
+            try {
+                $rows = DB::connection('schedules_db')->select($sql);
+            } catch (\Throwable $e) {
+                return $this->error(
+                    "Error al ejecutar preview de 'Inspecciones': " . $e->getMessage(),
+                    422
+                );
+            }
+
+            $rows = $dedupRows($rows);
+            $rows = $filterOutTest($rows);
+            $rows = $projectRows($rows, $columnsEn);
+
+            $defaultColumnsEn = array_values(array_unique($stepCfg['default'] ?? []));
+            $managedBlock = CasesFiltersHelper::calcManagedCases(
+                $step,
+                $stepCfg,
+                $defaultColumnsEn,
+                $baseSql,
+                $baseOrder
+            );
+
+            return $this->success([
+                'user_id' => $user,
+                'step'    => $step,
+                'filter'  => [
+                    'key'     => (string) $filterCfg['key'],
+                    'name'    => (string) $filterCfg['name'],
+                    'color'   => $filterCfg['color'],
+                    'columns' => $columnsEs,
+                ],
+                'data'          => $rows,
+                'managed_cases' => $managedBlock,
+            ], 'Preview generado correctamente.');
+        }
+
+        // 7) Filtros normales (v_cases_details)
+        if ($sqlFrag === '') {
+            return $this->error("Filtro inválido (SQL vacío).", 422);
+        }
+
+        $visibleColumnsEn = array_values(array_map('strval', $filterCfg['columns']));
+        $columnsEn        = $visibleColumnsEn;
+
+        foreach (['active_notifications', 'case_flow_last_json'] as $extraCol) {
+            if (in_array($extraCol, $stepCfg['default'] ?? [], true)
+                && ! in_array($extraCol, $columnsEn, true)
+            ) {
+                $columnsEn[] = $extraCol;
+            }
+        }
+
+        $columnsEs = ColumnMap::translate($visibleColumnsEn, 'cases');
+
+        try {
+            $rows = DB::connection('cases_db')->select($baseSql . $sqlFrag);
+        } catch (\Throwable $e) {
+            return $this->error(
+                "Error al ejecutar preview del filtro: " . $e->getMessage(),
+                422
+            );
+        }
+
+        $rows = $dedupRows($rows);
+        $rows = $filterOutTest($rows);
+        $rows = $enrich($rows);
+        $rows = $projectRows($rows, $columnsEn);
+
+        $defaultColumnsEn = array_values(array_unique($stepCfg['default'] ?? []));
+        $managedBlock = CasesFiltersHelper::calcManagedCases(
+            $step,
+            $stepCfg,
+            $defaultColumnsEn,
+            $baseSql,
+            $baseOrder
+        );
+
+        return $this->success([
+            'user_id'       => $user,
+            'step'          => $step,
+            'filter'        => [
+                'key'     => (string) $filterCfg['key'],
+                'name'    => (string) $filterCfg['name'],
+                'color'   => $filterCfg['color'],
+                'columns' => $columnsEs,
+            ],
+            'data'          => $rows,
+            'managed_cases' => $managedBlock,
+        ], 'Preview generado correctamente.');
+    }
 }
