@@ -21,6 +21,7 @@ class TypeSeeder extends Seeder
             ['name' => 'States_machine'],
             ['name' => 'Agent_available'],
             ['name' => 'Consultant_available'],
+            ['name' => 'User_charts'],
         ]);
     }
 }
