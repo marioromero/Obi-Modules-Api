@@ -36,9 +36,15 @@ Route::get   ('configurations/consultants-available',  [ConfigurationController:
 Route::patch ('configurations/consultants-available',  [ConfigurationController::class, 'updateConsultantsAvailable']);
 
 // Rutas para filtros de usuario en configuraciones
-Route::get( 'configurations/user-filters/{user}/{step?}',[ConfigurationController::class, 'indexFilters'])->whereNumber('user');
-Route::get('configurations/user-filters/{user}/{step}/{key}',[ConfigurationController::class, 'showFilters'])->whereNumber('user');
+Route::get('configurations/user-filters/{user}/{step}/{key?}', [ConfigurationController::class, 'showFilters'])->whereNumber('user');
+Route::get('configurations/user-filters/{user}/{step?}', [ConfigurationController::class, 'indexFilters'])->whereNumber('user');
 Route::post('configurations/user-filters/{user}/{step}',[ConfigurationController::class, 'storeFilters'])->whereNumber('user');
 Route::put('configurations/user-filters/{user}/{step}/{key}',[ConfigurationController::class, 'updateFilters'])->whereNumber('user');
 Route::delete('configurations/user-filters/{user}/{step}/{key}',[ConfigurationController::class, 'destroyFilters'])->whereNumber('user');
 Route::post('configurations/user-filters/{user}/{step}/preview',[ConfigurationController::class, 'previewFilters'])->whereNumber('user');
+
+// Rutas para graficos por usuario o rol
+Route::get('configurations/user-charts/{user}/{scope?}', [ConfigurationController::class, 'indexCharts'])->whereNumber('user');
+Route::post('configurations/user-charts/{user}/{scope}', [ConfigurationController::class, 'storeCharts'])->whereNumber('user');
+Route::put('configurations/user-charts/{user}/{scope}/{chart_id}', [ConfigurationController::class, 'updateCharts'])->whereNumber('user')->whereNumber('chart_id');
+Route::delete('configurations/user-charts/{user}/{scope}/{chart_id}', [ConfigurationController::class, 'deleteCharts'])->whereNumber('user')->whereNumber('chart_id');

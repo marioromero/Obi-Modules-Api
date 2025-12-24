@@ -14,9 +14,12 @@ use Modules\Cases\Support\CasesCache;
 use Modules\Configurations\app\Helpers\CasesFiltersHelper;
 use Illuminate\Support\Carbon;
 use Modules\Configurations\app\Helpers\UserFiltersHelper;
+use Modules\Configurations\app\Helpers\UserChartsHelper;
 
 class ConfigurationController extends BaseApiController
 {
+    private const TYPE_ID_USER_CHARTS = 9;
+
     public function index()
     {
         $paginator = Configuration::paginate(15);
@@ -1206,7 +1209,7 @@ class ConfigurationController extends BaseApiController
     }
 
     // Mostrar un filtro específico de un usuario + paso + key.
-    public function showFilters(int $user, string $step, string $key)
+    public function showFilters(int $user, string $step, ?string $key = null)
     {
         // 1) Normalizar paso
         $step = UserFiltersHelper::normalizeStep($step);
@@ -1218,29 +1221,24 @@ class ConfigurationController extends BaseApiController
         $rows  = Configuration::where('type_id', 1)->get();
         $found = UserFiltersHelper::findRowForUser($rows, $user);
 
-        if (! $found) {
-            return $this->error("El usuario no tiene registro de filtros.", 404);
-        }
-
         $userKey = (string) $user;
-        $row     = $found['row'];
-        $content = $found['content'];
 
-        if (! isset($content[$userKey]['steps'][$step])) {
-            return $this->error("El paso '{$step}' no existe para este usuario.", 404);
+        if (! $found) {
+            // Fallback: el usuario no tiene fila -> usamos defaults globales del helper
+            $stepCfg = UserFiltersHelper::buildEmptyStepConfig($step);
+        } else {
+            $content = $found['content'];
+
+            if (! isset($content[$userKey]['steps'][$step])) {
+                // Fallback: el usuario tiene fila pero no tiene ese paso -> usamos defaults globales
+                $stepCfg = UserFiltersHelper::buildEmptyStepConfig($step);
+            } else {
+                // Config normal del usuario
+                $stepCfg = $content[$userKey]['steps'][$step];
+            }
         }
 
-        $stepCfg = $content[$userKey]['steps'][$step];
-
-        // 3) Buscar el filtro por key dentro de ese paso
-        $filtersArr = $stepCfg['filters'] ?? [];
-        $filterCfg  = collect($filtersArr)->firstWhere('key', $key);
-
-        if (! $filterCfg) {
-            return $this->error("No existe el filtro '{$key}' para este usuario y paso.", 404);
-        }
-
-        // 4) Helpers externos (igual que en getUsersFiltersAndColumns)
+        // 3) Helpers externos
         $dedupRows     = fn(array $rows) => CasesFiltersHelper::dedupRows($rows);
         $filterOutTest = fn(array $rows) => CasesFiltersHelper::filterOutTest($rows);
         $enrich        = fn(array $rows) => CasesFiltersHelper::enrichWithCustomerData($rows);
@@ -1249,27 +1247,202 @@ class ConfigurationController extends BaseApiController
         $baseOrder = 'ORDER BY created_at DESC, id DESC';
         $baseSql   = 'SELECT * FROM v_cases_details v ';
 
-        // 5) Caso especial histórico: recaudación → "Inspecciones Asesores" (configuration_3, handled_in_code)
+        // A) DEFAULT (SIN FILTRO)
+        $isDefault = ($key === null || trim((string)$key) === '' || strtolower(trim((string)$key)) === 'default');
+
+        if ($isDefault) {
+
+            $defaultColumnsEn = array_values(array_unique($stepCfg['default'] ?? []));
+            $defaultColumnsEs = ColumnMap::translate($defaultColumnsEn, 'cases');
+
+            $labelMap = [
+                'denuncio'     => 'Denuncio',
+                'programacion' => 'Programacion',
+                'visita'       => 'Visita',
+                'presupuesto'  => 'Presupuesto',
+                'liquidacion'  => 'Liquidacion',
+                'recaudacion'  => 'Recaudacion',
+            ];
+
+            $label = $labelMap[$step] ?? null;
+            if (! $label) {
+                return $this->error("Paso '{$step}' no reconocido.", 422);
+            }
+
+            $isRecaudacion = ($step === 'recaudacion');
+            $isVisita      = ($step === 'visita');
+            $userId        = (int) $user;
+
+            // recaudación -> últimos 2 meses por created_at
+            $limitReca = $isRecaudacion ? Carbon::now()->subMonths(2) : null;
+
+            try {
+                // 1) Leer snapshot desde cache
+                $snapshot = CasesCache::getAll();
+
+                // 2) Convertir a objetos
+                $dataRows = [];
+                foreach ($snapshot as $rowArr) {
+                    $dataRows[] = (object) $rowArr;
+                }
+
+                // 3) Filtrar por paso, no cerrado y (recaudación: ventana 2 meses)
+                $dataRows = array_values(array_filter($dataRows, function ($r) use ($label, $isRecaudacion, $limitReca) {
+                    $state = $r->state ?? null;
+                    if (! $state) return false;
+
+                    $normalized = str_replace('\\', '/', $state);
+                    $suffix     = (($pos = strrpos($normalized, '/')) !== false) ? substr($normalized, $pos + 1) : $normalized;
+
+                    if ($suffix !== $label) return false;
+
+                    $overall = strtolower(trim($r->overall_status ?? ''));
+                    if ($overall === 'cerrado') return false;
+
+                    if ($isRecaudacion && $limitReca) {
+                        $created = $r->created_at ?? null;
+                        if (! $created) return false;
+
+                        try {
+                            $createdDt = Carbon::parse((string) $created);
+                        } catch (\Throwable $e) {
+                            return false;
+                        }
+
+                        if ($createdDt->lt($limitReca)) return false;
+                    }
+
+                    return true;
+                }));
+
+                // 4) Orden
+                if ($isRecaudacion) {
+                    // ORDER BY COALESCE(probable_payment_date, created_at) ASC, id DESC
+                    usort($dataRows, function ($a, $b) {
+                        $aBase = ($a->probable_payment_date ?? null) ?: ($a->created_at ?? null);
+                        $bBase = ($b->probable_payment_date ?? null) ?: ($b->created_at ?? null);
+
+                        try {
+                            $aDt = $aBase ? Carbon::parse((string) $aBase) : null;
+                            $bDt = $bBase ? Carbon::parse((string) $bBase) : null;
+                        } catch (\Throwable $e) {
+                            $aDt = $bDt = null;
+                        }
+
+                        if ($aDt && $bDt) {
+                            if ($aDt->eq($bDt)) return ($b->id <=> $a->id);
+                            return $aDt->lt($bDt) ? -1 : 1;
+                        }
+
+                        if ($aDt && ! $bDt) return -1;
+                        if (! $aDt && $bDt) return 1;
+
+                        return ($b->id <=> $a->id);
+                    });
+                } elseif ($isVisita) {
+                    // prioridad asesor propio, luego fecha, hora, id
+                    usort($dataRows, function ($a, $b) use ($userId) {
+                        $aPri = ((int)($a->consultant_id ?? 0) === $userId) ? 0 : 1;
+                        $bPri = ((int)($b->consultant_id ?? 0) === $userId) ? 0 : 1;
+
+                        if ($aPri !== $bPri) return $aPri <=> $bPri;
+
+                        $aIns = $a->inspection_date ?? null;
+                        $bIns = $b->inspection_date ?? null;
+
+                        try {
+                            $aDt = $aIns ? Carbon::parse((string) $aIns) : null;
+                            $bDt = $bIns ? Carbon::parse((string) $bIns) : null;
+                        } catch (\Throwable $e) {
+                            $aDt = $bDt = null;
+                        }
+
+                        if ($aDt && $bDt && ! $aDt->eq($bDt)) return $aDt->lt($bDt) ? -1 : 1;
+                        if ($aDt && ! $bDt) return -1;
+                        if (! $aDt && $bDt) return 1;
+
+                        $aTime = $a->schedule_inspection_time ?? '23:59:59';
+                        $bTime = $b->schedule_inspection_time ?? '23:59:59';
+                        if ($aTime !== $bTime) return strcmp($aTime, $bTime);
+
+                        return ($b->id <=> $a->id);
+                    });
+                } else {
+                    // ORDER BY created_at DESC, id DESC
+                    usort($dataRows, function ($a, $b) {
+                        $aC = $a->created_at ?? null;
+                        $bC = $b->created_at ?? null;
+
+                        try {
+                            $aDt = $aC ? Carbon::parse((string) $aC) : null;
+                            $bDt = $bC ? Carbon::parse((string) $bC) : null;
+                        } catch (\Throwable $e) {
+                            $aDt = $bDt = null;
+                        }
+
+                        if ($aDt && $bDt && ! $aDt->eq($bDt)) return $bDt->lt($aDt) ? -1 : 1;
+                        if ($aDt && ! $bDt) return -1;
+                        if (! $aDt && $bDt) return 1;
+
+                        return ($b->id <=> $a->id);
+                    });
+                }
+
+                // 5) Aplicar helpers
+                $defaultData = $dedupRows($dataRows);
+                $defaultData = $filterOutTest($defaultData);
+                $defaultData = $enrich($defaultData);
+                $defaultData = $projectRows($defaultData, $defaultColumnsEn);
+
+            } catch (\Throwable $e) {
+                return $this->error("Error al ejecutar default: " . $e->getMessage(), 422);
+            }
+
+            // Meta filtros (para que el front pinte botones)
+            $filtersMeta = array_map(fn($f) => [
+                'key'   => $f['key'] ?? '',
+                'name'  => $f['name'] ?? '',
+                'color' => $f['color'] ?? null,
+            ], $stepCfg['filters'] ?? []);
+
+            $managedBlock = CasesFiltersHelper::calcManagedCases(
+                $step, $stepCfg, $defaultColumnsEn, $baseSql, $baseOrder
+            );
+
+            return $this->success([
+                'user_id'       => (int) $user,
+                'step'          => $step,
+                'default'       => $defaultColumnsEs,
+                'filters'       => $filtersMeta,
+                'data'          => $defaultData,
+                'managed_cases' => $managedBlock,
+            ]);
+        }
+
+        // B) CON FILTRO
+        $filtersArr = $stepCfg['filters'] ?? [];
+        $filterCfg  = collect($filtersArr)->firstWhere('key', $key);
+
+        if (! $filterCfg) {
+            return $this->error("No existe el filtro '{$key}' para este usuario y paso.", 404);
+        }
+
         $sqlFrag = trim((string)($filterCfg['sql'] ?? ''));
 
+        // Caso especial: recaudación → Inspecciones Asesores (handled_in_code)
         if (
             $step === 'recaudacion'
-            && ($filterCfg['key'] ?? null) === 'configuration_3'
-            && $sqlFrag === '/* handled_in_code */'
+            && ($filterCfg['key'] ?? '') === 'inspecciones_asesores'
+            && stripos($sqlFrag, 'handled_in_code') !== false
         ) {
-            // Columnas en inglés para payload
             $columnsEn = array_values(array_map('strval', $filterCfg['columns'] ?? []));
 
-            // Asegurar que siempre viajen estas columnas si están en el default
             foreach (['active_notifications', 'case_flow_last_json'] as $extraCol) {
-                if (in_array($extraCol, $stepCfg['default'] ?? [], true)
-                    && ! in_array($extraCol, $columnsEn, true)
-                ) {
+                if (in_array($extraCol, $stepCfg['default'] ?? [], true) && ! in_array($extraCol, $columnsEn, true)) {
                     $columnsEn[] = $extraCol;
                 }
             }
 
-            // Columnas “visibles” (para el front) traducidas
             $columnsEs = ColumnMap::translate($filterCfg['columns'] ?? [], 'cases');
 
             $sql = "
@@ -1290,11 +1463,7 @@ class ConfigurationController extends BaseApiController
 
             $defaultColumnsEn = array_values(array_unique($stepCfg['default'] ?? []));
             $managedBlock = CasesFiltersHelper::calcManagedCases(
-                $step,
-                $stepCfg,
-                $defaultColumnsEn,
-                $baseSql,
-                $baseOrder
+                $step, $stepCfg, $defaultColumnsEn, $baseSql, $baseOrder
             );
 
             return $this->success([
@@ -1311,7 +1480,7 @@ class ConfigurationController extends BaseApiController
             ]);
         }
 
-        // 6) Filtros normales (SQL directo sobre v_cases_details)
+        // Filtros normales (SQL directo)
         if ($sqlFrag === '') {
             return $this->error("Filtro '{$key}' inválido (SQL vacío).", 422);
         }
@@ -1320,16 +1489,12 @@ class ConfigurationController extends BaseApiController
         $visibleColumnsEn = array_values(array_map('strval', $filterCfg['columns'] ?? []));
         $columnsEn        = $visibleColumnsEn;
 
-        // Añadir siempre estas columnas si están en el default
         foreach (['active_notifications', 'case_flow_last_json'] as $extraCol) {
-            if (in_array($extraCol, $stepCfg['default'] ?? [], true)
-                && ! in_array($extraCol, $columnsEn, true)
-            ) {
+            if (in_array($extraCol, $stepCfg['default'] ?? [], true) && ! in_array($extraCol, $columnsEn, true)) {
                 $columnsEn[] = $extraCol;
             }
         }
 
-        // Columnas en español para el front
         $columnsEs = ColumnMap::translate($visibleColumnsEn, 'cases');
 
         $querySql = $baseSql . $sqlFrag;
@@ -1347,24 +1512,20 @@ class ConfigurationController extends BaseApiController
 
         $defaultColumnsEn = array_values(array_unique($stepCfg['default'] ?? []));
         $managedBlock = CasesFiltersHelper::calcManagedCases(
-            $step,
-            $stepCfg,
-            $defaultColumnsEn,
-            $baseSql,
-            $baseOrder
+            $step, $stepCfg, $defaultColumnsEn, $baseSql, $baseOrder
         );
 
         return $this->success([
-            'user_id'      => $user,
-            'step'         => $step,
-            'filter'       => [
+            'user_id' => $user,
+            'step'    => $step,
+            'filter'  => [
                 'key'     => (string) ($filterCfg['key'] ?? ''),
                 'name'    => (string) ($filterCfg['name'] ?? ''),
                 'color'   => $filterCfg['color'] ?? null,
                 'columns' => $columnsEs,
             ],
-            'data'         => $rows,
-            'managed_cases'=> $managedBlock,
+            'data'          => $rows,
+            'managed_cases' => $managedBlock,
         ]);
     }
 
@@ -1390,15 +1551,20 @@ class ConfigurationController extends BaseApiController
         $found = UserFiltersHelper::findRowForUser($rows, $user);
 
         if (! $found) {
-            $row = new Configuration();
-            $row->type_id = 1;
+        $row = new Configuration();
+        $row->type_id = 1;
 
-            // 1 fila = 1 usuario → content parte con la key del user
-            $content = [
-                $userKey => [
-                    'steps' => [],
-                ],
-            ];
+        // 1 fila = 1 usuario → crear TODOS los pasos con defaults (sin filtros)
+        $steps = [];
+        foreach (UserFiltersHelper::STEPS as $s) {
+            $steps[$s] = UserFiltersHelper::buildEmptyStepConfig($s);
+        }
+
+        $content = [
+            $userKey => [
+                'steps' => $steps, // denuncio, programacion, visita, presupuesto, liquidacion, recaudacion
+            ],
+        ];
         } else {
             $row     = $found['row'];
             $content = $found['content'];
@@ -1758,5 +1924,412 @@ class ConfigurationController extends BaseApiController
             'data'          => $rows,
             'managed_cases' => $managedBlock,
         ], 'Preview generado correctamente.');
+    }
+
+
+    // ENDPOINTS PARA GRAFICOS POR USUARIO O POR ROL
+    public function indexCharts(int $user, ?string $scope = null)
+    {
+        $scope = $scope ? UserChartsHelper::normalizeScope($scope) : null;
+        if ($scope === false) {
+            return $this->error("Scope inválido.", 422);
+        }
+
+        $roleId = DB::connection('traro_db')->table('users')->where('id', $user)->value('role_id');
+        if (! $roleId) {
+            return $this->error("No se pudo resolver el rol.", 422);
+        }
+
+        $userRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+            ->where('content->scope', 'by-user')
+            ->where('content->scope-id', (string) $user)
+            ->first();
+
+        $rolRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+            ->where('content->scope', 'by-rol')
+            ->where('content->scope-id', (string) $roleId)
+            ->first();
+
+        return $this->success([
+            'user_id'   => $user,
+            'role_id'   => (int) $roleId,
+            'charts'    => [
+                'by_user' => $userRow ? data_get($userRow->content, 'charts', []) : [],
+                'by_rol'  => $rolRow  ? data_get($rolRow->content, 'charts', [])  : [],
+            ],
+            'visibility' => $userRow ? data_get($userRow->content, 'visibility', []) : [],
+        ], 'OK');
+    }
+
+    //Crea un chart en el registro (fila) correspondiente segun scope
+    public function storeCharts(Request $request, int $user, string $scope)
+    {
+        $scope = UserChartsHelper::normalizeScope($scope);
+        if ($scope === false) {
+            return $this->error("Scope inválido.", 422);
+        }
+
+        $data = $request->validate([
+            'sql'                        => 'required|string',
+            'chart_config'               => 'required|array',
+            'chart_config.type'          => 'required|string',
+            'chart_config.title'         => 'required|string',
+            'chart_config.xaxis_column'  => 'required|string',
+            'chart_config.series_column' => 'required|string',
+            'chart_config.series_name'   => 'required|string',
+            'options.color'              => 'nullable|string',
+        ]);
+
+        // Resolver rol del usuario
+        $roleId = DB::connection('traro_db')
+            ->table('users')
+            ->where('id', $user)
+            ->value('role_id');
+
+        if (! $roleId) {
+            return $this->error("No se pudo resolver el rol del usuario {$user}.", 422);
+        }
+
+        return DB::transaction(function () use ($scope, $user, $roleId, $data) {
+
+            $userRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                ->where('content->scope', 'by-user')
+                ->where('content->scope-id', (string) $user)
+                ->lockForUpdate()
+                ->first();
+
+            $rolRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                ->where('content->scope', 'by-rol')
+                ->where('content->scope-id', (string) $roleId)
+                ->lockForUpdate()
+                ->first();
+
+            $userCharts = $userRow ? data_get($userRow->content, 'charts', []) : [];
+            $rolCharts  = $rolRow  ? data_get($rolRow->content, 'charts', [])  : [];
+
+            $chartId = UserChartsHelper::nextGlobalChartId($userCharts, $rolCharts);
+
+            $chart = [
+                'chart_id'     => $chartId,
+                'sql'          => $data['sql'],
+                'chart_config' => $data['chart_config'],
+                'options'      => [
+                    'color' => data_get($data, 'options.color'),
+                ],
+            ];
+
+            if ($scope === 'by-user') {
+
+                if (! $userRow) {
+                    $userRow = new Configuration();
+                    $userRow->type_id = self::TYPE_ID_USER_CHARTS;
+                    $userRow->content = [
+                        'scope'      => 'by-user',
+                        'scope-id'   => (string) $user,
+                        'charts'     => [],
+                        'visibility' => [],
+                    ];
+                }
+
+                $content = $userRow->content;
+
+                // Agregar chart
+                $content['charts'][] = $chart;
+
+                // Agregar a visibility SOLO si no existe
+                if (! in_array($chartId, $content['visibility'], true)) {
+                    $content['visibility'][] = $chartId;
+                }
+
+                $userRow->content = $content;
+                $userRow->save();
+            }
+
+            if ($scope === 'by-rol') {
+
+                if (! $rolRow) {
+                    $rolRow = new Configuration();
+                    $rolRow->type_id = self::TYPE_ID_USER_CHARTS;
+                    $rolRow->content = [
+                        'scope'    => 'by-rol',
+                        'scope-id' => (string) $roleId,
+                        'charts'   => [],
+                    ];
+                }
+
+                // Guardar chart en rol
+                $rolContent = $rolRow->content;
+                $rolContent['charts'][] = $chart;
+                $rolRow->content = $rolContent;
+                $rolRow->save();
+
+                $users = DB::connection('traro_db')
+                    ->table('users')
+                    ->where('role_id', $roleId)
+                    ->pluck('id');
+
+                foreach ($users as $uid) {
+
+                    $uRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                        ->where('content->scope', 'by-user')
+                        ->where('content->scope-id', (string) $uid)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $uRow) {
+                        $uRow = new Configuration();
+                        $uRow->type_id = self::TYPE_ID_USER_CHARTS;
+                        $uRow->content = [
+                            'scope'      => 'by-user',
+                            'scope-id'   => (string) $uid,
+                            'charts'     => [],
+                            'visibility' => [],
+                        ];
+                    }
+
+                    $uContent = $uRow->content;
+
+                    if (! in_array($chartId, $uContent['visibility'], true)) {
+                        $uContent['visibility'][] = $chartId;
+                    }
+
+                    $uRow->content = $uContent;
+                    $uRow->save();
+                }
+            }
+
+            return $this->success(
+                ['chart' => $chart],
+                'Gráfico creado correctamente',
+                200
+            );
+        });
+    }
+
+    //Actualiza un chart (por chart_id) dentro del registro correcto (scope + scope-id).
+    public function updateCharts(Request $request, int $user, string $scope, int $chart_id)
+    {
+        $scope = UserChartsHelper::normalizeScope($scope);
+        if ($scope === false) {
+            return $this->error("Scope inválido.", 422);
+        }
+
+        $data = $request->validate([
+            'sql'           => 'sometimes|string',
+            'chart_config'  => 'sometimes|array',
+            'options.color' => 'nullable|string',
+            'visibility'    => 'sometimes|array',
+        ]);
+
+        // Resolver rol del usuario
+        $roleId = DB::connection('traro_db')
+            ->table('users')
+            ->where('id', $user)
+            ->value('role_id');
+
+        if (! $roleId) {
+            return $this->error("No se pudo resolver el rol del usuario {$user}.", 422);
+        }
+
+        $scopeId = $scope === 'by-user' ? (string) $user : (string) $roleId;
+
+        return DB::transaction(function () use ($scope, $scopeId, $chart_id, $data, $user, $roleId) {
+
+            $row = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                ->where('content->scope', $scope)
+                ->where('content->scope-id', $scopeId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $row) {
+                return $this->error('No existe configuración para este scope.', 404);
+            }
+
+            $content = (array) $row->content;
+
+            if (array_key_exists('visibility', $data)) {
+
+                if ($scope !== 'by-user') {
+                    return $this->error(
+                        'La visibilidad solo se puede modificar a nivel de usuario.',
+                        422
+                    );
+                }
+
+                // Charts del usuario
+                $userCharts = (array) data_get($content, 'charts', []);
+
+                // Charts del rol (lectura correcta del JSON)
+                $rolRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                    ->where('content->scope', 'by-rol')
+                    ->where('content->scope-id', (string) $roleId)
+                    ->first();
+
+                $rolCharts = $rolRow
+                    ? (array) data_get($rolRow->content, 'charts', [])
+                    : [];
+
+                // IDs válidos permitidos (user + rol)
+                $validIds = collect(array_merge($userCharts, $rolCharts))
+                    ->pluck('chart_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->toArray();
+
+                // IDs enviados por el frontend (normalizados, SIN guardar aún)
+                $sentIds = array_values(
+                    array_unique(
+                        array_map('intval', $data['visibility'])
+                    )
+                );
+
+                // Detectar IDs inválidos
+                $invalidIds = array_diff($sentIds, $validIds);
+
+                if (! empty($invalidIds)) {
+                    return $this->error(
+                        'Visibility contiene IDs no válidos: ' . implode(', ', $invalidIds),
+                        422
+                    );
+                }
+
+                $content['visibility'] = $sentIds;
+                $row->content = $content;
+                $row->save();
+
+                return $this->success(
+                    ['visibility' => $content['visibility']],
+                    'Visibilidad actualizada correctamente',
+                    200
+                );
+            }
+
+            $charts = (array) data_get($content, 'charts', []);
+            $idx = UserChartsHelper::findChartIndexById($charts, $chart_id);
+
+            if ($idx === null) {
+                return $this->error(
+                    "No existe el gráfico con chart_id={$chart_id}.",
+                    404
+                );
+            }
+
+            if (isset($data['sql'])) {
+                $charts[$idx]['sql'] = $data['sql'];
+            }
+
+            if (isset($data['chart_config'])) {
+                $charts[$idx]['chart_config'] = $data['chart_config'];
+            }
+
+            if (isset($data['options']['color'])) {
+                $charts[$idx]['options']['color'] = $data['options']['color'];
+            }
+
+            $content['charts'] = $charts;
+            $row->content = $content;
+            $row->save();
+
+            return $this->success(
+                ['chart' => $charts[$idx]],
+                'Gráfico actualizado correctamente',
+                200
+            );
+        });
+    }
+
+    //Elimina un chart por chart_id del registro correcto.
+    public function deleteCharts(int $user, string $scope, int $chart_id)
+    {
+        $scope = UserChartsHelper::normalizeScope($scope);
+        if ($scope === false) {
+            return $this->error("Scope inválido.", 422);
+        }
+
+        // Resolver rol del usuario
+        $roleId = DB::connection('traro_db')
+            ->table('users')
+            ->where('id', $user)
+            ->value('role_id');
+
+        if (! $roleId) {
+            return $this->error("No se pudo resolver el rol del usuario {$user}.", 422);
+        }
+
+        $scopeId = $scope === 'by-user' ? (string) $user : (string) $roleId;
+
+        return DB::transaction(function () use ($scope, $scopeId, $chart_id, $roleId) {
+
+            $row = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                ->where('content->scope', $scope)
+                ->where('content->scope-id', $scopeId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $row) {
+                return $this->error('No existe configuración para este scope.', 404);
+            }
+
+            $content = (array) $row->content;
+            $charts  = $content['charts'] ?? [];
+
+            $idx = UserChartsHelper::findChartIndexById($charts, $chart_id);
+            if ($idx === null) {
+                return $this->error("No existe el gráfico con chart_id={$chart_id}.", 404);
+            }
+
+            // Quitar el chart
+            array_splice($charts, $idx, 1);
+            $content['charts'] = $charts;
+
+            if ($scope === 'by-user') {
+
+                // Limpiar solo el visibility del usuario
+                if (isset($content['visibility'])) {
+                    $content['visibility'] = array_values(
+                        array_diff($content['visibility'], [$chart_id])
+                    );
+                }
+
+                $row->content = $content;
+                $row->save();
+
+            } else {
+
+                // Guardar primero el rol
+                $row->content = $content;
+                $row->save();
+
+                // Limpiar visibility SOLO de usuarios del mismo rol
+                $userIds = DB::connection('traro_db')
+                    ->table('users')
+                    ->where('role_id', $roleId)
+                    ->pluck('id');
+
+                $userRows = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                    ->where('content->scope', 'by-user')
+                    ->whereIn('content->scope-id', $userIds->map(fn ($id) => (string) $id)->toArray())
+                    ->get();
+
+                foreach ($userRows as $uRow) {
+                    $uContent = (array) $uRow->content;
+
+                    if (! empty($uContent['visibility'])) {
+                        $uContent['visibility'] = array_values(
+                            array_diff($uContent['visibility'], [$chart_id])
+                        );
+
+                        $uRow->content = $uContent;
+                        $uRow->save();
+                    }
+                }
+            }
+
+            return $this->success(
+                ['deleted_chart_id' => $chart_id],
+                'Gráfico eliminado correctamente',
+                200
+            );
+        });
     }
 }
