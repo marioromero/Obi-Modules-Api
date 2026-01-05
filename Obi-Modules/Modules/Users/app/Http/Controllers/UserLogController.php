@@ -64,6 +64,51 @@ class UserLogController extends BaseApiController
         $data = $request->validated();
         $data['user_id'] = $data['user_id'] ?? null; // evita undefined key
 
+        // Si viene "create_case" pero en realidad es transición/subestado → forzar update_case.
+        try {
+            $modelId = (int)($data['model_id'] ?? 0);
+            $eventId = (int)($data['event_id'] ?? 0);
+
+            if ($modelId === 1 && $eventId === 1) { // 1 = case
+
+                $incoming = $data['details'] ?? null;
+                $det = is_array($incoming) ? $incoming : (json_decode((string)$incoming, true) ?: []);
+
+                $before = (isset($det['before']) && is_array($det['before'])) ? $det['before'] : [];
+                $after  = (isset($det['after'])  && is_array($det['after']))  ? $det['after']  : [];
+
+                // 1) Si hay before/after y cambió state → update
+                $bState = $before['state'] ?? null;
+                $aState = $after['state']  ?? null;
+
+                if (is_string($bState) && is_string($aState) && $bState !== $aState) {
+                    $data['event_id'] = 2; // update_case
+                }
+
+                // 2) Si cambió algún *_status típico → update
+                if ($data['event_id'] === 1 && (!empty($before) || !empty($after))) {
+                    $keys = array_unique(array_merge(array_keys($before), array_keys($after)));
+
+                    foreach ($keys as $k) {
+                        if (!is_string($k)) continue;
+
+                        $isStatus = str_ends_with($k, '_status') || in_array($k, ['substate','signature_status','denounce_status','scheduling_status','visit_status','budget_status','decision_status','payment_status','overall_status'], true);
+                        if (!$isStatus) continue;
+
+                        $bv = $before[$k] ?? null;
+                        $av = $after[$k]  ?? null;
+
+                        if ($bv !== $av) {
+                            $data['event_id'] = 2; // update_case
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // no romper nada
+        }
+
         // 1) Acción
         $action = $this->getEventAction((int)$data['event_id']);
 
@@ -150,50 +195,112 @@ class UserLogController extends BaseApiController
         };
     }
 
-    // Logs por ID de usuario
-    public function logsByUser(int $userId): \Illuminate\Http\JsonResponse
-    {
-        if ($userId <= 0) {
-            return $this->error('El parámetro userId debe ser numérico y mayor a 0.', 422);
-        }
-
-        $rows = DB::connection('users_db')
-            ->table('user_logs')
-            ->where('user_id', $userId)
-            ->orderByDesc('timestamp')
-            ->orderByDesc('id')
-            ->get();
-
-        $map = $this->columnMap();
-        $out = [];
-
-        foreach ($rows as $r) {
-            [$fecha, $hora] = $this->formatDateTime($r->timestamp);
-            $usuario   = $this->resolveUserName($r->user_id);
-            $descLines = $this->buildDescriptionFromUserLogRow($r, $map);
-
-            $descripcion = trim(implode("\n", $descLines));
-            if ($descripcion === '') continue;
-
-            // Permitimos "Evento:" si es login o delete
-            if (Str::startsWith($descripcion, 'Evento:')
-                && !Str::contains($descripcion, 'login')
-                && !Str::contains(strtolower($descripcion), 'delete')) {
-                continue;
-            }
-
-            $out[] = [
-                'date'        => $fecha,
-                'time'        => $hora,
-                'user'        => $usuario ?? '----',
-                'model_id'    => (int) ($r->model_id ?? 0),
-                'event_id'    => (int) ($r->event_id ?? 0),
-                'description' => $descripcion,
-            ];
-        }
-
-        return $this->success($out, 'Logs por usuario');
+   // Logs por ID de usuario
+public function logsByUser(int $userId): \Illuminate\Http\JsonResponse
+{
+    if ($userId <= 0) {
+        return $this->error('El parámetro userId debe ser numérico y mayor a 0.', 422);
     }
+
+    $rows = DB::connection('users_db')
+        ->table('user_logs')
+        ->where('user_id', $userId)
+        ->orderByDesc('timestamp')
+        ->orderByDesc('id')
+        ->get();
+
+    $map = $this->columnMap();
+    $out = [];
+
+    // Cache local para “hidratar before” en updates:
+    // key = "{model_id}:{entity_id}"  value = last after array
+    $lastAfterByEntity = [];
+
+    foreach ($rows as $r) {
+        // 1) Decode details
+        $det = $this->decodeJson($r->details ?? null);
+
+        $before = is_array($det['before'] ?? null) ? $det['before'] : null;
+        $after  = is_array($det['after']  ?? null) ? $det['after']  : null;
+
+        // 2) Detectar entity_id de forma simple
+        $entityId = null;
+        if (is_array($after) && isset($after['id'])) {
+            $entityId = (int) $after['id'];
+        } elseif (is_array($before) && isset($before['id'])) {
+            $entityId = (int) $before['id'];
+        } elseif (isset($det['id'])) {
+            $entityId = (int) $det['id'];
+        } elseif (is_array($after) && isset($after['entity_id'])) {
+            $entityId = (int) $after['entity_id'];
+        } elseif (is_array($before) && isset($before['entity_id'])) {
+            $entityId = (int) $before['entity_id'];
+        }
+
+        $modelId = (int) ($r->model_id ?? 0);
+        $key     = ($modelId > 0 && $entityId > 0) ? ($modelId . ':' . $entityId) : null;
+
+        // 3) PARCHE: si es update y before viene vacío, lo “hidratamos” con el after anterior
+        $eventId = (int) ($r->event_id ?? 0);
+
+        $beforeEmpty =
+            $before === null ||
+            (is_array($before) && (count($before) === 0 || (count($before) === 1 && array_key_exists('id', $before))));
+
+        if ($eventId === 2 && $beforeEmpty && $key && isset($lastAfterByEntity[$key]) && is_array($lastAfterByEntity[$key])) {
+            $before = $lastAfterByEntity[$key];
+            $det['before'] = $before;
+        }
+
+        // 4) Construir descripción usando el details (posiblemente parchado)
+        //    Importante: mantenemos la forma original para no romper tu trait
+        $rForBuild = clone $r;
+        $rForBuild->details = $det;
+
+        [$fecha, $hora] = $this->formatDateTime($r->timestamp);
+        $usuario   = $this->resolveUserName($r->user_id);
+        $descLines = $this->buildDescriptionFromUserLogRow($rForBuild, $map);
+
+        $descripcion = trim(implode("\n", $descLines));
+        if ($descripcion === '') {
+            // Aun así actualizamos el lastAfter si existe
+            if ($key && is_array($after) && !empty($after)) {
+                $lastAfterByEntity[$key] = $after;
+            }
+            continue;
+        }
+
+        // Permitimos "Evento:" si es login o delete
+        if (
+            Str::startsWith($descripcion, 'Evento:')
+            && !Str::contains(strtolower($descripcion), 'login')
+            && !Str::contains(strtolower($descripcion), 'delete')
+        ) {
+            if ($key && is_array($after) && !empty($after)) {
+                $lastAfterByEntity[$key] = $after;
+            }
+            continue;
+        }
+
+        $out[] = [
+            'date'        => $fecha,
+            'time'        => $hora,
+            'user'        => $usuario ?? '----',
+            'model_id'    => $modelId,
+            'event_id'    => $eventId ?: null,
+            'description' => $descripcion,
+        ];
+
+        // 5) Guardar after actual para el próximo log de esa misma entidad
+        if ($key && is_array($after) && !empty($after)) {
+            $lastAfterByEntity[$key] = $after;
+        }
+    }
+
+    return $this->success($out, 'Logs por usuario');
+}
+
+
 
     // Logs por acción
     public function logsByAction(int $eventId): \Illuminate\Http\JsonResponse
@@ -239,7 +346,7 @@ class UserLogController extends BaseApiController
         return $this->success($out, 'Logs por acción');
     }
 
-    // Logs por entidad (modelId + entityId) combinando user_logs y case_step_logs (si aplica)
+   // Logs por entidad (modelId + entityId) combinando user_logs y case_step_logs (si aplica)
     public function logsByEntity(int $modelId, int $entityId): \Illuminate\Http\JsonResponse
     {
         if ($modelId <= 0 || $entityId <= 0) {
@@ -260,27 +367,69 @@ class UserLogController extends BaseApiController
             $match = false;
 
             if (isset($r->entity_pk) && $r->entity_pk) {
-                $match = ((int)$r->entity_pk) === $entityId;
+                $match = ((int) $r->entity_pk) === $entityId;
             } else {
                 $det    = $this->decodeJson($r->details ?? null);
                 $before = is_array($det['before'] ?? null) ? $det['before'] : [];
                 $after  = is_array($det['after']  ?? null) ? $det['after']  : [];
 
                 $cand = Arr::get($after, 'id',
-                Arr::get($before, 'id',
-                Arr::get($det, 'id',
-                Arr::get($after, 'entity_id',
-                Arr::get($before, 'entity_id',
-                Arr::get($det, 'entity_id'))))));
-
+                    Arr::get($before, 'id',
+                    Arr::get($det, 'id',
+                    Arr::get($after, 'entity_id',
+                    Arr::get($before, 'entity_id',
+                    Arr::get($det, 'entity_id'))))));
 
                 if (is_scalar($cand)) {
-                    $match = ((int)$cand) === $entityId;
+                    $match = ((int) $cand) === $entityId;
                 }
             }
 
             if ($match) $userLogs[] = $r;
         }
+
+        // FIX #1 (VISUAL): reparar "creates falsos" (before=null) usando el after anterior del mismo entity
+        // Esto NO toca BD: solo ajusta $r->details en memoria para que los diffs sean reales.
+        usort($userLogs, function ($a, $b) {
+            $ta = $this->tsValue($a->timestamp ?? null);
+            $tb = $this->tsValue($b->timestamp ?? null);
+            if ($ta === $tb) return ((int) $a->id) <=> ((int) $b->id);
+            return $ta <=> $tb; // ASC
+        });
+
+        $prevAfterByEntity = []; // [entityId => afterArray]
+        foreach ($userLogs as $r) {
+            $det      = $this->decodeJson($r->details ?? null);
+            $before   = $det['before'] ?? null;
+            $after    = $det['after']  ?? null;
+            $beforeA  = is_array($before) ? $before : [];
+            $afterA   = is_array($after)  ? $after  : [];
+
+            $eid = (int) (
+                ($afterA['id'] ?? $afterA['entity_id'] ?? $beforeA['id'] ?? $beforeA['entity_id'] ?? 0)
+            );
+
+            if ($eid > 0) {
+                // si before viene vacío/null, pero ya existe un after previo => lo usamos como before
+                if (empty($beforeA) && !empty($afterA) && isset($prevAfterByEntity[$eid])) {
+                    $det['before'] = $prevAfterByEntity[$eid];
+                    $r->details    = $det; // reinyecta para buildDescriptionFromUserLogRow()
+                }
+
+                // actualizar último after conocido
+                if (!empty($afterA)) {
+                    $prevAfterByEntity[$eid] = $afterA;
+                }
+            }
+        }
+
+        // volver a DESC (como venían desde DB) para mostrar
+        usort($userLogs, function ($a, $b) {
+            $ta = $this->tsValue($a->timestamp ?? null);
+            $tb = $this->tsValue($b->timestamp ?? null);
+            if ($ta === $tb) return ((int) $b->id) <=> ((int) $a->id);
+            return $tb <=> $ta; // DESC
+        });
 
         // 3) ¿Es 'case'? -> traer case_step_logs
         $isCase = false;
@@ -330,14 +479,64 @@ class UserLogController extends BaseApiController
                 'event_id'    => (int) ($r->event_id ?? 0),
                 'description' => $descripcion,
                 '_ts'         => $this->tsValue($r->timestamp),
-                '_id'         => (int)$r->id,
+                '_id'         => (int) $r->id,
             ];
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // DEDUPE: si un case_step_log coincide con un user_log (mismo segundo ±1 y mismo to_state),
+        // no lo mostramos para evitar duplicidad visual.
+        // ─────────────────────────────────────────────────────────────
+        $userLogBuckets = []; // [sec => [to_state_lower => true] | ['__any__' => true]]
+        foreach ($userLogs as $r) {
+            $det   = $this->decodeJson($r->details ?? null);
+            $after = is_array($det['after'] ?? null) ? $det['after'] : [];
+
+            $stateRaw = $after['state'] ?? null;
+            $toState  = null;
+            if (is_string($stateRaw) && $stateRaw !== '') {
+                $parts   = preg_split('#\\\\#', $stateRaw);
+                $toState = $parts ? end($parts) : $stateRaw;
+            }
+
+            // ✅ FIX #2: tsValue() ya está en segundos (NO dividir por 1000)
+            $sec = (int) $this->tsValue($r->timestamp);
+
+            if ($toState) {
+                $userLogBuckets[$sec][mb_strtolower((string) $toState, 'UTF-8')] = true;
+            } else {
+                $userLogBuckets[$sec]['__any__'] = true;
+            }
         }
 
         // 5) Transformar case_step_logs (si aplica)
         foreach ($caseSteps as $s) {
             [$fecha, $hora] = $this->formatDateTime($s->created_at);
-            $usuario         = $this->resolveUserName($s->user_id ?? null);
+            $usuario        = $this->resolveUserName($s->user_id ?? null);
+
+            // DEDUPE: si hay user_log equivalente en el mismo segundo (±1) con mismo to_state, omitimos el step_log
+            // ✅ FIX #2: tsValue() ya está en segundos (NO dividir por 1000)
+            $stepSec     = (int) $this->tsValue($s->created_at);
+            $stepToState = mb_strtolower((string) ($s->to_state ?? ''), 'UTF-8');
+
+            $isDupe = false;
+            for ($i = -1; $i <= 1; $i++) {
+                $sec = $stepSec + $i;
+                if (!isset($userLogBuckets[$sec])) continue;
+
+                if ($stepToState !== '' && isset($userLogBuckets[$sec][$stepToState])) {
+                    $isDupe = true;
+                    break;
+                }
+                if (isset($userLogBuckets[$sec]['__any__'])) {
+                    $isDupe = true;
+                    break;
+                }
+            }
+
+            if ($isDupe) {
+                continue;
+            }
 
             $lines = [];
             // Estado
@@ -382,7 +581,7 @@ class UserLogController extends BaseApiController
                 'event_id'    => null,
                 'description' => implode("\n", $lines),
                 '_ts'         => $this->tsValue($s->created_at),
-                '_id'         => (int)($s->id ?? 0),
+                '_id'         => (int) ($s->id ?? 0),
             ];
         }
 
@@ -391,6 +590,67 @@ class UserLogController extends BaseApiController
             if ($a['_ts'] === $b['_ts']) return $b['_id'] <=> $a['_id'];
             return $b['_ts'] <=> $a['_ts'];
         });
+
+        // ✅ MERGE SIMPLE: colapsa duplicados visuales de transición (Estado + subestados)
+        // Solo afecta logsByEntity (salida), no toca cómo se guardan los logs.
+        $merged = [];
+        foreach ($items as $it) {
+            $last = end($merged);
+
+            if (!$last) {
+                $merged[] = $it;
+                continue;
+            }
+
+            // Ventana corta (2s)
+            $dt = abs((int)$it['_ts'] - (int)$last['_ts']);
+            $sameActor = (($it['user'] ?? '----') === ($last['user'] ?? '----'));
+            $sameModel = ((int)$it['model_id'] === (int)$last['model_id']);
+
+            $descA = (string)($last['description'] ?? '');
+            $descB = (string)($it['description'] ?? '');
+
+            $isTransitionA =
+                Str::contains($descA, 'Cambió Estado')
+                || Str::contains($descA, ' - estado')
+                || Str::contains($descA, 'Cambió Substate')
+                || Str::contains($descA, 'Cambió Subestado');
+
+            $isTransitionB =
+                Str::contains($descB, 'Cambió Estado')
+                || Str::contains($descB, ' - estado')
+                || Str::contains($descB, 'Cambió Substate')
+                || Str::contains($descB, 'Cambió Subestado');
+
+            // Merge solo si es claramente la misma transición
+            if ($sameModel && $sameActor && $isTransitionA && $isTransitionB && $dt <= 2) {
+
+                $linesA = array_filter(array_map('trim', explode("\n", $descA)));
+                $linesB = array_filter(array_map('trim', explode("\n", $descB)));
+
+                $seen = [];
+                $out  = [];
+
+                foreach (array_merge($linesA, $linesB) as $ln) {
+                    $k = mb_strtolower($ln, 'UTF-8');
+                    if (isset($seen[$k])) continue;
+                    $seen[$k] = true;
+                    $out[] = $ln;
+                }
+
+                $last['description'] = implode("\n", $out);
+                $last['_ts'] = max((int)$last['_ts'], (int)$it['_ts']);
+                $last['_id'] = max((int)$last['_id'], (int)$it['_id']);
+
+                array_pop($merged);
+                $merged[] = $last;
+                continue;
+            }
+
+            $merged[] = $it;
+        }
+
+        $items = $merged;
 
         $items = array_map(fn($x) => Arr::except($x, ['_ts','_id']), $items);
 

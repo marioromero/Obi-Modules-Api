@@ -1961,7 +1961,7 @@ class ConfigurationController extends BaseApiController
         ], 'OK');
     }
 
-    //Crea un chart en el registro (fila) correspondiente segun scope
+   // Crea un chart en el registro (fila) correspondiente según scope
     public function storeCharts(Request $request, int $user, string $scope)
     {
         $scope = UserChartsHelper::normalizeScope($scope);
@@ -1969,15 +1969,12 @@ class ConfigurationController extends BaseApiController
             return $this->error("Scope inválido.", 422);
         }
 
+        // SOLO validamos lo estructural
         $data = $request->validate([
-            'sql'                        => 'required|string',
-            'chart_config'               => 'required|array',
-            'chart_config.type'          => 'required|string',
-            'chart_config.title'         => 'required|string',
-            'chart_config.xaxis_column'  => 'required|string',
-            'chart_config.series_column' => 'required|string',
-            'chart_config.series_name'   => 'required|string',
-            'options.color'              => 'nullable|string',
+            'title'        => 'required|string|max:255',
+            'type'         => 'required|string|max:50',
+            'sql'          => 'required|string',
+            'chart_config' => 'required|array',
         ]);
 
         // Resolver rol del usuario
@@ -2009,13 +2006,13 @@ class ConfigurationController extends BaseApiController
 
             $chartId = UserChartsHelper::nextGlobalChartId($userCharts, $rolCharts);
 
+            // El chart tiene title, type, sql + chart_config
             $chart = [
                 'chart_id'     => $chartId,
+                'title'        => $data['title'],
+                'type'         => $data['type'],
                 'sql'          => $data['sql'],
                 'chart_config' => $data['chart_config'],
-                'options'      => [
-                    'color' => data_get($data, 'options.color'),
-                ],
             ];
 
             if ($scope === 'by-user') {
@@ -2032,11 +2029,8 @@ class ConfigurationController extends BaseApiController
                 }
 
                 $content = $userRow->content;
-
-                // Agregar chart
                 $content['charts'][] = $chart;
 
-                // Agregar a visibility SOLO si no existe
                 if (! in_array($chartId, $content['visibility'], true)) {
                     $content['visibility'][] = $chartId;
                 }
@@ -2057,7 +2051,6 @@ class ConfigurationController extends BaseApiController
                     ];
                 }
 
-                // Guardar chart en rol
                 $rolContent = $rolRow->content;
                 $rolContent['charts'][] = $chart;
                 $rolRow->content = $rolContent;
@@ -2106,7 +2099,7 @@ class ConfigurationController extends BaseApiController
         });
     }
 
-    //Actualiza un chart (por chart_id) dentro del registro correcto (scope + scope-id).
+    // Actualiza un chart (por chart_id) dentro del registro correcto (scope + scope-id).
     public function updateCharts(Request $request, int $user, string $scope, int $chart_id)
     {
         $scope = UserChartsHelper::normalizeScope($scope);
@@ -2114,11 +2107,11 @@ class ConfigurationController extends BaseApiController
             return $this->error("Scope inválido.", 422);
         }
 
+        // validacion
         $data = $request->validate([
-            'sql'           => 'sometimes|string',
-            'chart_config'  => 'sometimes|array',
-            'options.color' => 'nullable|string',
-            'visibility'    => 'sometimes|array',
+            'sql'          => 'sometimes|string',
+            'chart_config' => 'sometimes|array',
+            'visibility'   => 'sometimes|array',
         ]);
 
         // Resolver rol del usuario
@@ -2147,6 +2140,7 @@ class ConfigurationController extends BaseApiController
 
             $content = (array) $row->content;
 
+            // VISIBILITY
             if (array_key_exists('visibility', $data)) {
 
                 if ($scope !== 'by-user') {
@@ -2156,10 +2150,8 @@ class ConfigurationController extends BaseApiController
                     );
                 }
 
-                // Charts del usuario
                 $userCharts = (array) data_get($content, 'charts', []);
 
-                // Charts del rol (lectura correcta del JSON)
                 $rolRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
                     ->where('content->scope', 'by-rol')
                     ->where('content->scope-id', (string) $roleId)
@@ -2169,21 +2161,16 @@ class ConfigurationController extends BaseApiController
                     ? (array) data_get($rolRow->content, 'charts', [])
                     : [];
 
-                // IDs válidos permitidos (user + rol)
                 $validIds = collect(array_merge($userCharts, $rolCharts))
                     ->pluck('chart_id')
                     ->map(fn ($id) => (int) $id)
                     ->unique()
                     ->toArray();
 
-                // IDs enviados por el frontend (normalizados, SIN guardar aún)
                 $sentIds = array_values(
-                    array_unique(
-                        array_map('intval', $data['visibility'])
-                    )
+                    array_unique(array_map('intval', $data['visibility']))
                 );
 
-                // Detectar IDs inválidos
                 $invalidIds = array_diff($sentIds, $validIds);
 
                 if (! empty($invalidIds)) {
@@ -2204,6 +2191,7 @@ class ConfigurationController extends BaseApiController
                 );
             }
 
+            // UPDATE DEL CHART
             $charts = (array) data_get($content, 'charts', []);
             $idx = UserChartsHelper::findChartIndexById($charts, $chart_id);
 
@@ -2220,10 +2208,6 @@ class ConfigurationController extends BaseApiController
 
             if (isset($data['chart_config'])) {
                 $charts[$idx]['chart_config'] = $data['chart_config'];
-            }
-
-            if (isset($data['options']['color'])) {
-                $charts[$idx]['options']['color'] = $data['options']['color'];
             }
 
             $content['charts'] = $charts;
@@ -2331,5 +2315,119 @@ class ConfigurationController extends BaseApiController
                 200
             );
         });
+    }
+
+    // Ejecuta los SQL de todos los charts del usuario (by-user) + de su rol (by-rol)
+    // y devuelve data lista para el frontend.
+    public function showCharts(int $user)
+    {
+        $roleId = DB::connection('traro_db')
+            ->table('users')
+            ->where('id', $user)
+            ->value('role_id');
+
+        if (! $roleId) {
+            return $this->error("No se pudo resolver el rol del usuario {$user}.", 422);
+        }
+
+        $userRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+            ->where('content->scope', 'by-user')
+            ->where('content->scope-id', (string) $user)
+            ->first();
+
+        $rolRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+            ->where('content->scope', 'by-rol')
+            ->where('content->scope-id', (string) $roleId)
+            ->first();
+
+        $userCharts = $userRow ? (array) data_get($userRow->content, 'charts', []) : [];
+        $rolCharts  = $rolRow  ? (array) data_get($rolRow->content, 'charts', [])  : [];
+
+        $visibility = $userRow ? (array) data_get($userRow->content, 'visibility', []) : [];
+
+        // merge sin duplicar por chart_id
+        $byId = [];
+        foreach (array_merge($rolCharts, $userCharts) as $c) {
+            $id = (int) data_get($c, 'chart_id', 0);
+            if ($id > 0) $byId[$id] = $c;
+        }
+
+        // orden por visibility (si existe)
+        $orderedIds = [];
+        if (! empty($visibility)) {
+            foreach ($visibility as $vid) {
+                $vid = (int) $vid;
+                if ($vid > 0 && isset($byId[$vid])) $orderedIds[] = $vid;
+            }
+            foreach (array_keys($byId) as $id) {
+                if (! in_array($id, $orderedIds, true)) $orderedIds[] = $id;
+            }
+        } else {
+            $orderedIds = array_keys($byId);
+            sort($orderedIds);
+        }
+
+        $out = [];
+        foreach ($orderedIds as $id) {
+            $raw      = (array) $byId[$id];
+            $sql      = (string) data_get($raw, 'sql', '');
+
+            $title = (string) data_get($raw, 'title', '');
+            $type  = (string) data_get($raw, 'type', '');
+
+            $chartCfg = (array) data_get($raw, 'chart_config', []);
+
+            unset($chartCfg['title'], $chartCfg['type']);
+
+            // claves para transformar data según config
+            $xKey = (string) data_get($chartCfg, 'xaxis_column', 'eje_x');
+            $yKey = (string) data_get($chartCfg, 'series_column', 'eje_y');
+
+            $dataRows = [];
+            $errorMsg = null;
+
+            if ($sql !== '') {
+                try {
+                    $rows = DB::connection('cases_db')->select($sql);
+                    $rows = array_map(fn ($r) => (array) $r, $rows);
+
+                    // POST-PROCESO: formatear eje X + castear eje Y
+                    foreach ($rows as $r) {
+                        if (array_key_exists($xKey, $r)) {
+                            $r[$xKey] = UserChartsHelper::formatAxisValue($r[$xKey], 'America/Santiago');
+                        }
+                        if (array_key_exists($yKey, $r)) {
+                            $r[$yKey] = UserChartsHelper::normalizeSeriesValue($r[$yKey]);
+                        }
+                        $dataRows[] = $r;
+                    }
+
+                } catch (\Throwable $e) {
+                    $dataRows = [];
+                    $errorMsg = $e->getMessage();
+                }
+            }
+
+            $payload = [
+                'chart_id'     => $id,
+                'title'        => $title,
+                'type'         => $type,
+                'data'         => $dataRows,
+                'chart_config' => $chartCfg,
+            ];
+
+            if ($errorMsg) {
+                $payload['error'] = $errorMsg;
+            }
+
+            $out[] = $payload;
+        }
+
+        return $this->success([
+            'user_id'    => $user,
+            'role_id'    => (int) $roleId,
+            'charts'     => $out,
+            'visibility' => $visibility,
+        ], 'OK', 200);
     }
 }

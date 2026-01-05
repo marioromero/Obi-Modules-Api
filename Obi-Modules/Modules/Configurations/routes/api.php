@@ -44,6 +44,7 @@ Route::delete('configurations/user-filters/{user}/{step}/{key}',[ConfigurationCo
 Route::post('configurations/user-filters/{user}/{step}/preview',[ConfigurationController::class, 'previewFilters'])->whereNumber('user');
 
 // Rutas para graficos por usuario o rol
+Route::get( 'configurations/user-charts/{user}/show',[ConfigurationController::class, 'showCharts'])->whereNumber('user');
 Route::get('configurations/user-charts/{user}/{scope?}', [ConfigurationController::class, 'indexCharts'])->whereNumber('user');
 Route::post('configurations/user-charts/{user}/{scope}', [ConfigurationController::class, 'storeCharts'])->whereNumber('user');
 Route::put('configurations/user-charts/{user}/{scope}/{chart_id}', [ConfigurationController::class, 'updateCharts'])->whereNumber('user')->whereNumber('chart_id');
