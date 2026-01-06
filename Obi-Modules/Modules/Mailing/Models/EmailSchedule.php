@@ -1,8 +1,8 @@
 <?php
 
 namespace Modules\Mailing\Models;
-use Modules\Core\app\Support\Traits\DeletionStrategies;
 
+use Modules\Core\app\Support\Traits\DeletionStrategies;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,26 +17,28 @@ class EmailSchedule extends Model
 
     protected $fillable = [
         'start_in',
+        'ending_at',
         'send_once',
-        'send_frecuency_days',
-        'customer_set',
-        'email_template',
+        'failed_or_pendings',
+        'is_retry',
+        'customer_set_id',
+        'email_template_id',
     ];
 
-    /** RELACIONES INTERNAS **/
-
-    // Relación de EmailSchedule con CustomersSet (un EmailSchedule pertenece a un CustomersSet)
-    //Cascade
-    public function customersSet()
+    // Relación con CustomerSet
+    public function customerSet()
     {
-        return $this->belongsTo(CustomersSet::class, 'customer_set');
+        return $this->belongsTo(CustomersSet::class, 'customer_set_id');
     }
 
-    // Relación de EmailSchedule con EmailTemplate (un EmailSchedule pertenece a un EmailTemplate)
-    //No Action
+    // Relación con EmailTemplate
     public function emailTemplate()
     {
-        return $this->belongsTo(EmailTemplate::class, 'email_template');
+        return $this->belongsTo(EmailTemplate::class, 'email_template_id');
+    }
+
+    public function sends()
+    {
+        return $this->hasMany(\Modules\Mailing\Models\Send::class, 'email_schedule_id');
     }
 }
-

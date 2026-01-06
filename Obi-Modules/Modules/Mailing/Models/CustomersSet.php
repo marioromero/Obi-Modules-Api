@@ -13,7 +13,6 @@ class CustomersSet extends Model
 
     protected $connection = 'mailing_db';
     protected $table = 'customers_sets';
-    public $timestamps = false;
 
     protected $fillable = [
         'name',
@@ -31,7 +30,7 @@ class CustomersSet extends Model
     //Cascade
     public function emailSchedules()   // 🔟  EmailSchedule → CustomersSet
     {
-        return $this->hasMany(\Modules\Mailing\Models\EmailSchedule::class, 'customer_set');
+        return $this->hasMany(\Modules\Mailing\Models\EmailSchedule::class, 'customer_set_id');
     }
     //Cascade
     public function customerDetails()

@@ -32,7 +32,7 @@ class EmailTemplate extends Model
     }
     public function emailSchedules()   // 1️⃣1️⃣  EmailSchedule → EmailTemplate
     {
-        return $this->hasMany(EmailSchedule::class, 'email_template');
+        return $this->hasMany(\Modules\Mailing\Models\EmailSchedule::class, 'email_template_id');
     }
     //Set Null
     public function department()       // 1️⃣2️⃣  Departamento ↔ Plantilla

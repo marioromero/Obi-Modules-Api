@@ -23,7 +23,7 @@ class CustomerDetail extends Model
     /** RELACIONES INTERNAS **/
 
     // Relación de CustomerDetail con CustomersSet (un CustomerDetail pertenece a un CustomersSet)
-    public function customersSet()
+    public function customerSet()
     {
         return $this->belongsTo(CustomersSet::class, 'customer_set_id');
     }
@@ -35,6 +35,11 @@ class CustomerDetail extends Model
     public function customer()
     {
         return $this->belongsTo(\Modules\Customers\Models\Customer::class, 'customer_id');
+    }
+
+    public function sends()
+    {
+        return $this->hasMany(\Modules\Mailing\Models\Send::class, 'customer_detail_id');
     }
 }
 
