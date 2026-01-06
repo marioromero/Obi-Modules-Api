@@ -14,6 +14,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 50);
             $table->unsignedBigInteger('user_id'); // FK to users_db.users
+            $table->timestamps();
         });
     }
 

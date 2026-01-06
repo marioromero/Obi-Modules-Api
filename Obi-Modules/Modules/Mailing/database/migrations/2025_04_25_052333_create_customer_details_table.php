@@ -13,7 +13,7 @@ return new class extends Migration
         Schema::create('customer_detail', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('customer_id');
-            $table->foreignId('customer_set_id')->constrained('customers_sets');
+            $table->unsignedBigInteger('customer_set_id');
         });
     }
 
@@ -22,4 +22,3 @@ return new class extends Migration
         Schema::dropIfExists('customer_detail');
     }
 };
-

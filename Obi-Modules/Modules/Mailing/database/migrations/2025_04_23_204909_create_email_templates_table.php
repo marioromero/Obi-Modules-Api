@@ -13,15 +13,15 @@ return new class extends Migration
         Schema::create('email_templates', function (Blueprint $table) {
             $table->id();
             $table->string('name', 50);
-            $table->unsignedBigInteger('user_id'); // FK to users_db.users
-             $table->foreignId('department_id')->constrained('departments');
+            $table->unsignedBigInteger('user_id');        // users_db.users
+            $table->unsignedBigInteger('department_id'); // mailing_db.departments
             $table->longText('content');
         });
     }
 
-    public function down(): void
-    {
-        Schema::dropIfExists('email_templates');
-    }
-};
-
+           public function down(): void
+           {
+               Schema::dropIfExists('email_templates');
+           }
+       };
+       

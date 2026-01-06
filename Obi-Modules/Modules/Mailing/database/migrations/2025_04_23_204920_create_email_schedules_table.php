@@ -13,10 +13,11 @@ return new class extends Migration
         Schema::create('email_schedules', function (Blueprint $table) {
             $table->id();
             $table->dateTime('start_in');
-            $table->boolean('send_once');
-            $table->integer('send_frecuency_days')->nullable();
-            $table->foreignId('customer_set')->constrained('customers_sets');
-            $table->foreignId('email_template')->constrained('email_templates');
+            $table->dateTime('ending_at');
+            $table->integer('send_once'); // 25 seg es el intervalo de envio
+            $table->integer('failed_or_pendings')->default(0);
+            $table->boolean('is_retry')->default(false);
+            $table->unsignedBigInteger('customer_set_id');
         });
     }
 
@@ -25,4 +26,3 @@ return new class extends Migration
         Schema::dropIfExists('email_schedules');
     }
 };
-
