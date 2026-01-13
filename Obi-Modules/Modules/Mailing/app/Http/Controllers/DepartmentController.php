@@ -13,8 +13,8 @@ class DepartmentController extends BaseApiController
 
     public function index()
     {
-        $paginator = Department::paginate(15);
-        return $this->paginated($paginator, 'Listado de departments');
+        $departments = Department::all();
+        return $this->success($departments, 'Listado de departamentos');
     }
 
     public function show(Department $department)
@@ -24,10 +24,14 @@ class DepartmentController extends BaseApiController
 
     public function store(Request $request)
     {
-        $data   = $request->validate(['name' => 'required|string']);
+        $data = $request->validate([
+            'name'  => 'required|string|max:50',
+            'email' => 'required|email|max:100',
+        ]);
+
         $department = Department::create($data);
 
-        return $this->success($department, 'Department creado correctamente', 201);
+        return $this->success($department, 'Departamento creado correctamente', 200);
     }
 
     public function update(Request $request, Department $department)
@@ -49,7 +53,8 @@ class DepartmentController extends BaseApiController
     public function destroy(Department $department)
     {
         $department->delete();
-        return $this->success(null, 'Department eliminado correctamente', 204);
+
+        return $this->success(null, 'Departamento eliminado correctamente', 200);
     }
 }
 

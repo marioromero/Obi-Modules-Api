@@ -25,4 +25,12 @@ class TraroUser extends Authenticatable
     {
         return $this->hasMany(\Modules\Schedules\Models\Schedule::class, 'consultant_id');
     }
+
+    public function emailSchedules()
+    {
+        return $this->hasMany(
+            \Modules\Mailing\Models\EmailSchedule::class,
+            'user_id'
+        );
+    }
 }

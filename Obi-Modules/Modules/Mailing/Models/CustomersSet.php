@@ -25,7 +25,7 @@ class CustomersSet extends Model
     //Set Null
     public function user()
     {
-        return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
+        return $this->belongsTo(\Modules\Users\Models\TraroUser::class, 'user_id');
     }
     //Cascade
     public function emailSchedules()   // 🔟  EmailSchedule → CustomersSet
@@ -36,6 +36,16 @@ class CustomersSet extends Model
     public function customerDetails()
     {
         return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_set_id');
+    }
+
+    public function customers()
+    {
+        return $this->belongsToMany(
+            \Modules\Customers\Models\Customer::class,
+            'customer_detail',
+            'customer_set_id',
+            'customer_id'
+        );
     }
 }
 

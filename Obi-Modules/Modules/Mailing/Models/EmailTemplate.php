@@ -28,7 +28,8 @@ class EmailTemplate extends Model
     //Set Null
     public function user()
     {
-        return $this->belongsTo(\Modules\Users\Models\User::class, 'user_id');
+        return $this->belongsTo(\Modules\Users\Models\TraroUser::class, 'user_id')
+                    ->select('id', 'name');
     }
     public function emailSchedules()   // 1️⃣1️⃣  EmailSchedule → EmailTemplate
     {

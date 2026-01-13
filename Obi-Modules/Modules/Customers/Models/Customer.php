@@ -76,6 +76,16 @@ class Customer extends Model
         return $this->hasMany(\Modules\Mailing\Models\CustomerDetail::class, 'customer_id');
     }
 
+    public function customersSets()
+    {
+        return $this->belongsToMany(
+            \Modules\Mailing\Models\CustomersSet::class,
+            'customer_detail',
+            'customer_id',
+            'customer_set_id'
+        );
+    }
+
     protected static function booted(): void
     {
         // excluye los registros con softdeleted = 1
