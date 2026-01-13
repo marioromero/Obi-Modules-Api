@@ -166,4 +166,38 @@ return [
             'user_name'      => 'Ejecutivo asignado',
         ],
     ],
+
+        // MAILING
+        'mailing' => [
+            'map' => [
+                // v_customers_mailing
+                'customer_id'   => 'Cliente (ID)',
+                'name'          => 'Nombre',
+                'lastname'      => 'Apellido',
+                'email'         => 'Correo',
+                'tags'          => 'Etiquetas',
+                'commune_name'  => 'Comuna',
+                'province_name' => 'Provincia',
+                'region_name'   => 'Región',
+                'cases_count'   => 'N casos',
+
+                // customers_sets / v_customers_sets_list
+                'created_at'        => 'Creado',
+                'recipients_count'  => 'N destinatarios',
+                'last_used_at'      => 'Último uso',
+                'created_by_name'   => 'Creado por',
+
+                // email_templates
+                'content'     => 'Contenido',
+                'department'  => 'Departamento',
+                'user'        => 'Creado por',
+
+                // ids internos (por si alguna vez se muestran)
+                'department_id'      => 'Departamento (ID)',
+                'email_template_id'  => 'Plantilla (ID)',
+                'customer_set_id'    => 'Set (ID)',
+                'user_name' => 'Creado por',
+            ],
+        ],
+
 ];

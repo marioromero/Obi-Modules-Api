@@ -33,6 +33,7 @@ Route::post('customers-sets', [CustomersSetController::class, 'store']);
 Route::put('customers-sets/{customersSet}', [CustomersSetController::class, 'update']);
 Route::patch('customers-sets/{customersSet}', [CustomersSetController::class, 'patch']);
 Route::delete('customers-sets/{customersSet}', [CustomersSetController::class, 'destroy']);
+Route::post('customers-sets/create-with-customers', [CustomersSetController::class, 'storeWithCustomers']);
 
 // REST para CustomerDetail
 Route::get('customer-details', [CustomerDetailController::class, 'index']);

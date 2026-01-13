@@ -6,15 +6,39 @@ use Modules\Core\app\Http\BaseApiController;
 use Illuminate\Http\Request;
 use Modules\Mailing\Models\CustomerDetail;
 use App\Http\Controllers\Controller;
-
+use Illuminate\Support\Facades\DB;
+use Modules\Core\app\Helpers\ColumnMap;
 
 class CustomerDetailController extends BaseApiController
 {
  
     public function index()
     {
-        $paginator = CustomerDetail::paginate(15);
-        return $this->paginated($paginator, 'Listado de customer-details');
+        $keys = [
+            'customer_id',
+            'name',
+            'lastname',
+            'email',
+            'tags',
+            'commune_name',
+            'province_name',
+            'region_name',
+            'cases_count',
+        ];
+
+        $rows = DB::connection('mailing_db')
+            ->table('v_customers_mailing')
+            ->orderByDesc('customer_id')
+            ->get()
+            ->map(function ($row) {
+                $row->tags = $row->tags ? json_decode($row->tags, true) : [];
+                return $row;
+            });
+
+        return $this->success([
+            'columns' => ColumnMap::translate($keys, 'mailing'),
+            'rows'    => $rows,
+        ], 'Listado de clientes');
     }
 
     public function show(CustomerDetail $customerDetail)

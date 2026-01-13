@@ -12,6 +12,7 @@ use Modules\Users\Models\TraroUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Core\app\Helpers\ColumnMap;
+use Modules\Core\app\Helpers\RutValidator;
 
 
 class CustomerController extends BaseApiController
@@ -77,29 +78,40 @@ class CustomerController extends BaseApiController
         return $this->success($customer->refresh(), 'Cliente actualizado (softdeleted toggled).', 200);
     }
 
-    // DNI exacto → devuelve objeto completo
+     // DNI exacto → devuelve objeto completo
     public function showCustomerByDni(string $dni)
     {
+        // 1. Limpieza básica
         $dni = str_replace(['.', ' '], '', trim($dni));
         if ($dni === '') {
             return $this->error('DNI inválido', 422);
         }
 
-        // Normalización básica del RUT
+        // 2. Separar número y DV
         if (str_contains($dni, '-')) {
             [$num, $dv] = explode('-', $dni, 2);
         } else {
             $num = substr($dni, 0, -1);
             $dv  = substr($dni, -1);
         }
+
+        // 3. Normalización
         $num = preg_replace('/\D+/', '', $num ?? '');
         $dv  = strtolower($dv ?? '');
+
         if ($num === '' || $dv === '') {
             return $this->error('DNI inválido', 422);
         }
 
+        // 4. RUT normalizado
         $normalized = $num . '-' . $dv;
 
+        // 5. Validación REAL del RUT (DV por cálculo)
+        if (! RutValidator::isValidRut($normalized)) {
+            return $this->error('El RUT no es válido.', 422);
+        }
+
+        // 6. Búsqueda en BD
         $customer = Customer::query()
             ->with('assignedAgent:id,name')
             ->where('dni', $normalized)
@@ -109,6 +121,7 @@ class CustomerController extends BaseApiController
             return $this->success(null, 'No existe', 204);
         }
 
+        // 7. Respuesta
         $data = $customer->toArray();
         $data['assigned_agent'] = $customer->assigned_agent ?? null;
         $data['agent_name']     = $customer->assignedAgent->name ?? null;
