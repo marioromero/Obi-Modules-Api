@@ -49,3 +49,4 @@ Route::get('configurations/user-charts/{user}/{scope?}', [ConfigurationControlle
 Route::post('configurations/user-charts/{user}/{scope}', [ConfigurationController::class, 'storeCharts'])->whereNumber('user');
 Route::put('configurations/user-charts/{user}/{scope}/{chart_id}', [ConfigurationController::class, 'updateCharts'])->whereNumber('user')->whereNumber('chart_id');
 Route::delete('configurations/user-charts/{user}/{scope}/{chart_id}', [ConfigurationController::class, 'deleteCharts'])->whereNumber('user')->whereNumber('chart_id');
+Route::put('configurations/user-charts/{user}/{scope}/{chart_id}/config',[ConfigurationController::class, 'updateChartsConfig'])->whereNumber('user')->whereNumber('chart_id');

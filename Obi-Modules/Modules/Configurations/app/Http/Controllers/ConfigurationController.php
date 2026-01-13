@@ -2430,4 +2430,159 @@ class ConfigurationController extends BaseApiController
             'visibility' => $visibility,
         ], 'OK', 200);
     }
+
+    // Actualiza data del chart sin sql y solo lo que es enviado gracias a sometimes
+    public function updateChartsConfig(Request $request, int $user, string $scope, int $chart_id)
+    {
+        $scope = UserChartsHelper::normalizeScope($scope);
+        if ($scope === false) {
+            return $this->error("Scope inválido.", 422);
+        }
+
+        // Validación (parcial con sometimes)
+        $data = $request->validate([
+            'title'        => 'sometimes|string|max:255',
+            'type'         => 'sometimes|string|max:64',
+
+            'chart_config' => 'sometimes|array',
+            'chart_config.xaxis_column'  => 'sometimes|string|max:128',
+            'chart_config.series_column' => 'sometimes|string|max:128',
+            'chart_config.series_name'   => 'sometimes|string|max:255',
+            'chart_config.colors'        => 'sometimes|array',
+            'chart_config.colors.*'      => 'sometimes|string',
+            'chart_config.stroke'        => 'sometimes|array',
+            'chart_config.dataLabels'    => 'sometimes|array',
+
+            'visibility'   => 'sometimes|array',
+        ]);
+
+        // Resolver rol del usuario
+        $roleId = DB::connection('traro_db')
+            ->table('users')
+            ->where('id', $user)
+            ->value('role_id');
+
+        if (! $roleId) {
+            return $this->error("No se pudo resolver el rol del usuario {$user}.", 422);
+        }
+
+        $scopeId = $scope === 'by-user' ? (string) $user : (string) $roleId;
+
+        return DB::transaction(function () use ($scope, $scopeId, $chart_id, $data, $roleId) {
+
+            $row = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                ->where('content->scope', $scope)
+                ->where('content->scope-id', $scopeId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $row) {
+                return $this->error('No existe configuración para este scope.', 404);
+            }
+
+            $content = (array) $row->content;
+
+            // =========================
+            // VISIBILITY (solo by-user)
+            // =========================
+            if (array_key_exists('visibility', $data)) {
+
+                if ($scope !== 'by-user') {
+                    return $this->error(
+                        'La visibilidad solo se puede modificar a nivel de usuario.',
+                        422
+                    );
+                }
+
+                $userCharts = (array) data_get($content, 'charts', []);
+
+                $rolRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                    ->where('content->scope', 'by-rol')
+                    ->where('content->scope-id', (string) $roleId)
+                    ->first();
+
+                $rolCharts = $rolRow
+                    ? (array) data_get($rolRow->content, 'charts', [])
+                    : [];
+
+                $validIds = collect(array_merge($userCharts, $rolCharts))
+                    ->pluck('chart_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->toArray();
+
+                // Mantengo la misma lógica: normaliza a int + unique
+                $sentIds = array_values(
+                    array_unique(array_map('intval', (array) $data['visibility']))
+                );
+
+                $invalidIds = array_diff($sentIds, $validIds);
+
+                if (! empty($invalidIds)) {
+                    return $this->error(
+                        'Visibility contiene IDs no válidos: ' . implode(', ', $invalidIds),
+                        422
+                    );
+                }
+
+                $content['visibility'] = $sentIds;
+                $row->content = $content;
+                $row->save();
+
+                return $this->success(
+                    ['visibility' => $content['visibility']],
+                    'Visibilidad actualizada correctamente',
+                    200
+                );
+            }
+
+            // =========================
+            // UPDATE CHART CONFIG
+            // =========================
+            $charts = (array) data_get($content, 'charts', []);
+            $idx = UserChartsHelper::findChartIndexById($charts, $chart_id);
+
+            if ($idx === null) {
+                return $this->error("No existe el gráfico con chart_id={$chart_id}.", 404);
+            }
+
+            if (
+                ! array_key_exists('title', $data) &&
+                ! array_key_exists('type', $data) &&
+                ! array_key_exists('chart_config', $data)
+            ) {
+                return $this->error(
+                    'No se enviaron campos para actualizar (title, type, chart_config o visibility).',
+                    422
+                );
+            }
+
+            // Solo tocar lo que viene
+            if (array_key_exists('title', $data)) {
+                $charts[$idx]['title'] = $data['title'];
+            }
+
+            if (array_key_exists('type', $data)) {
+                $charts[$idx]['type'] = $data['type'];
+            }
+
+            if (array_key_exists('chart_config', $data)) {
+                // Merge parcial (no pisa lo que no viene)
+                $charts[$idx]['chart_config'] = array_replace_recursive(
+                    (array) ($charts[$idx]['chart_config'] ?? []),
+                    (array) $data['chart_config']
+                );
+            }
+
+            $content['charts'] = $charts;
+            $row->content = $content;
+            $row->save();
+
+            return $this->success(
+                ['chart' => $charts[$idx]],
+                'Configuración del gráfico actualizada correctamente',
+                200
+            );
+        });
+    }
 }
