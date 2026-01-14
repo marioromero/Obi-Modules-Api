@@ -1977,6 +1977,9 @@ class ConfigurationController extends BaseApiController
             'chart_config' => 'required|array',
         ]);
 
+        // Normalizar SQL para evitar problemas con backslash (\) en JSON/PHP/SQL
+        $data['sql'] = UserChartsHelper::sanitizeSql($data['sql']);
+
         // Resolver rol del usuario
         $roleId = DB::connection('traro_db')
             ->table('users')
@@ -2113,6 +2116,11 @@ class ConfigurationController extends BaseApiController
             'chart_config' => 'sometimes|array',
             'visibility'   => 'sometimes|array',
         ]);
+
+        // Normalizar SQL solo si viene en el payload
+        if (isset($data['sql'])) {
+            $data['sql'] = UserChartsHelper::sanitizeSql($data['sql']);
+        }
 
         // Resolver rol del usuario
         $roleId = DB::connection('traro_db')

@@ -103,4 +103,28 @@ public static function formatAxisValue(mixed $value, string $tz = 'America/Santi
 
         return $value;
     }
+
+    public static function sanitizeSql(string $sql): string
+    {
+        // Si ya está usando CHAR(92), no tocar (idempotente)
+        if (stripos($sql, 'CHAR(92)') !== false) {
+            return $sql;
+        }
+
+        /**
+         * Reemplaza cualquier variante de:
+         *   SUBSTRING_INDEX(campo, '\', -1)
+         *   SUBSTRING_INDEX(campo, '\\', -1)
+         *   SUBSTRING_INDEX(campo, '\\\\', -1)
+         * por:
+         *   SUBSTRING_INDEX(campo, CHAR(92), -1)
+         *
+         * OJO: en el patrón, '\\\\*' significa "uno o más backslashes dentro del string SQL".
+         */
+        $pattern = "/SUBSTRING_INDEX\\s*\\(\\s*([^,]+)\\s*,\\s*'\\\\\\\\*'\\s*,\\s*(-?\\d+)\\s*\\)/i";
+
+        $fixed = preg_replace($pattern, "SUBSTRING_INDEX($1, CHAR(92), $2)", $sql);
+
+        return $fixed ?? $sql;
+    }
 }
