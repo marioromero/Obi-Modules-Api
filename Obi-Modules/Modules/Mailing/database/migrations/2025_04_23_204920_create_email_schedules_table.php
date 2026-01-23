@@ -14,7 +14,7 @@ return new class extends Migration
             $table->id();
             $table->dateTime('start_in');
             $table->dateTime('ending_at');
-            $table->integer('send_once'); // 25 seg es el intervalo de envio de cada correo
+            $table->integer('send_once')->default(25); // 25 seg es el intervalo de envio de cada correo
             $table->integer('sends_ok')->default(0);
             $table->integer('failed_or_pendings')->default(0);
             $table->boolean('is_retry')->default(false);
