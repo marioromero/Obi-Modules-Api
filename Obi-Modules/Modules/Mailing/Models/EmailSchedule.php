@@ -5,6 +5,8 @@ namespace Modules\Mailing\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Core\app\Support\Traits\DeletionStrategies;
+use DateTimeInterface;
+use DateTimeZone;
 
 class EmailSchedule extends Model
 {
@@ -41,6 +43,13 @@ class EmailSchedule extends Model
         'email_template_id'  => 'integer',
         'status'             => 'string',
     ];
+
+    protected function serializeDate(DateTimeInterface $date): string
+    {
+        return $date
+            ->setTimezone(new DateTimeZone('America/Santiago'))
+            ->format('Y-m-d H:i:s');
+    }
 
 
     public function user()
