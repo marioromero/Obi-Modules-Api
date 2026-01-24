@@ -13,7 +13,7 @@ return new class extends Migration
         Schema::create('email_schedules', function (Blueprint $table) {
             $table->id();
             $table->dateTime('start_in');
-            $table->dateTime('ending_at');
+            $table->dateTime('ending_at')->nullable();
             $table->integer('send_once')->default(25); // 25 seg es el intervalo de envio de cada correo
             $table->integer('sends_ok')->default(0);
             $table->integer('failed_or_pendings')->default(0);
