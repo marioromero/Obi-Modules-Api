@@ -43,7 +43,13 @@ class MailingServiceProvider extends ServiceProvider
      */
     protected function registerCommands(): void
     {
-        // $this->commands([]);
+        if (! $this->app->runningInConsole()) {
+        return;
+        }
+    
+        $this->commands([
+            \Modules\Mailing\Console\Commands\RunMailingSchedulesCommand::class,
+        ]);
     }
 
     /**
