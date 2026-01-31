@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Schedules\app\Http\Requests\StoreScheduleRequest;
 use Modules\Schedules\app\Http\Requests\UpdateScheduleRequest;
 use Modules\Schedules\Models\ScheduleDetail;
+use Modules\Cases\Support\CasesCache;
 
 class ScheduleController extends BaseApiController
 {
@@ -159,8 +160,11 @@ class ScheduleController extends BaseApiController
             'liquidator_inspector_info' => 'nullable|string',
             'consultant_id'             => 'nullable|integer',
             'loss_adjuster_id'          => 'nullable|integer',
-            'message_sent'              => 'nullable|boolean',
-            'message_confirmed'         => 'nullable|boolean',
+
+            //  no pisa si no viene
+            'message_sent'              => 'sometimes|boolean',
+            'message_confirmed'         => 'sometimes|boolean',
+
             'inspection_failed'         => 'nullable|boolean',
         ]);
 
@@ -169,11 +173,17 @@ class ScheduleController extends BaseApiController
             ->orderByDesc('id')
             ->first();
 
-        if (!$schedule) {
+        if (! $schedule) {
             return $this->error('No existe programación vigente para este caso', 404);
         }
 
         $schedule->update($data);
+
+        // parche instantáneo del snapshot
+        $sent      = array_key_exists('message_sent', $data) ? (bool)$data['message_sent'] : null;
+        $confirmed = array_key_exists('message_confirmed', $data) ? (bool)$data['message_confirmed'] : null;
+
+        CasesCache::patchScheduleFlags((int)$caseId, $sent, $confirmed);
 
         $detail = ScheduleDetail::on($this->conn)->find($schedule->id);
         return $this->success($detail, 'Programación actualizada correctamente');

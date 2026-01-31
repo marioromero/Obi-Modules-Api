@@ -344,4 +344,29 @@ class CasesCache
         // 👀 Nota:
         // No tocamos cases.last_sync aquí, porque no estamos cambiando updated_at en la tabla cases.
     }
+
+    public static function patchScheduleFlags(
+        int $caseId,
+        ?bool $messageSent,
+        ?bool $messageConfirmed
+    ): void {
+        $cacheAll = Cache::get(self::CACHE_KEY_ALL, []);
+    
+        if (!isset($cacheAll[$caseId]) || !is_array($cacheAll[$caseId])) {
+            // Si no existe en cache, no hacemos buildAll (caro).
+            // Opcional: podrías llamar syncOne($caseId) aquí, pero eso vuelve a ser lento.
+            return;
+        }
+
+        // Solo parcheamos si vienen valores (evita pisar con null)
+        if ($messageSent !== null) {
+            $cacheAll[$caseId]['schedule_message_sent'] = $messageSent ? 1 : 0;
+        }
+
+        if ($messageConfirmed !== null) {
+            $cacheAll[$caseId]['schedule_message_confirmed'] = $messageConfirmed ? 1 : 0;
+        }
+
+        Cache::forever(self::CACHE_KEY_ALL, $cacheAll);
+    }
 }
