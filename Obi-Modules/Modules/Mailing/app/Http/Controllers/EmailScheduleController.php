@@ -209,10 +209,149 @@ class EmailScheduleController extends BaseApiController
 
     public function patch(Request $request, EmailSchedule $emailSchedule)
     {
-        $data = $request->validate(['name' => 'sometimes|string']);
-        $emailSchedule->update($data);
+        $data = $request->validate([
+            'status'             => 'sometimes|in:pending,in_progress,paused,finished',
+            'start_in'           => 'sometimes', // 'YYYY-MM-DD' o 'YYYY-MM-DD HH:MM:SS'
+            'only_business_days' => 'sometimes|boolean',
+            'customer_set_id'    => 'sometimes|integer|min:1',
+            'email_template_id'  => 'sometimes|integer|min:1',
+            'user_id'            => 'nullable|integer|min:1',
+        ]);
 
-        return $this->success($emailSchedule, 'EmailSchedule parcialmente actualizado');
+        $conn = DB::connection('mailing_db');
+
+        // Estado real actual
+        $emailSchedule->refresh();
+        $currentStatus = (string) $emailSchedule->status;
+
+        // 1) finished: no tocar nada
+        if ($currentStatus === 'finished') {
+            return $this->error('La programación ya está finalizada y no puede modificarse.', 422);
+        }
+
+        // 2) Si está corriendo o pausada: SOLO status
+        $isRunningState = in_array($currentStatus, ['in_progress', 'paused'], true);
+        $wantsMoreThanStatus = collect($data)->keys()->diff(['status'])->isNotEmpty();
+
+        if ($isRunningState && $wantsMoreThanStatus) {
+            return $this->error(
+                "Solo puedes cambiar 'status' cuando la campaña está en '{$currentStatus}'.",
+                422
+            );
+        }
+
+        // 3) Cambio de status (pausar/reanudar)
+        if (array_key_exists('status', $data)) {
+            $next = (string) $data['status'];
+
+            // Reglas de transición simples
+            if ($next === 'paused' && $currentStatus !== 'in_progress') {
+                return $this->error("Solo puedes pausar una campaña que esté en 'in_progress'.", 422);
+            }
+
+            if ($next === 'in_progress' && !in_array($currentStatus, ['paused', 'pending'], true)) {
+                return $this->error("Solo puedes reanudar una campaña que esté en 'paused' (o iniciar desde 'pending').", 422);
+            }
+
+            // No permitimos setear finished manual desde aquí (lo hace el comando)
+            if ($next === 'finished') {
+                return $this->error("No se permite marcar 'finished' manualmente.", 422);
+            }
+
+            $emailSchedule->status = $next;
+            $emailSchedule->save();
+
+            return $this->success($emailSchedule, 'Estado actualizado correctamente');
+        }
+
+        // 4) Desde aquí: solo modificaciones cuando está pending
+        if ($currentStatus !== 'pending') {
+            return $this->error("Solo puedes editar start_in/only_business_days/set/template cuando está 'pending'.", 422);
+        }
+
+        // 5) Si cambia customer_set_id: recalcular destinatarios y regenerar sends
+        $customerSetId = (int) ($data['customer_set_id'] ?? $emailSchedule->customer_set_id);
+
+        $recipientsCount = (int) $conn->table('customer_detail')
+            ->where('customer_set_id', $customerSetId)
+            ->count();
+
+        if ($recipientsCount <= 0) {
+            return $this->error('El set no tiene destinatarios (customer_detail).', 422);
+        }
+
+        // 6) Resolver start/end (recalcula ending_at)
+        $startInput = (string) ($data['start_in'] ?? $emailSchedule->start_in);
+        $onlyBiz    = (bool)  ($data['only_business_days'] ?? $emailSchedule->only_business_days);
+
+        [$startAt, $endingAt] = EmailScheduleHelper::resolveStartAndEnd(
+            $startInput,
+            $recipientsCount,
+            $onlyBiz
+        );
+
+        try {
+            $conn->transaction(function () use (
+                $conn, $data, $emailSchedule, $customerSetId,
+                $startAt, $endingAt, $onlyBiz
+            ) {
+                // 7) Actualizar schedule
+                $emailSchedule->start_in           = $startAt->format('Y-m-d H:i:s');
+                $emailSchedule->ending_at          = $endingAt->format('Y-m-d H:i:s');
+                $emailSchedule->only_business_days = $onlyBiz;
+
+                if (array_key_exists('email_template_id', $data)) {
+                    $emailSchedule->email_template_id = (int) $data['email_template_id'];
+                }
+
+                if (array_key_exists('customer_set_id', $data)) {
+                    $emailSchedule->customer_set_id = $customerSetId;
+                }
+
+                $emailSchedule->save();
+
+                // 8) Si cambió customer_set_id: regenerar sends (porque aún no se envía nada)
+                if (array_key_exists('customer_set_id', $data)) {
+
+                    // borrar sends actuales del schedule
+                    $conn->table('sends')->where('email_schedule_id', (int) $emailSchedule->id)->delete();
+
+                    // insertar nuevos sends
+                    $conn->table('customer_detail as cd')
+                        ->join('v_customers_mailing as c', 'c.customer_id', '=', 'cd.customer_id')
+                        ->where('cd.customer_set_id', $customerSetId)
+                        ->select(['cd.id as customer_detail_id', 'c.name', 'c.lastname', 'c.email'])
+                        ->orderBy('cd.id')
+                        ->chunk(500, function ($rows) use ($conn, $emailSchedule) {
+
+                            $inserts = [];
+
+                            foreach ($rows as $r) {
+                                $fullName = trim(($r->name ?? '') . ' ' . ($r->lastname ?? ''));
+
+                                $inserts[] = [
+                                    'email_schedule_id'  => (int) $emailSchedule->id,
+                                    'customer_detail_id' => (int) $r->customer_detail_id,
+                                    'customer_name'      => $fullName !== '' ? $fullName : 'N/A',
+                                    'email'              => (string) ($r->email ?? ''),
+                                    'sent_at'            => null,
+                                    'status'             => 'pending',
+                                ];
+                            }
+
+                            if (!empty($inserts)) {
+                                $conn->table('sends')->insert($inserts);
+                            }
+                        });
+                }
+            });
+
+            $emailSchedule->refresh();
+            return $this->success($emailSchedule, 'Programación actualizada correctamente');
+
+        } catch (\Throwable $e) {
+            return $this->error('No se pudo actualizar la programación: ' . $e->getMessage(), 500);
+        }
     }
 
     public function destroy(EmailSchedule $emailSchedule)

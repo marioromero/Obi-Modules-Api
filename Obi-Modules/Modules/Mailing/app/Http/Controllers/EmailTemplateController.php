@@ -17,6 +17,7 @@ class EmailTemplateController extends BaseApiController
         $keys = [
             'id',
             'name',
+            'subject',
             'content',
             'department',
             'user_name',
@@ -53,6 +54,7 @@ class EmailTemplateController extends BaseApiController
         $data = $request->validate([
             'name'          => 'required|string|max:50',
             'department_id' => 'required|integer',
+            'subject'       => 'required|string|max:255',
             'content'       => 'required|string',
             'user_id'       => 'nullable|integer', // fallback si no hay auth
         ]);
@@ -69,6 +71,7 @@ class EmailTemplateController extends BaseApiController
         $emailTemplate = EmailTemplate::create([
             'name'          => $data['name'],
             'department_id' => $data['department_id'],
+            'subject'       => $data['subject'],
             'content'       => $data['content'],
             'user_id'       => $userId,
         ]);
@@ -81,6 +84,7 @@ class EmailTemplateController extends BaseApiController
         $data = $request->validate([
             'name'          => 'sometimes|string|max:50',
             'department_id' => 'sometimes|integer',
+            'subject'       => 'sometimes|string|max:255',
             'content'       => 'sometimes|string',
         ]);
 
