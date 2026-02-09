@@ -1403,6 +1403,7 @@ class ConfigurationController extends BaseApiController
                 'key'   => $f['key'] ?? '',
                 'name'  => $f['name'] ?? '',
                 'color' => $f['color'] ?? null,
+                'id_conversation' => $f['id_conversation'] ?? null,
             ], $stepCfg['filters'] ?? []);
 
             $managedBlock = CasesFiltersHelper::calcManagedCases(
@@ -1474,6 +1475,7 @@ class ConfigurationController extends BaseApiController
                     'name'    => (string) ($filterCfg['name'] ?? ''),
                     'color'   => $filterCfg['color'] ?? null,
                     'columns' => $columnsEs,
+                    'id_conversation' => $filterCfg['id_conversation'] ?? null,
                 ],
                 'data'          => $rows,
                 'managed_cases' => $managedBlock,
@@ -1523,6 +1525,7 @@ class ConfigurationController extends BaseApiController
                 'name'    => (string) ($filterCfg['name'] ?? ''),
                 'color'   => $filterCfg['color'] ?? null,
                 'columns' => $columnsEs,
+                'id_conversation' => $filterCfg['id_conversation'] ?? null,
             ],
             'data'          => $rows,
             'managed_cases' => $managedBlock,
@@ -1543,6 +1546,7 @@ class ConfigurationController extends BaseApiController
             'columns'   => 'required|array|min:1',
             'columns.*' => 'string',
             'sql'       => 'required|string',
+            'id_conversation' => 'nullable|string|max:100',
         ]);
 
         $userKey = (string) $user;
@@ -1593,6 +1597,7 @@ class ConfigurationController extends BaseApiController
             'color'   => $data['color'] ?? null,
             'columns' => array_values($data['columns']),
             'sql'     => $data['sql'],
+            'id_conversation' => $data['id_conversation'] ?? null,
         ];
 
         $content[$userKey]['steps'][$step]['filters'][] = $new;
@@ -1625,6 +1630,7 @@ class ConfigurationController extends BaseApiController
             'columns'    => 'sometimes|required|array|min:1',
             'columns.*'  => 'string',
             'sql'        => 'sometimes|required|string',
+            'id_conversation' => 'sometimes|required|string|max:100',
         ]);
 
         // Buscar la fila de configuración donde esté este usuario
@@ -1688,6 +1694,11 @@ class ConfigurationController extends BaseApiController
             // 4) Si viene sql, actualizar sql
             if (array_key_exists('sql', $data)) {
                 $f['sql'] = $data['sql'];
+            }
+
+            // 5) anexar o actualizar id_conversation incluso si antes no existía
+            if (array_key_exists('id_conversation', $data)) {
+                $f['id_conversation'] = $data['id_conversation'];
             }
 
             // Guardar: como content tiene cast 'array', se guarda bien sin json_encode
@@ -1766,6 +1777,7 @@ class ConfigurationController extends BaseApiController
             'columns.*' => 'string',
             'sql'       => 'required|string',
             'key'       => 'sometimes|string|max:255',
+            'id_conversation' => 'required|string|max:100',
         ]);
 
         $userKey = (string) $user;
@@ -1798,6 +1810,7 @@ class ConfigurationController extends BaseApiController
             'color'   => $data['color'] ?? null,
             'columns' => array_values($data['columns']),
             'sql'     => $data['sql'],
+            'id_conversation' => $data['id_conversation'],
         ];
 
         // 5) Helpers (idénticos a showFilters)
@@ -1865,6 +1878,7 @@ class ConfigurationController extends BaseApiController
                     'name'    => (string) $filterCfg['name'],
                     'color'   => $filterCfg['color'],
                     'columns' => $columnsEs,
+                    'id_conversation' => $filterCfg['id_conversation'] ?? null,
                 ],
                 'data'          => $rows,
                 'managed_cases' => $managedBlock,
@@ -1920,6 +1934,7 @@ class ConfigurationController extends BaseApiController
                 'name'    => (string) $filterCfg['name'],
                 'color'   => $filterCfg['color'],
                 'columns' => $columnsEs,
+                'id_conversation' => $filterCfg['id_conversation'] ?? null,
             ],
             'data'          => $rows,
             'managed_cases' => $managedBlock,
