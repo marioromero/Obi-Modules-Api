@@ -44,10 +44,18 @@ class DepartmentController extends BaseApiController
 
     public function patch(Request $request, Department $department)
     {
-        $data = $request->validate(['name' => 'sometimes|string']);
+        $data = $request->validate([
+            'name'  => 'sometimes|string|max:100',
+            'email' => 'sometimes|email|max:100',
+        ]);
+
+        if (empty($data)) {
+            return $this->error('Debe enviar al menos un campo para actualizar', 422);
+        }
+
         $department->update($data);
 
-        return $this->success($department, 'Department parcialmente actualizado');
+        return $this->success($department, 'Departmento actualizado');
     }
 
     public function destroy(Department $department)

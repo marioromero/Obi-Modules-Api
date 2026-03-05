@@ -4,6 +4,7 @@ namespace Modules\Configurations\app\Helpers;
 
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 class UserChartsHelper
 {
     public static function normalizeScope(string $scope): string|false
@@ -15,16 +16,39 @@ class UserChartsHelper
     /**
      * Obtiene el siguiente chart_id GLOBAL (user + rol)
      */
-    public static function nextGlobalChartId(array $userCharts, array $rolCharts): int
+    public static function nextGlobalChartIdFromDb(string $lockName = 'obi_global_chart_id', int $lockTimeout = 5): int
     {
-        $max = 0;
+        // 1) Tomar lock global (MariaDB)
+        $lockRow = DB::connection('configurations_db')
+            ->selectOne("SELECT GET_LOCK(?, ?) AS l", [$lockName, $lockTimeout]);
 
-        foreach (array_merge($userCharts, $rolCharts) as $c) {
-            $id = (int) ($c['chart_id'] ?? 0);
-            if ($id > $max) $max = $id;
+        $locked = (int) ($lockRow->l ?? 0);
+        if ($locked !== 1) {
+            // Si no logra lock, evita ids duplicados por concurrencia
+            throw new \RuntimeException("No se pudo obtener lock global para generar chart_id.");
         }
 
-        return $max + 1;
+        try {
+
+            $row = DB::connection('configurations_db')->selectOne("
+                SELECT COALESCE(MAX(j.chart_id), 0) AS max_id
+                FROM configurations c
+                JOIN JSON_TABLE(
+                    c.content,
+                    '$.charts[*]' COLUMNS(
+                        chart_id INT PATH '$.chart_id'
+                    )
+                ) j
+                WHERE c.type_id = 9
+            ");
+
+            $maxId = (int) ($row->max_id ?? 0);
+            return $maxId + 1;
+
+        } finally {
+            // 3) Soltar lock (siempre)
+            DB::connection('configurations_db')->selectOne("SELECT RELEASE_LOCK(?)", [$lockName]);
+        }
     }
 
     public static function findChartIndexById(array $charts, int $chartId): ?int

@@ -1990,6 +1990,7 @@ class ConfigurationController extends BaseApiController
             'type'         => 'required|string|max:50',
             'sql'          => 'required|string',
             'chart_config' => 'required|array',
+            'id_conversation' => 'nullable|string|max:100',
         ]);
 
         // Normalizar SQL para evitar problemas con backslash (\) en JSON/PHP/SQL
@@ -2022,7 +2023,7 @@ class ConfigurationController extends BaseApiController
             $userCharts = $userRow ? data_get($userRow->content, 'charts', []) : [];
             $rolCharts  = $rolRow  ? data_get($rolRow->content, 'charts', [])  : [];
 
-            $chartId = UserChartsHelper::nextGlobalChartId($userCharts, $rolCharts);
+            $chartId = UserChartsHelper::nextGlobalChartIdFromDb();
 
             // El chart tiene title, type, sql + chart_config
             $chart = [
@@ -2031,6 +2032,7 @@ class ConfigurationController extends BaseApiController
                 'type'         => $data['type'],
                 'sql'          => $data['sql'],
                 'chart_config' => $data['chart_config'],
+                'id_conversation' => $data['id_conversation'] ?? null,
             ];
 
             if ($scope === 'by-user') {
@@ -2130,6 +2132,7 @@ class ConfigurationController extends BaseApiController
             'sql'          => 'sometimes|string',
             'chart_config' => 'sometimes|array',
             'visibility'   => 'sometimes|array',
+            'id_conversation' => 'sometimes|nullable|string|max:100',
         ]);
 
         // Normalizar SQL solo si viene en el payload
@@ -2231,6 +2234,10 @@ class ConfigurationController extends BaseApiController
 
             if (isset($data['chart_config'])) {
                 $charts[$idx]['chart_config'] = $data['chart_config'];
+            }
+
+            if (array_key_exists('id_conversation', $data)) {
+                $charts[$idx]['id_conversation'] = $data['id_conversation'];
             }
 
             $content['charts'] = $charts;
@@ -2437,6 +2444,7 @@ class ConfigurationController extends BaseApiController
                 'type'         => $type,
                 'data'         => $dataRows,
                 'chart_config' => $chartCfg,
+                'id_conversation' => $raw['id_conversation'] ?? null,
             ];
 
             if ($errorMsg) {
@@ -2477,6 +2485,7 @@ class ConfigurationController extends BaseApiController
             'chart_config.dataLabels'    => 'sometimes|array',
 
             'visibility'   => 'sometimes|array',
+            'id_conversation' => 'sometimes|nullable|string|max:100',
         ]);
 
         // Resolver rol del usuario
@@ -2572,10 +2581,12 @@ class ConfigurationController extends BaseApiController
             if (
                 ! array_key_exists('title', $data) &&
                 ! array_key_exists('type', $data) &&
-                ! array_key_exists('chart_config', $data)
+                ! array_key_exists('chart_config', $data) &&
+                ! array_key_exists('id_conversation', $data)
+
             ) {
                 return $this->error(
-                    'No se enviaron campos para actualizar (title, type, chart_config o visibility).',
+                    'No se enviaron campos para actualizar (titulo, tipo, config, ID de conversacion o visibilidad).',
                     422
                 );
             }
@@ -2597,6 +2608,10 @@ class ConfigurationController extends BaseApiController
                 );
             }
 
+            if (array_key_exists('id_conversation', $data)) {
+                $charts[$idx]['id_conversation'] = $data['id_conversation'];
+            }
+
             $content['charts'] = $charts;
             $row->content = $content;
             $row->save();
@@ -2606,6 +2621,329 @@ class ConfigurationController extends BaseApiController
                 'Configuración del gráfico actualizada correctamente',
                 200
             );
+        });
+    }
+
+    public function showSingleChart(int $user, int $chart_id)
+    {
+        // 1) Resolver rol del usuario
+        $roleId = DB::connection('traro_db')
+            ->table('users')
+            ->where('id', $user)
+            ->value('role_id');
+
+        if (! $roleId) {
+            return $this->error("No se pudo resolver el rol del usuario {$user}.", 422);
+        }
+
+        // 2) Cargar config by-user y by-rol
+        $userRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+            ->where('content->scope', 'by-user')
+            ->where('content->scope-id', (string) $user)
+            ->first();
+
+        $rolRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+            ->where('content->scope', 'by-rol')
+            ->where('content->scope-id', (string) $roleId)
+            ->first();
+
+        $userCharts = $userRow ? (array) data_get($userRow->content, 'charts', []) : [];
+        $rolCharts  = $rolRow  ? (array) data_get($rolRow->content, 'charts', [])  : [];
+
+        // 3) Buscar el chart_id (prioridad: user sobre rol si existiera duplicado, aunque no debería)
+        $picked = null;
+
+        foreach ($userCharts as $c) {
+            if ((int) data_get($c, 'chart_id', 0) === (int) $chart_id) {
+                $picked = (array) $c;
+                break;
+            }
+        }
+
+        if (! $picked) {
+            foreach ($rolCharts as $c) {
+                if ((int) data_get($c, 'chart_id', 0) === (int) $chart_id) {
+                    $picked = (array) $c;
+                    break;
+                }
+            }
+        }
+
+        if (! $picked) {
+            return $this->error("No existe el gráfico con chart_id={$chart_id}.", 404);
+        }
+
+        // 4) Preparar ejecución
+        $sql      = (string) data_get($picked, 'sql', '');
+        $title    = (string) data_get($picked, 'title', '');
+        $type     = (string) data_get($picked, 'type', '');
+        $chartCfg = (array)  data_get($picked, 'chart_config', []);
+
+        unset($chartCfg['title'], $chartCfg['type']);
+
+        $xKey = (string) data_get($chartCfg, 'xaxis_column', 'eje_x');
+        $yKey = (string) data_get($chartCfg, 'series_column', 'eje_y');
+
+        $dataRows = [];
+        $errorMsg = null;
+
+        if ($sql !== '') {
+            try {
+                $rows = DB::connection('cases_db')->select($sql);
+                $rows = array_map(fn ($r) => (array) $r, $rows);
+
+                foreach ($rows as $r) {
+                    if (array_key_exists($xKey, $r)) {
+                        $r[$xKey] = UserChartsHelper::formatAxisValue($r[$xKey], 'America/Santiago');
+                    }
+                    if (array_key_exists($yKey, $r)) {
+                        $r[$yKey] = UserChartsHelper::normalizeSeriesValue($r[$yKey]);
+                    }
+                    $dataRows[] = $r;
+                }
+            } catch (\Throwable $e) {
+                $dataRows = [];
+                $errorMsg = $e->getMessage();
+            }
+        }
+
+        // 5) Respuesta (solo 1 chart)
+        $payload = [
+            'chart_id'        => (int) $chart_id,
+            'title'           => $title,
+            'type'            => $type,
+            'data'            => $dataRows,
+            'chart_config'    => $chartCfg,
+            'id_conversation' => $picked['id_conversation'] ?? null,
+        ];
+
+        if ($errorMsg) {
+            $payload['error'] = $errorMsg;
+        }
+
+        return $this->success([
+            'user_id' => (int) $user,
+            'role_id' => (int) $roleId,
+            'chart'   => $payload,
+        ], 'OK', 200);
+    }
+
+    public function moveScopeCharts(Request $request, int $user, int $chart_id)
+    {
+        $data = $request->validate([
+            'from' => 'required|string',
+            'to'   => 'required|string',
+            'target_user_id' => 'sometimes|integer|min:1',
+        ]);
+
+        $from = UserChartsHelper::normalizeScope($data['from']);
+        $to   = UserChartsHelper::normalizeScope($data['to']);
+
+        if ($from === false || $to === false) {
+            return $this->error("Scope inválido. Usa 'by-user' o 'by-rol'.", 422);
+        }
+        if ($from === $to) {
+            return $this->error("from y to no pueden ser iguales.", 422);
+        }
+
+        // Rol del usuario actor (el {user} de la URL)
+        $roleId = DB::connection('traro_db')->table('users')->where('id', $user)->value('role_id');
+        if (! $roleId) {
+            return $this->error("No se pudo resolver el rol del usuario {$user}.", 422);
+        }
+
+        // Definir destino
+        $targetUserId = null;
+        $targetRoleId = null;
+
+        if ($to === 'by-user') {
+            $targetUserId = (int) ($data['target_user_id'] ?? 0);
+            if ($targetUserId <= 0) {
+                return $this->error("target_user_id es requerido cuando to=by-user.", 422);
+            }
+
+            // Rol del usuario destino (importa para limpiar visibility del rol origen al mover desde rol)
+            $targetRoleId = DB::connection('traro_db')->table('users')->where('id', $targetUserId)->value('role_id');
+            if (! $targetRoleId) {
+                return $this->error("No se pudo resolver el rol del usuario destino {$targetUserId}.", 422);
+            }
+        } else {
+            // to = by-rol: destino es el rol del usuario actor
+            $targetRoleId = (int) $roleId;
+        }
+
+        // Origen y destino scope-id
+        $fromScopeId = $from === 'by-user' ? (string) $user : (string) $roleId;
+        $toScopeId   = $to === 'by-user'   ? (string) $targetUserId : (string) $targetRoleId;
+
+        return DB::transaction(function () use (
+            $from, $to, $fromScopeId, $toScopeId, $chart_id,
+            $user, $roleId, $targetUserId, $targetRoleId
+        ) {
+
+            $fromRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                ->where('content->scope', $from)
+                ->where('content->scope-id', $fromScopeId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $fromRow) {
+                return $this->error('No existe configuración para el scope de origen.', 404);
+            }
+
+            $fromContent = (array) $fromRow->content;
+            $fromCharts  = (array) data_get($fromContent, 'charts', []);
+
+            $fromIdx = UserChartsHelper::findChartIndexById($fromCharts, (int) $chart_id);
+            if ($fromIdx === null) {
+                return $this->error("No existe el gráfico con chart_id={$chart_id} en el scope de origen.", 404);
+            }
+
+            $movingChart = (array) $fromCharts[$fromIdx];
+
+            $toRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                ->where('content->scope', $to)
+                ->where('content->scope-id', $toScopeId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $toRow) {
+                $toRow = new Configuration();
+                $toRow->type_id = self::TYPE_ID_USER_CHARTS;
+
+                if ($to === 'by-user') {
+                    $toRow->content = [
+                        'scope'      => 'by-user',
+                        'scope-id'   => (string) $toScopeId,
+                        'charts'     => [],
+                        'visibility' => [],
+                    ];
+                } else {
+                    $toRow->content = [
+                        'scope'    => 'by-rol',
+                        'scope-id' => (string) $toScopeId,
+                        'charts'   => [],
+                    ];
+                }
+            }
+
+            $toContent = (array) $toRow->content;
+            $toCharts  = (array) data_get($toContent, 'charts', []);
+
+            if (UserChartsHelper::findChartIndexById($toCharts, (int) $chart_id) !== null) {
+                return $this->error(
+                    "No se puede mover: ya existe chart_id={$chart_id} en el scope de destino.",
+                    409
+                );
+            }
+
+            array_splice($fromCharts, $fromIdx, 1);
+            $fromContent['charts'] = $fromCharts;
+
+            $toCharts[] = $movingChart;
+            $toContent['charts'] = $toCharts;
+
+            // Caso A: by-rol -> by-user
+            if ($from === 'by-rol' && $to === 'by-user') {
+
+                // A1) Quitar chart_id del visibility de TODOS los users del rol ORIGEN (roleId del actor)
+                $users = DB::connection('traro_db')->table('users')->where('role_id', (int) $roleId)->pluck('id');
+
+                foreach ($users as $uid) {
+
+                    $uRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                        ->where('content->scope', 'by-user')
+                        ->where('content->scope-id', (string) $uid)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $uRow) {
+                        // igual que store: si no existe, se crea
+                        $uRow = new Configuration();
+                        $uRow->type_id = self::TYPE_ID_USER_CHARTS;
+                        $uRow->content = [
+                            'scope'      => 'by-user',
+                            'scope-id'   => (string) $uid,
+                            'charts'     => [],
+                            'visibility' => [],
+                        ];
+                    }
+
+                    $uContent = (array) $uRow->content;
+                    $vis = array_map('intval', (array) ($uContent['visibility'] ?? []));
+
+                    // quitar
+                    $vis = array_values(array_diff($vis, [(int) $chart_id]));
+                    $uContent['visibility'] = $vis;
+
+                    $uRow->content = $uContent;
+                    $uRow->save();
+                }
+
+                // A2) Asegurar visibility en el usuario DESTINO
+                $destVis = array_map('intval', (array) ($toContent['visibility'] ?? []));
+                if (! in_array((int) $chart_id, $destVis, true)) {
+                    $destVis[] = (int) $chart_id;
+                }
+                $toContent['visibility'] = array_values(array_unique($destVis));
+            }
+
+
+            // Caso B: by-user -> by-rol
+            if ($from === 'by-user' && $to === 'by-rol') {
+
+                // NO se elimina del visibility del user origen.
+                // El chart seguirá visible vía rol y visibility define orden/visualización.
+
+                // B1) Agregar chart_id al visibility de TODOS los users del rol DESTINO (targetRoleId)
+                $users = DB::connection('traro_db')->table('users')->where('role_id', (int) $targetRoleId)->pluck('id');
+
+                foreach ($users as $uid) {
+
+                    $uRow = Configuration::where('type_id', self::TYPE_ID_USER_CHARTS)
+                        ->where('content->scope', 'by-user')
+                        ->where('content->scope-id', (string) $uid)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $uRow) {
+                        // igual que store: si no existe, se crea
+                        $uRow = new Configuration();
+                        $uRow->type_id = self::TYPE_ID_USER_CHARTS;
+                        $uRow->content = [
+                            'scope'      => 'by-user',
+                            'scope-id'   => (string) $uid,
+                            'charts'     => [],
+                            'visibility' => [],
+                        ];
+                    }
+
+                    $uContent = (array) $uRow->content;
+                    $vis = array_map('intval', (array) ($uContent['visibility'] ?? []));
+
+                    if (! in_array((int) $chart_id, $vis, true)) {
+                        $vis[] = (int) $chart_id;
+                    }
+
+                    $uContent['visibility'] = array_values(array_unique($vis));
+                    $uRow->content = $uContent;
+                    $uRow->save();
+                }
+            }
+
+            $fromRow->content = $fromContent;
+            $fromRow->save();
+
+            $toRow->content = $toContent;
+            $toRow->save();
+
+            return $this->success([
+                'moved' => [
+                    'chart_id' => (int) $chart_id,
+                    'from' => ['scope' => $from, 'scope_id' => $fromScopeId],
+                    'to'   => ['scope' => $to,   'scope_id' => $toScopeId],
+                ],
+            ], 'Alcance del gráfico actualizado correctamente', 200);
         });
     }
 }
