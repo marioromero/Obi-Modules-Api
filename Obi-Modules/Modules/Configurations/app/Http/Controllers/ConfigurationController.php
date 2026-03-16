@@ -2377,9 +2377,25 @@ class ConfigurationController extends BaseApiController
 
         // merge sin duplicar por chart_id
         $byId = [];
-        foreach (array_merge($rolCharts, $userCharts) as $c) {
+
+        // 1) primero rol
+        foreach ($rolCharts as $c) {
             $id = (int) data_get($c, 'chart_id', 0);
-            if ($id > 0) $byId[$id] = $c;
+            if ($id > 0) {
+                $c['__scope']    = 'by-rol';
+                $c['__scope_id'] = (string) $roleId;
+                $byId[$id] = $c;
+            }
+        }
+
+        // 2) luego user (override si existiera mismo chart_id)
+        foreach ($userCharts as $c) {
+            $id = (int) data_get($c, 'chart_id', 0);
+            if ($id > 0) {
+                $c['__scope']    = 'by-user';
+                $c['__scope_id'] = (string) $user;
+                $byId[$id] = $c;
+            }
         }
 
         // orden por visibility (si existe)
@@ -2401,10 +2417,10 @@ class ConfigurationController extends BaseApiController
         foreach ($orderedIds as $id) {
             $raw      = (array) $byId[$id];
             $sql      = (string) data_get($raw, 'sql', '');
-
+            $scope   = (string) data_get($raw, '__scope', '');
+            $scopeId = (string) data_get($raw, '__scope_id', '');
             $title = (string) data_get($raw, 'title', '');
             $type  = (string) data_get($raw, 'type', '');
-
             $chartCfg = (array) data_get($raw, 'chart_config', []);
 
             unset($chartCfg['title'], $chartCfg['type']);
@@ -2440,6 +2456,8 @@ class ConfigurationController extends BaseApiController
 
             $payload = [
                 'chart_id'     => $id,
+                'scope'        => $scope,
+                'scope_id'     => $scopeId,
                 'title'        => $title,
                 'type'         => $type,
                 'data'         => $dataRows,
