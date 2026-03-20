@@ -357,7 +357,7 @@ class EmailScheduleController extends BaseApiController
     public function destroy(EmailSchedule $emailSchedule)
     {
         $emailSchedule->delete();
-        return $this->success(null, 'EmailSchedule eliminado correctamente', 204);
+        return $this->success(null, 'Programación eliminada correctamente', 200);
     }
 }
 
