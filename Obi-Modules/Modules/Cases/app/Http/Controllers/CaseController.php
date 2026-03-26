@@ -598,7 +598,7 @@ class CaseController extends BaseApiController
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
 
-        $query = CaseEntity::query();
+        $query = CaseEntity::query()->with('customer');
 
         if ($startDate && $endDate) {
             // Filtrar entre fechas
@@ -613,7 +613,11 @@ class CaseController extends BaseApiController
             return $this->error('Debe proporcionar al menos una fecha (start_date o end_date)', 400);
         }
 
-        $cases = $query->get();
+        $cases = $query->get()->map(function ($case) {
+            $case->customer_name = $case->customer?->name." ".$case->customer?->lastname ?? null;
+            $case->customer_email = $case->customer?->email ?? null;
+            return $case;
+        });
 
         return $this->success($cases, 'Casos filtrados por fecha de pago', 200);
     }
