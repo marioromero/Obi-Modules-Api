@@ -50,4 +50,5 @@ Route::post('email-schedules', [EmailScheduleController::class, 'store']);
 Route::put('email-schedules/{emailSchedule}', [EmailScheduleController::class, 'update']);
 Route::patch('email-schedules/{emailSchedule}', [EmailScheduleController::class, 'patch']);
 Route::delete('email-schedules/{emailSchedule}', [EmailScheduleController::class, 'destroy']);
+Route::post('email-schedules/preview', [EmailScheduleController::class, 'previewSchedule']);
 

@@ -50,3 +50,5 @@ Route::post('configurations/user-charts/{user}/{scope}', [ConfigurationControlle
 Route::put('configurations/user-charts/{user}/{scope}/{chart_id}', [ConfigurationController::class, 'updateCharts'])->whereNumber('user')->whereNumber('chart_id');
 Route::delete('configurations/user-charts/{user}/{scope}/{chart_id}', [ConfigurationController::class, 'deleteCharts'])->whereNumber('user')->whereNumber('chart_id');
 Route::put('configurations/user-charts/{user}/{scope}/{chart_id}/config',[ConfigurationController::class, 'updateChartsConfig'])->whereNumber('user')->whereNumber('chart_id');
+Route::get('configurations/user-charts/{user}/show/{chart_id}', [ConfigurationController::class, 'showSingleChart'])->whereNumber('user')->whereNumber('chart_id');
+Route::patch('configurations/user-charts/{user}/move-scope/{chart_id}', [ConfigurationController::class, 'moveScopeCharts'])->whereNumber('user')->whereNumber('chart_id');

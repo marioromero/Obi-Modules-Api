@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('name', 50);
             $table->unsignedBigInteger('user_id');        // users_db.users
             $table->unsignedBigInteger('department_id'); // mailing_db.departments
+            $table->string('subject', 255);
             $table->longText('content');
         });
     }
@@ -23,5 +24,5 @@ return new class extends Migration
            {
                Schema::dropIfExists('email_templates');
            }
-       };
+};
        

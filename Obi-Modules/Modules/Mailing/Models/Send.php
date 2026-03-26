@@ -19,6 +19,7 @@ class Send extends Model
         'sent_at',
         'status',
         'email_schedule_id',
+        'customer_name',
         'email',
         'customer_detail_id',
     ];

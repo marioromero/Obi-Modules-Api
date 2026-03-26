@@ -197,6 +197,16 @@ return [
                 'email_template_id'  => 'Plantilla (ID)',
                 'customer_set_id'    => 'Set (ID)',
                 'user_name' => 'Creado por',
+
+                'schedule_id'          => 'Programación (ID)',
+                'customer_set_name'    => 'Nombre del set',
+                'start_in'             => 'Fecha inicio',
+                'ending_at'            => 'Fecha término',
+                'status_sends'         => 'Envíos',
+                'is_retry'             => 'Reintento',
+                'created_by_user_id'   => 'Creador (ID)',
+                'created_by_user_name' => 'Creado por',
+                'status'               => 'Estado',
             ],
         ],
 
