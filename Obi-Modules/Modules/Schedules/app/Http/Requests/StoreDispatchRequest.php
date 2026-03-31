@@ -1,0 +1,35 @@
+<?php
+
+namespace Modules\Schedules\app\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreDispatchRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'date' => 'required|date',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            '*.required' => 'El campo :attribute es obligatorio.',
+            '*.date'     => 'El campo :attribute debe ser una fecha válida (AAAA-MM-DD).',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'date' => 'fecha',
+        ];
+    }
+}
