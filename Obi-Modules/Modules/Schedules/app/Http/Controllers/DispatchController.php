@@ -16,7 +16,7 @@ class DispatchController extends BaseApiController
     public function index()
     {
         $dispatches = Dispatch::all();
-        return $this->success($dispatches, 'Listado de despachos', 200);
+        return $this->success($dispatches, 'Listado de salidas', 200);
     }
 
     public function show(Dispatch $dispatch)
@@ -48,6 +48,11 @@ class DispatchController extends BaseApiController
 
     public function destroy(Dispatch $dispatch)
     {
+        // Verificar que refund_status sea false antes de eliminar
+        if ($dispatch->refund_status) {
+            return $this->error('No se puede eliminar el despacho porque tiene estado de reembolso activo', 400);
+        }
+
         $dispatch->delete();
         return $this->success(null, 'Despacho eliminado correctamente', 204);
     }
@@ -62,7 +67,18 @@ class DispatchController extends BaseApiController
             ->orderByDesc('id')
             ->get();
 
-        return $this->success($dispatches, 'Listado de despachos por fecha');
+        return $this->success($dispatches, 'Listado de salidas por fecha');
+    }
+
+    //Listar salidas por asesor
+    public function indexByAssistantId($assistantId)
+    {
+        $dispatches = Dispatch::on($this->conn)
+            ->where('assistant_id', $assistantId)
+            ->orderByDesc('id')
+            ->get();
+
+        return $this->success($dispatches, 'Listado de salidas del asesor');
     }
 
     //Obtener despacho con sus detalles

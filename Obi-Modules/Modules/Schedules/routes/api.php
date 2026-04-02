@@ -5,6 +5,7 @@ use Modules\Schedules\app\Http\Controllers\ScheduleController;
 use Modules\Schedules\app\Http\Controllers\ScheduleStatusController;
 use Modules\Schedules\app\Http\Controllers\DispatchController;
 use Modules\Schedules\app\Http\Controllers\DispatchDetailController;
+use Modules\Schedules\app\Http\Controllers\MovementTypeController;
 
 Route::get('/ping-schedules', fn() => response()->json(['pong' => 'Schedules']))->name('Schedules.ping');
 
@@ -36,6 +37,7 @@ Route::put('dispatches/{dispatch}', [DispatchController::class, 'update']);
 Route::patch('dispatches/{dispatch}', [DispatchController::class, 'patch']);
 Route::delete('dispatches/{dispatch}', [DispatchController::class, 'destroy']);
 Route::get('dispatches/date/{date}', [DispatchController::class, 'indexByDate']);           // Listar despachos por fecha
+Route::get('dispatches/assistant/{assistantId}', [DispatchController::class, 'indexByAssistantId']); // Listar despachos por asistente
 Route::get('dispatches/{dispatch}/details', [DispatchController::class, 'showWithDetails']); // Despacho con detalles
 
 // REST para DispatchDetail
@@ -47,4 +49,12 @@ Route::patch('dispatch-details/{dispatchDetail}', [DispatchDetailController::cla
 Route::delete('dispatch-details/{dispatchDetail}', [DispatchDetailController::class, 'destroy']);
 Route::get('dispatch-details/dispatch/{dispatchId}', [DispatchDetailController::class, 'indexByDispatchId']);           // Listar detalles por despacho
 Route::get('dispatch-details/{dispatchDetail}/movement-type', [DispatchDetailController::class, 'showWithMovementType']); // Detalle con tipo de movimiento
+
+// REST para MovementType
+Route::get('movement-types', [MovementTypeController::class, 'index']);
+Route::get('movement-types/{movementType}', [MovementTypeController::class, 'show']);
+Route::post('movement-types', [MovementTypeController::class, 'store']);
+Route::put('movement-types/{movementType}', [MovementTypeController::class, 'update']);
+Route::patch('movement-types/{movementType}', [MovementTypeController::class, 'patch']);
+Route::delete('movement-types/{movementType}', [MovementTypeController::class, 'destroy']);
 

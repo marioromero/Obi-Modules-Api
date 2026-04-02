@@ -4,6 +4,7 @@ namespace Modules\Schedules\app\Http\Controllers;
 use Modules\Core\app\Http\BaseApiController;
 
 use Illuminate\Http\Request;
+use Modules\Schedules\Models\Dispatch;
 use Modules\Schedules\Models\DispatchDetail;
 use Illuminate\Support\Facades\DB;
 use Modules\Schedules\app\Http\Requests\StoreDispatchDetailRequest;
@@ -16,26 +17,26 @@ class DispatchDetailController extends BaseApiController
     public function index()
     {
         $details = DispatchDetail::all();
-        return $this->success($details, 'Listado de detalles de despacho', 200);
+        return $this->success($details, 'Listado de detalles de desplazamiento', 200);
     }
 
     public function show(DispatchDetail $dispatchDetail)
     {
-        return $this->success($dispatchDetail, 'Detalle de despacho obtenido correctamente');
+        return $this->success($dispatchDetail, 'Detalle de desplazamiento obtenido correctamente');
     }
 
     public function store(StoreDispatchDetailRequest $request)
     {
         $detail = DispatchDetail::create($request->validated());
 
-        return $this->success($detail, 'Detalle de despacho creado correctamente', 200);
+        return $this->success($detail, 'Detalle de desplazamiento creado correctamente', 200);
     }
 
     public function update(UpdateDispatchDetailRequest $request, DispatchDetail $dispatchDetail)
     {
         $dispatchDetail->update($request->validated());
 
-        return $this->success($dispatchDetail, 'Detalle de despacho actualizado correctamente');
+        return $this->success($dispatchDetail, 'Detalle de desplazamiento actualizado correctamente');
     }
 
     public function patch(Request $request, DispatchDetail $dispatchDetail)
@@ -51,13 +52,19 @@ class DispatchDetailController extends BaseApiController
         ]);
         $dispatchDetail->update($data);
 
-        return $this->success($dispatchDetail, 'Detalle de despacho parcialmente actualizado');
+        return $this->success($dispatchDetail, 'Detalle de desplazamiento parcialmente actualizado');
     }
 
     public function destroy(DispatchDetail $dispatchDetail)
     {
+        // Verificar que el refund_status del dispatch sea false antes de eliminar
+        $dispatch = Dispatch::find($dispatchDetail->dispatch_id);
+        if ($dispatch && $dispatch->refund_status) {
+            return $this->error('No se puede eliminar el desplazamiento porque el desplazamiento tiene estado de reembolso activo', 400);
+        }
+
         $dispatchDetail->delete();
-        return $this->success(null, 'Detalle de despacho eliminado correctamente', 204);
+        return $this->success(null, 'Detalle de desplazamiento eliminado correctamente', 204);
     }
 
     //Metodos con logica de negocio
@@ -70,7 +77,7 @@ class DispatchDetailController extends BaseApiController
             ->orderByDesc('id')
             ->get();
 
-        return $this->success($details, 'Listado de detalles del despacho');
+        return $this->success($details, 'Listado de detalles del desplazamiento');
     }
 
     //Obtener detalle con su tipo de movimiento
@@ -78,6 +85,6 @@ class DispatchDetailController extends BaseApiController
     {
         $dispatchDetail->load('movementType');
 
-        return $this->success($dispatchDetail, 'Detalle de despacho con tipo de movimiento obtenido correctamente');
+        return $this->success($dispatchDetail, 'Detalle de desplazamiento con tipo de movimiento obtenido correctamente');
     }
 }

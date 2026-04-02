@@ -1,7 +1,7 @@
 <?php
 
 namespace Modules\Users\app\Http\Controllers;
-use Modules\Core\App\Http\BaseApiController;
+use Modules\Core\app\Http\BaseApiController;
 use Modules\Users\Models\Model;
 
 use App\Http\Controllers\Controller;
@@ -12,27 +12,27 @@ class ModelController extends BaseApiController
     /**
      * Display a listing of the resource.
      */
-    
+
 
     /**
      * Store a newly created resource in storage.
      */
-    
+
 
     /**
      * Show the specified resource.
      */
-    
+
 
     /**
      * Update the specified resource in storage.
      */
-    
+
 
     /**
      * Remove the specified resource from storage.
      */
-    
+
 
     public function index()
     {
