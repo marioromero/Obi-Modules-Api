@@ -6,6 +6,10 @@
 @baseUrl = http://obi.trarocrm.cl/obi/api/schedules/v1/
 # @baseUrl = https://api.produccion.com/api
 
+### Variable de servidor para módulo de geografía
+@geoUrl = http://obi.trarocrm.cl/obi/api/geography/v1/
+# @geoUrl = https://api.produccion.com/api
+
 ### ============================================
 ### 1. UN ASESOR CREA UNA NUEVA SALIDA (DISPATCH)
 ### ============================================
@@ -29,6 +33,15 @@ x-internal-key: obi2025
 
 ### Obtener todos los tipos de movimiento disponibles
 GET {{baseUrl}}/movement-types
+Accept: application/json
+x-internal-key: obi2025
+
+### ============================================
+### 2.5 OBTENER DISTANCIA ENTRE COMUNAS (ORIGEN Y DESTINO)
+### ============================================
+
+### Obtener la distancia en km entre dos comunas (reemplazar {originId} y {destinationId} con los IDs de comuna)
+GET {{geoUrl}}/commune-distances/1/2
 Accept: application/json
 x-internal-key: obi2025
 

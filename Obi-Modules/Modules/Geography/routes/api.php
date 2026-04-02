@@ -6,6 +6,7 @@ use Modules\Geography\app\Http\Controllers\RegionController;
 use Modules\Geography\app\Http\Controllers\ProvinceController;
 use Modules\Geography\app\Http\Controllers\CommuneController;
 use Modules\Geography\app\Http\Controllers\VersionPAController;
+use Modules\Geography\app\Http\Controllers\CommuneDistanceController;
 
 Route::get('/ping-geography', fn() => response()->json(['pong' => 'Geography']))->name('Geography.ping');
 
@@ -49,4 +50,7 @@ Route::post('version-p-as', [VersionPAController::class, 'store']);
 Route::put('version-p-as/{versionPA}', [VersionPAController::class, 'update']);
 Route::patch('version-p-as/{versionPA}', [VersionPAController::class, 'patch']);
 Route::delete('version-p-as/{versionPA}', [VersionPAController::class, 'destroy']);
+
+// Ruta para obtener distancia entre comunas
+Route::get('commune-distances/{originId}/{destinationId}', [CommuneDistanceController::class, 'getDistance']);
 
