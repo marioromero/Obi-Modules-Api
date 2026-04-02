@@ -14,8 +14,9 @@ class StoreDispatchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date'         => 'required|date',
-            'assistant_id' => 'required|integer',
+            'date'           => 'required|date',
+            'assistant_id'   => 'required|integer',
+            'refund_status'  => 'nullable|boolean',
         ];
     }
 
@@ -25,14 +26,16 @@ class StoreDispatchRequest extends FormRequest
             '*.required' => 'El campo :attribute es obligatorio.',
             '*.date'     => 'El campo :attribute debe ser una fecha válida (AAAA-MM-DD).',
             '*.integer'  => 'El campo :attribute debe ser un número entero.',
+            '*.boolean'  => 'El campo :attribute debe ser verdadero o falso.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'date'         => 'fecha',
-            'assistant_id' => 'asistente',
+            'date'           => 'fecha',
+            'assistant_id'   => 'asistente',
+            'refund_status'  => 'estado de reembolso',
         ];
     }
 }

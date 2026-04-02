@@ -14,8 +14,9 @@ class UpdateDispatchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date'         => 'sometimes|date',
-            'assistant_id' => 'sometimes|integer',
+            'date'           => 'sometimes|date',
+            'assistant_id'   => 'sometimes|integer',
+            'refund_status'  => 'sometimes|boolean',
         ];
     }
 
@@ -24,14 +25,16 @@ class UpdateDispatchRequest extends FormRequest
         return [
             '*.date'    => 'El campo :attribute debe ser una fecha válida (AAAA-MM-DD).',
             '*.integer' => 'El campo :attribute debe ser un número entero.',
+            '*.boolean' => 'El campo :attribute debe ser verdadero o falso.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'date'         => 'fecha',
-            'assistant_id' => 'asistente',
+            'date'           => 'fecha',
+            'assistant_id'   => 'asistente',
+            'refund_status'  => 'estado de reembolso',
         ];
     }
 }

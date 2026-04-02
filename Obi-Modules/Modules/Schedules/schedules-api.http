@@ -151,7 +151,8 @@ x-internal-key: obi2025
 
 {
     "date": "2025-04-01",
-    "assistant_id": 1
+    "assistant_id": 1,
+    "refund_status": false
 }
 
 ### Actualizar un despacho (PUT)
@@ -161,7 +162,8 @@ x-internal-key: obi2025
 
 {
     "date": "2025-04-02",
-    "assistant_id": 2
+    "assistant_id": 2,
+    "refund_status": true
 }
 
 ### Actualización parcial de un despacho (PATCH)
@@ -171,7 +173,8 @@ x-internal-key: obi2025
 
 {
     "date": "2025-04-03",
-    "assistant_id": 3
+    "assistant_id": 3,
+    "refund_status": false
 }
 
 ### Eliminar un despacho
