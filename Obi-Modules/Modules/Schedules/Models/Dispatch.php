@@ -16,6 +16,7 @@ class Dispatch extends Model
 
     protected $fillable = [
         'date',
+        'assistant_id',
     ];
 
     /** RELACIONES INTERNAS **/

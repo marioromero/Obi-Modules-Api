@@ -14,7 +14,8 @@ class StoreDispatchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date' => 'required|date',
+            'date'         => 'required|date',
+            'assistant_id' => 'required|integer',
         ];
     }
 
@@ -23,13 +24,15 @@ class StoreDispatchRequest extends FormRequest
         return [
             '*.required' => 'El campo :attribute es obligatorio.',
             '*.date'     => 'El campo :attribute debe ser una fecha válida (AAAA-MM-DD).',
+            '*.integer'  => 'El campo :attribute debe ser un número entero.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'date' => 'fecha',
+            'date'         => 'fecha',
+            'assistant_id' => 'asistente',
         ];
     }
 }

@@ -14,21 +14,24 @@ class UpdateDispatchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date' => 'sometimes|date',
+            'date'         => 'sometimes|date',
+            'assistant_id' => 'sometimes|integer',
         ];
     }
 
     public function messages(): array
     {
         return [
-            '*.date' => 'El campo :attribute debe ser una fecha válida (AAAA-MM-DD).',
+            '*.date'    => 'El campo :attribute debe ser una fecha válida (AAAA-MM-DD).',
+            '*.integer' => 'El campo :attribute debe ser un número entero.',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'date' => 'fecha',
+            'date'         => 'fecha',
+            'assistant_id' => 'asistente',
         ];
     }
 }
