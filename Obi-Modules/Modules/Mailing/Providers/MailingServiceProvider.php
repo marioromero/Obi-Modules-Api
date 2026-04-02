@@ -46,10 +46,6 @@ class MailingServiceProvider extends ServiceProvider
         if (! $this->app->runningInConsole()) {
         return;
         }
-    
-        $this->commands([
-            \Modules\Mailing\Console\Commands\RunMailingSchedulesCommand::class,
-        ]);
     }
 
     /**
