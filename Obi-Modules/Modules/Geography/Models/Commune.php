@@ -18,6 +18,8 @@ class Commune extends Model
     protected $fillable = [
         'name',
         'province_id',
+        'latitude',
+        'longitude',
     ];
 
     // Relación de Commune con Province (una Commune pertenece a una Province)
