@@ -121,3 +121,12 @@ x-internal-key: obi2025
 DELETE {{baseUrl}}/dispatch-details/1
 x-internal-key: obi2025
 
+### ============================================
+### 9. CAMBIAR ESTADO DE REEMBOLSO DE UNA SALIDA
+###    (Cambia refund_status de 0 a 1 o de 1 a 0)
+### ============================================
+
+### Cambiar el estado de reembolso de un despacho (toggle)
+POST {{baseUrl}}/dispatches/1/toggle-refund-status
+x-internal-key: obi2025
+

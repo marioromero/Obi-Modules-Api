@@ -100,4 +100,17 @@ class DispatchController extends BaseApiController
 
         return $this->success($dispatches, 'Listado de salidas por rango de fechas');
     }
+
+    //Cambiar el estado de refund_status (toggle)
+    public function toggleRefundStatus(Dispatch $dispatch)
+    {
+        $newStatus = !$dispatch->refund_status;
+        $dispatch->update(['refund_status' => $newStatus]);
+
+        $message = $newStatus
+            ? 'Estado de reembolso activado correctamente'
+            : 'Estado de reembolso desactivado correctamente';
+
+        return $this->success($dispatch, $message);
+    }
 }
