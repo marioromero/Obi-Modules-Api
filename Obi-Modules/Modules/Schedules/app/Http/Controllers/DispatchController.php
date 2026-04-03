@@ -88,4 +88,16 @@ class DispatchController extends BaseApiController
 
         return $this->success($dispatch, 'Despacho con detalles obtenido correctamente');
     }
+
+    //Listar salidas por rango de fechas (inclusive)
+    public function indexByDateRange($startDate, $endDate)
+    {
+        $dispatches = Dispatch::on($this->conn)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->get();
+
+        return $this->success($dispatches, 'Listado de salidas por rango de fechas');
+    }
 }

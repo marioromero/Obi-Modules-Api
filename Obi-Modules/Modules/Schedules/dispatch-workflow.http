@@ -37,7 +37,8 @@ Accept: application/json
 x-internal-key: obi2025
 
 ### ============================================
-### 2.5 OBTENER DISTANCIA ENTRE COMUNAS (ORIGEN Y DESTINO)
+### 2.5 OBTENER DISTANCIA ENTRE COMUNAS (ORIGEN Y DESTINO) se debe consultar para verificar que los kms. ingresados por el
+## usuario no sean mayores a ese valor
 ### ============================================
 
 ### Obtener la distancia en km entre dos comunas (reemplazar {originId} y {destinationId} con los IDs de comuna)
@@ -74,11 +75,20 @@ Accept: application/json
 x-internal-key: obi2025
 
 ### ============================================
+### 4.5 EL ASESOR CARGA LA LISTA DE SALIDAS DENTRO DE UN RANGO DE FECHAS
+### ============================================
+
+### Listar despachos por rango de fechas (inclusive) (reemplazar {startDate} y {endDate} con las fechas de inicio y fin)
+GET {{baseUrl}}/dispatches/date-range/2025-04-01/2025-04-30
+Accept: application/json
+x-internal-key: obi2025
+
+### ============================================
 ### 5. EL ASESOR SELECCIONA "VER DETALLE" EN UNA SALIDA Y CARGA
 ###    UNA TABLA CON LA LISTA DE DESPLAZAMIENTOS DE ESA SALIDA
 ### ============================================
 
-### Obtener despacho con sus detalles (reemplazar {dispatchId} con el ID del despacho)
+### Obtener salida con sus desplazamientos  (reemplazar {dispatchId} con el ID del despacho)
 GET {{baseUrl}}/dispatches/1/details
 Accept: application/json
 x-internal-key: obi2025

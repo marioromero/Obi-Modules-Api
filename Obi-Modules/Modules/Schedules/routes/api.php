@@ -37,6 +37,7 @@ Route::put('dispatches/{dispatch}', [DispatchController::class, 'update']);
 Route::patch('dispatches/{dispatch}', [DispatchController::class, 'patch']);
 Route::delete('dispatches/{dispatch}', [DispatchController::class, 'destroy']);
 Route::get('dispatches/date/{date}', [DispatchController::class, 'indexByDate']);           // Listar despachos por fecha
+Route::get('dispatches/date-range/{startDate}/{endDate}', [DispatchController::class, 'indexByDateRange']); // Listar despachos por rango de fechas
 Route::get('dispatches/assistant/{assistantId}', [DispatchController::class, 'indexByAssistantId']); // Listar despachos por asistente
 Route::get('dispatches/{dispatch}/details', [DispatchController::class, 'showWithDetails']); // Despacho con detalles
 
