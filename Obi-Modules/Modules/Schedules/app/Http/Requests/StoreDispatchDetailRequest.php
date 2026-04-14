@@ -16,7 +16,7 @@ class StoreDispatchDetailRequest extends FormRequest
         return [
             'dispatch_id'      => 'required|integer|exists:schedules_db.dispatches,id',
             'movement_type_id' => 'required|integer|exists:schedules_db.movement_types,id',
-            'cases'            => 'required|string',
+            'cases'            => 'nullable|string',
             'origin'           => 'required|integer',
             'destination'      => 'required|integer',
             'km_traveled'      => 'required|integer|min:0',

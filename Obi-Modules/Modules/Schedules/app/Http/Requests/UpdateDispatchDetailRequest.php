@@ -16,7 +16,7 @@ class UpdateDispatchDetailRequest extends FormRequest
         return [
             'dispatch_id'      => 'sometimes|integer|exists:schedules_db.dispatches,id',
             'movement_type_id' => 'sometimes|integer|exists:schedules_db.movement_types,id',
-            'cases'            => 'sometimes|string',
+            'cases'            => 'sometimes|nullable|string',
             'origin'           => 'sometimes|integer',
             'destination'      => 'sometimes|integer',
             'km_traveled'      => 'sometimes|integer|min:0',
