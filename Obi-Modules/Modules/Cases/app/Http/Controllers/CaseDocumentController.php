@@ -38,7 +38,6 @@ class CaseDocumentController extends BaseApiController
             }
 
             return $this->success($list, 'Documentos del caso obtenidos correctamente', 200);
-
         } catch (RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         } catch (\Throwable $e) {
@@ -60,7 +59,6 @@ class CaseDocumentController extends BaseApiController
             }
 
             return $this->success($document, 'Documento encontrado', 200);
-
         } catch (RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         } catch (\Throwable $e) {
@@ -74,11 +72,13 @@ class CaseDocumentController extends BaseApiController
     public function download(string $code, Request $request)
     {
         try {
-            $path = (string)$request->query('path', '');
+            $path = (string) $request->query('path', '');
             if ($path === '') {
                 // retrocompatibilidad con ?filename=
-                $filename = (string)$request->query('filename', '');
-                if ($filename === '') return $this->error('Parámetro path o filename es requerido', 422);
+                $filename = (string) $request->query('filename', '');
+                if ($filename === '') {
+                    return $this->error('Parámetro path o filename es requerido', 422);
+                }
                 $path = $code . '/' . $filename;
             }
 
@@ -92,13 +92,11 @@ class CaseDocumentController extends BaseApiController
             $disposition = $request->boolean('download') ? 'attachment' : 'inline';
             $name = basename($path);
 
-            // STREAM del original (no toca el binario → firma intacta)
             return Storage::disk('cases-docs')->response($path, $name, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => $disposition . '; filename="' . $name . '"',
                 'Cache-Control' => 'no-cache, must-revalidate',
             ]);
-
         } catch (RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         } catch (\Throwable $e) {
@@ -108,21 +106,23 @@ class CaseDocumentController extends BaseApiController
 
     /**
      * Sube un nuevo documento
-      */
-     public function store(Request $request, string $code)
-     {
-         try {
-             $this->storage->sanitizeCaseCode($code);
+     */
+    public function store(Request $request, string $code)
+    {
+        try {
+            $this->storage->sanitizeCaseCode($code);
 
-             $request->validate([
-                 'file' => 'required|file|max:20480|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx', // 10MB max
-                 'filename' => 'sometimes|string|max:255',
-                 'type' => 'required|in:CONTRATO,MANDATO,DOC'
-             ]);
+            $request->validate([
+                'file' => 'required|file|max:20480|mimes:pdf,doc,docx,jpg,jpeg,png,xls,xlsx',
+                'filename' => 'sometimes|string|max:255',
+                'type' => 'required|in:CONTRATO,MANDATO,DOC'
+            ]);
 
-             $file = $request->file('file');
-             $type = strtoupper($request->string('type')->toString());
-             $filename = $request->string('filename')->toString() ?: $file->getClientOriginalName();
+            $file = $request->file('file');
+            $type = strtoupper($request->string('type')->toString());
+            $filename = $request->string('filename')->toString() ?: $file->getClientOriginalName();
+
+            $filename = $this->sanitizeDocumentFilename($filename);
 
             // Renombrar con prefijo
             $filename = $type . '_' . $filename;
@@ -143,7 +143,6 @@ class CaseDocumentController extends BaseApiController
             $this->storage->put($code, $relativePath, $content);
 
             return $this->success(['filename' => $filename], 'Documento subido correctamente', 201);
-
         } catch (ValidationException $e) {
             return $this->error('Datos inválidos: ' . $e->getMessage(), 422);
         } catch (RuntimeException $e) {
@@ -169,7 +168,7 @@ class CaseDocumentController extends BaseApiController
 
             $base64 = $request->string('base64')->toString();
             $type = strtoupper($request->string('type')->toString());
-            $filename = $request->string('filename')->toString();
+            $filename = $this->sanitizeDocumentFilename($request->string('filename')->toString());
 
             // Decodificar base64
             $content = base64_decode($base64);
@@ -184,7 +183,6 @@ class CaseDocumentController extends BaseApiController
                 $imagick->setImageFormat('pdf');
                 $pdfContent = $imagick->getImagesBlob();
             } else {
-                // Si no hay Imagick, asumir que el base64 ya es un PDF
                 $pdfContent = $content;
             }
 
@@ -206,7 +204,6 @@ class CaseDocumentController extends BaseApiController
             $this->storage->put($code, $relativePath, $pdfContent);
 
             return $this->success(['filename' => $filename], 'Documento subido correctamente', 201);
-
         } catch (ValidationException $e) {
             return $this->error('Datos inválidos: ' . $e->getMessage(), 422);
         } catch (RuntimeException $e) {
@@ -224,11 +221,13 @@ class CaseDocumentController extends BaseApiController
         try {
             $this->storage->sanitizeCaseCode($code);
 
-            $path = (string)$request->query('path', '');
+            $path = (string) $request->query('path', '');
             if ($path === '') {
                 // retrocompatibilidad con ?filename=
-                $filename = (string)$request->query('filename', '');
-                if ($filename === '') return $this->error('Parámetro path o filename es requerido', 422);
+                $filename = (string) $request->query('filename', '');
+                if ($filename === '') {
+                    return $this->error('Parámetro path o filename es requerido', 422);
+                }
                 $path = $code . '/' . $filename;
             }
 
@@ -245,7 +244,6 @@ class CaseDocumentController extends BaseApiController
             }
 
             return $this->success(null, 'Documento eliminado exitosamente', 200);
-
         } catch (RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         } catch (\Throwable $e) {
@@ -253,19 +251,17 @@ class CaseDocumentController extends BaseApiController
         }
     }
 
-    // Modules/Cases/app/Http/Controllers/CaseDocumentController.php
-    public function checkSignature(string $code, \Illuminate\Http\Request $request)
+    public function checkSignature(string $code, Request $request)
     {
-        $path = (string)$request->input('path');
+        $path = (string) $request->input('path');
         $this->storage->sanitizeCaseCode($code);
         $this->guardPath($code, $path);
 
-        if (!\Illuminate\Support\Facades\Storage::disk('cases-docs')->exists($path)) {
+        if (!Storage::disk('cases-docs')->exists($path)) {
             return response()->json(['message' => 'Archivo no existe'], 404);
         }
 
-        // Lee hasta 1 MB (suficiente para detectar marcadores en la mayoría de PDFs)
-        $stream = \Illuminate\Support\Facades\Storage::disk('cases-docs')->readStream($path);
+        $stream = Storage::disk('cases-docs')->readStream($path);
         $buf = '';
         while (!feof($stream) && strlen($buf) < 1024 * 1024) {
             $buf .= fread($stream, 8192);
@@ -273,42 +269,26 @@ class CaseDocumentController extends BaseApiController
         fclose($stream);
 
         $markers = [
-            'has_Type_Sig' => (bool)preg_match('/\/Type\s*\/Sig/i', $buf),
-            'has_ByteRange' => (bool)preg_match('/\/ByteRange\s*\[/i', $buf),
+            'has_Type_Sig' => (bool) preg_match('/\/Type\s*\/Sig/i', $buf),
+            'has_ByteRange' => (bool) preg_match('/\/ByteRange\s*\[/i', $buf),
             'has_ACEPTA' => stripos($buf, 'ACEPTA') !== false,
         ];
 
         return response()->json([
             'likely_signed' => in_array(true, $markers, true),
             'markers' => $markers,
-            'size' => \Illuminate\Support\Facades\Storage::disk('cases-docs')->size($path),
+            'size' => Storage::disk('cases-docs')->size($path),
             'filename' => basename($path),
         ]);
-    }
-
-    private function guardPath(string $case, string $rel): string
-    {
-        // normaliza y quita barras iniciales
-        $rel = str_replace('\\', '/', ltrim((string)$rel, '/'));
-
-        // debe empezar por el prefijo del caso, p. ej. TR123/
-        if (!str_starts_with($rel, $case . '/')) {
-            abort(422, 'Ruta fuera del caso');
-        }
-
-        // prohíbe traversal
-        if (str_contains($rel, '..')) {
-            abort(422, 'Ruta inválida');
-        }
-
-        return $rel; // ruta segura, relativa al disk
     }
 
     public function preview(string $code, Request $request)
     {
         try {
-            $path = (string)$request->query('path', '');
-            if ($path === '') return $this->error('Parámetro path es requerido', 422);
+            $path = (string) $request->query('path', '');
+            if ($path === '') {
+                return $this->error('Parámetro path es requerido', 422);
+            }
 
             $this->storage->sanitizeCaseCode($code);
             $path = $this->guardPath($code, $path);
@@ -317,16 +297,13 @@ class CaseDocumentController extends BaseApiController
                 return $this->error('Archivo no existe', 404);
             }
 
-            // 1) ¿Nos dieron el comprobante explícito?
-            $certHint = (string)$request->query('cert_path', '');
+            $certHint = (string) $request->query('cert_path', '');
             $certPath = $certHint ? $this->guardPath($code, $certHint) : null;
 
-            // 2) Si no, intenta heurística
             if (!$certPath) {
                 $certPath = $this->findCertificateFor($path);
             }
 
-            // 3) Si hay comprobante, concatena [comprobante + original]
             if ($certPath && Storage::disk('cases-docs')->exists($certPath)) {
                 $merger = new Merger();
                 $merger->addRaw(Storage::disk('cases-docs')->get($certPath));
@@ -341,14 +318,12 @@ class CaseDocumentController extends BaseApiController
                 ]);
             }
 
-            // 4) Sin comprobante: sirve el original (al menos firmado)
             $name = basename($path);
             return Storage::disk('cases-docs')->response($path, $name, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="' . $name . '"',
                 'Cache-Control' => 'no-cache, must-revalidate',
             ]);
-
         } catch (RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         } catch (\Throwable $e) {
@@ -356,29 +331,76 @@ class CaseDocumentController extends BaseApiController
         }
     }
 
-    private function findCertificateFor(string $docPath): ?string
-{
-    $disk = Storage::disk('cases-docs');
-    $dir  = trim(str_replace('\\','/', dirname($docPath)), '/');
-    $base = pathinfo($docPath, PATHINFO_FILENAME);
+    private function guardPath(string $case, string $rel): string
+    {
+        $rel = str_replace('\\', '/', ltrim((string) $rel, '/'));
 
-    $candidates = [
-        "{$dir}/{$base}-comprobante.pdf",
-        "{$dir}/{$base}_comprobante.pdf",
-        "{$dir}/{$base}-certificado.pdf",
-        "{$dir}/{$base}_certificado.pdf",
-        "{$dir}/{$base}-cert.pdf",
-        "{$dir}/{$base}_cert.pdf",
-        "{$dir}/certificados/{$base}.pdf",
-        "{$dir}/cert/{$base}.pdf",
-    ];
-    foreach ($candidates as $c) if ($disk->exists($c)) return $c;
+        if (!str_starts_with($rel, $case . '/')) {
+            abort(422, 'Ruta fuera del caso');
+        }
 
-    // búsqueda amplia por palabras clave (primer match)
-    foreach ($disk->files($dir) as $f) {
-        if (preg_match('/(acepta|comprobante|certificad)/i', $f)) return $f;
+        if (str_contains($rel, '..')) {
+            abort(422, 'Ruta inválida');
+        }
+
+        return $rel;
     }
-    return null;
-}
 
+    private function findCertificateFor(string $docPath): ?string
+    {
+        $disk = Storage::disk('cases-docs');
+        $dir = trim(str_replace('\\', '/', dirname($docPath)), '/');
+        $base = pathinfo($docPath, PATHINFO_FILENAME);
+
+        $candidates = [
+            "{$dir}/{$base}-comprobante.pdf",
+            "{$dir}/{$base}_comprobante.pdf",
+            "{$dir}/{$base}-certificado.pdf",
+            "{$dir}/{$base}_certificado.pdf",
+            "{$dir}/{$base}-cert.pdf",
+            "{$dir}/{$base}_cert.pdf",
+            "{$dir}/certificados/{$base}.pdf",
+            "{$dir}/cert/{$base}.pdf",
+        ];
+
+        foreach ($candidates as $c) {
+            if ($disk->exists($c)) {
+                return $c;
+            }
+        }
+
+        foreach ($disk->files($dir) as $f) {
+            if (preg_match('/(acepta|comprobante|certificad)/i', $f)) {
+                return $f;
+            }
+        }
+
+        return null;
+    }
+
+    private function sanitizeDocumentFilename(string $filename): string
+    {
+        $filename = trim($filename);
+        $filename = str_replace('\\', '/', $filename);
+        $filename = basename($filename);
+
+        $info = pathinfo($filename);
+        $name = $info['filename'] ?? '';
+        $ext = $info['extension'] ?? '';
+
+        $name = preg_replace('/\s+/', ' ', $name);
+        $name = preg_replace('/\.+/', '.', $name);
+        $name = trim($name, " ._\t\n\r\0\x0B");
+        $ext = trim($ext, " ._\t\n\r\0\x0B");
+
+        if ($name === '') {
+            $name = 'documento';
+        }
+
+        if ($ext !== '') {
+            return $name . '.' . $ext;
+        }
+
+        return $name;
+    }
 }
