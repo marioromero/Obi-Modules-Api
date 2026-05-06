@@ -441,23 +441,56 @@ class CaseController extends BaseApiController
         return $this->success(['next' => $next, 'prev' => $prev], 'Transiciones disponibles', 200);
     }
 
-   public function transition(TransitionCaseRequest $req, CaseEntity $case)
-    {
-        try {
-            $updated = app(\Modules\Cases\app\Services\CaseTransitionService::class)->transition(
-                $case,
-                $req->input('next_state'),
-                $req->input('comments'),
-                $req->input('user_id')
-            );
+    public function transition(TransitionCaseRequest $req, CaseEntity $case)
+     {
+         try {
+             $updated = app(\Modules\Cases\app\Services\CaseTransitionService::class)->transition(
+                 $case,
+                 $req->input('next_state'),
+                 $req->input('comments'),
+                 $req->input('user_id')
+             );
 
-            return $this->success($updated, 'Transición realizada satisfactoriamente', 200);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return $this->error('Datos inválidos', 422);
-        } catch (\Throwable $e) {
-            return $this->error($e->getMessage() ?: 'Error interno', 500);
-        }
-    }
+             // Actualizar campos en la tabla case_flows de traro_db
+             $caseFlow = DB::connection('traro_db')
+                 ->table('case_flows')
+                 ->where('obi_case_id', $case->id)
+                 ->first();
+
+             if ($caseFlow) {
+                 $updates = [];
+                 $needsUpdate = false;
+
+                 // Verificar mandato_firmado
+                 if (!isset($caseFlow->mandato_firmado) || $caseFlow->mandato_firmado == 0) {
+                     $updates['mandato_firmado'] = 1;
+                     $updates['fecha_firma_mandato'] = now();
+                     $needsUpdate = true;
+                 }
+
+                 // Verificar contrato_firmado
+                 if (!isset($caseFlow->contrato_firmado) || $caseFlow->contrato_firmado == 0) {
+                     $updates['contrato_firmado'] = 1;
+                     $updates['fecha_firma_contrato'] = now();
+                     $needsUpdate = true;
+                 }
+
+                 // Actualizar si hay cambios
+                 if ($needsUpdate) {
+                     DB::connection('traro_db')
+                         ->table('case_flows')
+                         ->where('obi_case_id', $case->id)
+                         ->update($updates);
+                 }
+             }
+
+             return $this->success($updated, 'Transición realizada satisfactoriamente', 200);
+         } catch (\Illuminate\Validation\ValidationException $e) {
+             return $this->error('Datos inválidos', 422);
+         } catch (\Throwable $e) {
+             return $this->error($e->getMessage() ?: 'Error interno', 500);
+         }
+     }
 
     //Endpoint: estadísticas globales de casos
     public function stats(): \Illuminate\Http\JsonResponse
