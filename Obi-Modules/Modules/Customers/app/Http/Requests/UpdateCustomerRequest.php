@@ -20,19 +20,19 @@ class UpdateCustomerRequest extends FormRequest
 
             // DNI único, ignorando el registro actual (id auto-detectado)
             'dni'            => [
-                'sometimes','string','max:15',
+                'sometimes','nullable','string','max:15',
                 Rule::unique('customers_db.customers', 'dni')
                     ->ignore($this->currentCustomerId()),
             ],
             'serial_number'  => ['sometimes','nullable','string','max:15'],
             'email'          => ['sometimes','email'],
-            'address'        => ['sometimes','string','max:255'],
+            'address'        => ['sometimes','nullable','string','max:255'],
             'phone'          => ['sometimes','string','max:20'],
             'phone2'         => ['sometimes','nullable','string','max:20'],
             'gender'         => ['nullable','in:M,F,O'],
-            'marital_status' => ['sometimes','in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo'],
-            'occupation'     => ['sometimes','string','max:100'],
-            'nationality'    => ['sometimes','in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña'],
+            'marital_status' => ['sometimes','nullable','string','in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo'],
+            'occupation'     => ['sometimes','nullable','string','max:100'],
+            'nationality'    => ['sometimes','nullable','string','in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña'],
             'commune_id'     => ['sometimes','nullable','exists:geography_db.communes,id'],
             'assigned_agent' => ['sometimes','nullable','exists:traro_db.users,id'],
             'is_enabled'     => ['sometimes','boolean'],

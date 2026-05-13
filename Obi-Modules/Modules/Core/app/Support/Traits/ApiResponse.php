@@ -14,12 +14,13 @@ trait ApiResponse
         ], $code);
     }
 
-    public function error(string $message, int $code = 400)
+    public function error(string $message, int $code = 400, $data = null)
     {
         return response()->json([
             'success' => false,
             'message' => $message,
             'code' => $code,
+            'data' => $data,
         ], $code);
     }
 

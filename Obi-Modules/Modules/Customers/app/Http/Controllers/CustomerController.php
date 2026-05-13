@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Core\app\Helpers\ColumnMap;
 use Modules\Core\app\Helpers\RutValidator;
+use Illuminate\Validation\ValidationException;
 
 
 class CustomerController extends BaseApiController
@@ -40,14 +41,22 @@ class CustomerController extends BaseApiController
 
     public function update(UpdateCustomerRequest $request, Customer $customer)
     {
-        $customer->fill($request->validated())->save();
-        return $this->success($customer->refresh(), 'Cliente actualizado correctamente', 200);
+        try {
+            $customer->fill($request->validated())->save();
+            return $this->success($customer->refresh(), 'Cliente actualizado correctamente', 200);
+        } catch (ValidationException $e) {
+            return $this->error('Errores de validación', 422, $e->errors());
+        }
     }
 
     public function patch(UpdateCustomerRequest $request, Customer $customer)
     {
-        $customer->fill($request->validated())->save();
-        return $this->success($customer->refresh(), 'Cliente parcialmente actualizado', 200);
+        try {
+            $customer->fill($request->validated())->save();
+            return $this->success($customer->refresh(), 'Cliente parcialmente actualizado', 200);
+        } catch (ValidationException $e) {
+            return $this->error('Errores de validación', 422, $e->errors());
+        }
     }
 
     public function destroy(Customer $customer)
@@ -81,52 +90,57 @@ class CustomerController extends BaseApiController
      // DNI exacto → devuelve objeto completo
     public function showCustomerByDni(string $dni)
     {
-        // 1. Limpieza básica
-        $dni = str_replace(['.', ' '], '', trim($dni));
-        if ($dni === '') {
-            return $this->error('DNI inválido', 422);
+        try {
+            // 1. Limpieza básica
+            $dni = str_replace(['.', ' '], '', trim($dni));
+            if ($dni === '') {
+                return $this->error('DNI inválido', 422);
+            }
+
+            // 2. Separar número y DV
+            if (str_contains($dni, '-')) {
+                [$num, $dv] = explode('-', $dni, 2);
+            } else {
+                $num = substr($dni, 0, -1);
+                $dv  = substr($dni, -1);
+            }
+
+            // 3. Normalización
+            $num = preg_replace('/\D+/', '', $num ?? '');
+            $dv  = strtolower($dv ?? '');
+
+            if ($num === '' || $dv === '') {
+                return $this->error('DNI inválido', 422);
+            }
+
+            // 4. RUT normalizado
+            $normalized = $num . '-' . $dv;
+
+            // 5. Validación REAL del RUT (DV por cálculo)
+            if (! RutValidator::isValidRut($normalized)) {
+                return $this->error('El RUT no es válido.', 422);
+            }
+
+            // 6. Búsqueda en BD
+            $customer = Customer::query()
+                ->with('assignedAgent:id,name')
+                ->where('dni', $normalized)
+                ->first();
+
+            if (! $customer) {
+                return $this->success(null, 'No existe', 204);
+            }
+
+            // 7. Respuesta
+            $data = $customer->toArray();
+            $data['assigned_agent'] = $customer->assigned_agent ?? null;
+            $data['agent_name']     = $customer->assignedAgent->name ?? null;
+
+            return $this->success($data, 'Cliente encontrado', 200);
+        } catch (\Throwable $e) {
+            // Registrar el error para depuración (en un entorno real, usarías el logger)
+            return $this->error('Error interno al buscar el cliente: ' . $e->getMessage(), 500);
         }
-
-        // 2. Separar número y DV
-        if (str_contains($dni, '-')) {
-            [$num, $dv] = explode('-', $dni, 2);
-        } else {
-            $num = substr($dni, 0, -1);
-            $dv  = substr($dni, -1);
-        }
-
-        // 3. Normalización
-        $num = preg_replace('/\D+/', '', $num ?? '');
-        $dv  = strtolower($dv ?? '');
-
-        if ($num === '' || $dv === '') {
-            return $this->error('DNI inválido', 422);
-        }
-
-        // 4. RUT normalizado
-        $normalized = $num . '-' . $dv;
-
-        // 5. Validación REAL del RUT (DV por cálculo)
-        if (! RutValidator::isValidRut($normalized)) {
-            return $this->error('El RUT no es válido.', 422);
-        }
-
-        // 6. Búsqueda en BD
-        $customer = Customer::query()
-            ->with('assignedAgent:id,name')
-            ->where('dni', $normalized)
-            ->first();
-
-        if (! $customer) {
-            return $this->success(null, 'No existe', 204);
-        }
-
-        // 7. Respuesta
-        $data = $customer->toArray();
-        $data['assigned_agent'] = $customer->assigned_agent ?? null;
-        $data['agent_name']     = $customer->assignedAgent->name ?? null;
-
-        return $this->success($data, 'Cliente encontrado', 200);
     }
 
     // Verifica existencia por DNI responde 1 o 0
@@ -200,7 +214,7 @@ class CustomerController extends BaseApiController
 
         return $this->success($results, 'Clientes encontrados por DNI', 200);
     }
-    
+
     public function customersByName(string $q)
     {
         // Validación mínima inline

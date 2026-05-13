@@ -1,0 +1,28 @@
+### ============================================
+### DISPATCH ADMIN WORKFLOW
+### ============================================
+
+### Variable de servidor - Cambiar entre localhost y producción
+@baseUrl = http://obi.trarocrm.cl/obi/api/schedules/v1/
+# @baseUrl = https://api.produccion.com/api
+
+### ============================================
+### 1. CAMBIAR ESTADO DE REEMBOLSO DE UNA SALIDA
+###    (Cambia refund_status de 0 a 1 o de 1 a 0)
+### ============================================
+
+### Cambiar el estado de reembolso de un salida (toggle)
+POST {{baseUrl}}/dispatches/1/toggle-refund-status
+x-internal-key: obi2025
+
+### ============================================
+### 2. LISTAR SALIDAS DENTRO DE UN RANGO DE FECHAS
+### ============================================
+
+### Listar salidas por rango de fechas
+GET {{baseUrl}}/dispatches/date-range/2025-04-01/2025-04-30
+Accept: application/json
+x-internal-key: obi2025
+
+
+

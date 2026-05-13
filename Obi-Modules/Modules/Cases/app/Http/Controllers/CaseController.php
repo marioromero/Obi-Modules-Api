@@ -49,7 +49,8 @@ class CaseController extends BaseApiController
 
         $userId = $data['created_by']
             ?? $request->header('X-User-Id')
-            ?? auth()->id();
+            ?? $request->input('user_id')
+            ?? ($request->user() ? $request->user()->id : null);
 
         $data['created_by'] = $userId;
 

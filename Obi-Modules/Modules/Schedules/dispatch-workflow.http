@@ -3,7 +3,7 @@
 ### ============================================
 
 ### Variable de servidor - Cambiar entre localhost y producción
-@baseUrl = http://obi.trarocrm.cl/obi/api/schedules/v1/
+@baseUrl = https://obi.trarocrm.cl/obi/api/schedules/v1/
 # @baseUrl = https://api.produccion.com/api
 
 ### Variable de servidor para módulo de geografía
@@ -104,12 +104,32 @@ Accept: application/json
 x-internal-key: obi2025
 
 ### ============================================
+### 6.5 EL ASESOR EDITA UN DESPLAZAMIENTO
+### ============================================
+
+### Editar un detalle de desplazamiento
+PUT {{baseUrl}}/dispatch-details/1
+Content-Type: application/json
+x-internal-key: obi2025
+
+{
+    "dispatch_id": 1,
+    "movement_type_id": 1,
+    "cases": "Caso actualizado",
+    "origin": 1,
+    "destination": 2,
+    "km_traveled": 150,
+    "fare_value": 100,
+    "comments": "Comentarios actualizados"
+}
+
+### ============================================
 ### 7. EL ASESOR ELIMINA UNA SALIDA
 ###    (El sistema debe verificar que el refund_status sea false, sino, no se puede eliminar)
 ### ============================================
 
 ### Eliminar un despacho
-DELETE {{baseUrl}}/dispatches/1
+DELETE {{baseUrl}}/dispatches/120
 x-internal-key: obi2025
 
 ### ============================================
