@@ -47,9 +47,26 @@ class CaseController extends BaseApiController
     {
         $data = $request->validated();
 
-        $data['created_by'] = $data['created_by']
+        $userId = $data['created_by']
             ?? $request->header('X-User-Id')
             ?? auth()->id();
+
+        $data['created_by'] = $userId;
+
+        if (! empty($data['customer_id'])) {
+            $customer = Customer::find($data['customer_id']);
+
+            if ($customer && empty($customer->assigned_agent)) {
+                if (! $userId) {
+                    throw ValidationException::withMessages([
+                        'created_by' => 'No se pudo determinar el usuario que está ingresando el caso para asignarlo como ejecutivo del cliente.',
+                    ]);
+                }
+
+                $customer->assigned_agent = (int) $userId;
+                $customer->save();
+            }
+        }
 
         $case = CaseEntity::create($data);
 
@@ -475,16 +492,23 @@ class CaseController extends BaseApiController
                      $needsUpdate = true;
                  }
 
-                 // Actualizar si hay cambios
-                 if ($needsUpdate) {
-                     DB::connection('traro_db')
-                         ->table('case_flows')
-                         ->where('obi_case_id', $case->id)
-                         ->update($updates);
-                 }
-             }
+              // Actualizar si hay cambios
+                  if ($needsUpdate) {
+                      DB::connection('traro_db')
+                          ->table('case_flows')
+                          ->where('obi_case_id', $case->id)
+                          ->update($updates);
 
-             return $this->success($updated, 'Transición realizada satisfactoriamente', 200);
+                      // Si se actualizó alguno de los campos de firma, actualizar document_signing_date en cases table
+                      if (isset($updates['mandato_firmado']) || isset($updates['contrato_firmado'])) {
+                          $case->update([
+                              'document_signing_date' => now()->toDateString()
+                          ]);
+                      }
+                  }
+              }
+
+              return $this->success($updated, 'Transición realizada satisfactoriamente', 200);
          } catch (\Illuminate\Validation\ValidationException $e) {
              return $this->error('Datos inválidos', 422);
          } catch (\Throwable $e) {
