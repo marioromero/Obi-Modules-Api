@@ -22,6 +22,10 @@ use Modules\Customers\Models\Customer;
 use Modules\Users\Models\User;
 use Illuminate\Http\Request;
 use Modules\Core\app\Helpers\ColumnMap;
+use Modules\Cases\Models\CaseEntityStepLog;
+use Modules\Cases\Models\Comment;
+use Modules\Schedules\Models\Schedule;
+use Illuminate\Support\Facades\Storage;
 
 
 class CaseController extends BaseApiController
@@ -89,11 +93,36 @@ class CaseController extends BaseApiController
 
     public function destroy(CaseEntity $case)
     {
-        // Borra los registros en la BD de traro por el id del caso OBI
+        $caseId = $case->id;
+        $caseCode = $case->code;
+
         DB::connection('traro_db')
             ->table('case_flows')
-            ->where('obi_case_id', $case->id)
+            ->where('obi_case_id', $caseId)
             ->delete();
+
+        CaseEntityStepLog::where('case_id', $caseId)->delete();
+
+        Comment::where('case_id', $caseId)->delete();
+
+        Schedule::where('case_id', $caseId)->delete();
+
+        if ($caseCode) {
+            try {
+                $disk = Storage::disk('cases-docs');
+                if ($disk->exists($caseCode)) {
+                    $disk->deleteDirectory($caseCode);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('No se pudieron eliminar documentos del caso', [
+                    'case_id' => $caseId,
+                    'code' => $caseCode,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        CasesCache::syncOne($caseId);
 
         $case->delete();
 
