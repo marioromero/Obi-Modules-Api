@@ -80,13 +80,25 @@ class CaseController extends BaseApiController
 
     public function update(UpdateCaseRequest $request, CaseEntity $case)
     {
-        $case->fill($request->validated())->save();
+        $data = $request->validated();
+
+        if (isset($data['amount_paid']) && (int) $data['amount_paid'] > 0) {
+            $data['probable_payment_date'] = now()->toDateString();
+        }
+
+        $case->fill($data)->save();
         return $this->success($case->refresh(), 'Caso actualizado correctamente', 200);
     }
 
    public function patch(UpdateCaseRequest $request, CaseEntity $case)
-    {
-        $case->fill($request->validated())->save();
+     {
+        $data = $request->validated();
+
+        if (isset($data['amount_paid']) && (int) $data['amount_paid'] > 0) {
+            $data['probable_payment_date'] = now()->toDateString();
+        }
+
+        $case->fill($data)->save();
 
         return $this->success($case->refresh(), 'Caso actualizado correctamente', 200);
     }
