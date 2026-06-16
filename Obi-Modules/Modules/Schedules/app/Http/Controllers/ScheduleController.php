@@ -106,6 +106,7 @@ class ScheduleController extends BaseApiController
                 ]);
 
                 $detail = ScheduleDetail::on($this->conn)->find($schedule->id);
+                CasesCache::syncOne((int) $caseId);
                 return $this->success($detail, 'Programación creada correctamente');
             }
 
@@ -144,6 +145,7 @@ class ScheduleController extends BaseApiController
                 ]);
 
                 $detail = ScheduleDetail::on($this->conn)->find($new->id);
+                CasesCache::syncOne((int) $caseId);
                 return $this->success($detail, 'Reprogramación creada correctamente');
             }
 
@@ -179,11 +181,14 @@ class ScheduleController extends BaseApiController
 
         $schedule->update($data);
 
-        // parche instantáneo del snapshot
         $sent      = array_key_exists('message_sent', $data) ? (bool)$data['message_sent'] : null;
         $confirmed = array_key_exists('message_confirmed', $data) ? (bool)$data['message_confirmed'] : null;
 
-        CasesCache::patchScheduleFlags((int)$caseId, $sent, $confirmed);
+        if ($sent !== null || $confirmed !== null) {
+            CasesCache::patchScheduleFlags((int)$caseId, $sent, $confirmed);
+        }
+
+        CasesCache::syncOne((int) $caseId);
 
         $detail = ScheduleDetail::on($this->conn)->find($schedule->id);
         return $this->success($detail, 'Programación actualizada correctamente');
