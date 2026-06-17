@@ -511,10 +511,11 @@ class CaseController extends BaseApiController
              );
 
              // Actualizar campos en la tabla case_flows de traro_db
-             $caseFlow = DB::connection('traro_db')
-                 ->table('case_flows')
-                 ->where('obi_case_id', $case->id)
-                 ->first();
+$caseFlow = DB::connection('traro_db')
+                  ->table('case_flows')
+                  ->where('obi_case_id', $case->id)
+                  ->where('is_active', 1)
+                  ->first();
 
              if ($caseFlow) {
                  $updates = [];
@@ -536,10 +537,11 @@ class CaseController extends BaseApiController
 
               // Actualizar si hay cambios
                   if ($needsUpdate) {
-                      DB::connection('traro_db')
-                          ->table('case_flows')
-                          ->where('obi_case_id', $case->id)
-                          ->update($updates);
+DB::connection('traro_db')
+                           ->table('case_flows')
+                           ->where('obi_case_id', $case->id)
+                           ->where('is_active', 1)
+                           ->update($updates);
 
                       // Si se actualizó alguno de los campos de firma, actualizar document_signing_date en cases table
                       if (isset($updates['mandato_firmado']) || isset($updates['contrato_firmado'])) {

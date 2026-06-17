@@ -47,6 +47,7 @@ class CaseEntityNotificationsObserver
             $lastId = DB::connection('traro_db')
                 ->table('case_flows')
                 ->where('obi_case_id', $case->id)
+                ->where('is_active', 1)
                 ->max('id');
 
             if ($lastId) {
