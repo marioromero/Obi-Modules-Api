@@ -11,6 +11,13 @@ class StoreCaseRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'agreement_id' => $this->input('agreement_id', 1),
+        ]);
+    }
+
     public function rules(): array
     {
         return [
