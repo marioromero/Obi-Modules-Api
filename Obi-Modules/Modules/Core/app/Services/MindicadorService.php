@@ -3,8 +3,8 @@
 namespace Modules\Core\app\Services;
 
 use Carbon\Carbon;
-use Modules\Core\App\Support\Services\ServiceHandlerException;
-use Modules\Core\App\Support\DTO\ServiceResponseDTO;
+use Modules\Core\app\Support\Services\ServiceHandlerException;
+use Modules\Core\app\Support\DTO\ServiceResponseDTO;
 
 class MindicadorService
 {
