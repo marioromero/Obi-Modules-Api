@@ -44,6 +44,7 @@ class LogCaseEntityStateTransition
       0 => 'pendiente',
       1 => 'en proceso',
       2 => 'realizado',
+      3 => 'revocado',
     ),
     'default' => 'pendiente',
     'final' => 'realizado',

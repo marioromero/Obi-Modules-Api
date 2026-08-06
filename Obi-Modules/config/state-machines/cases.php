@@ -83,7 +83,8 @@ return [
             'column' => 'scheduling_status',
             'values' => ['pendiente', // anaranjado
                 'en proceso', // azul
-                'realizado'], // verde
+                'realizado', // verde
+                'revocado'], // rojo – cierra el caso
             'default' => 'pendiente',
             'final' => 'realizado', // verde
         ],
@@ -166,7 +167,7 @@ return [
         'triggers' => [
             'closed' => [
                 'states' => ['Cancelado', 'Desistido', 'DesistidoSinVisita'],
-                'sub_states' => ['bajo deducible', 'rechazado aseguradora', 'rechazado liquidadora', 'pagado'],
+                'sub_states' => ['bajo deducible', 'rechazado aseguradora', 'rechazado liquidadora', 'pagado', 'revocado'],
             ],
             'pending' => [
                 'sub_states' => ['pendiente'],
