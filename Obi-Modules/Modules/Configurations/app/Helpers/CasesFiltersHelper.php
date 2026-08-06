@@ -94,9 +94,19 @@ class CasesFiltersHelper
 
         return array_map(function ($r) use ($selectCols) {
             $out = [];
+
             foreach ($selectCols as $c) {
+                if ($c === 'revoked') {
+                    $out[$c] = strtolower(trim((string) ($r->scheduling_status ?? ''))) === 'revocado'
+                        ? 'Si'
+                        : 'No';
+
+                    continue;
+                }
+
                 $out[$c] = property_exists($r, $c) ? $r->{$c} : null;
             }
+
             return $out;
         }, $rows);
     }

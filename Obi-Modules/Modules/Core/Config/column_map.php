@@ -85,6 +85,7 @@ return [
             'signature_status'       => 'Estado de firma',
             'denounce_status'        => 'Denuncio - estado',
             'scheduling_status'      => 'Programación - estado',
+            'revoked'                => 'Revocado',
             'visit_status'           => 'Visita - estado',
             'budget_status'          => 'Presupuesto - estado',
             'decision_status'        => 'Decisión',
