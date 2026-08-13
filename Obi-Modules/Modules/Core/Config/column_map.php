@@ -48,6 +48,7 @@ return [
             'user_name'              => 'Ejecutivo asignado',
             'is_duplicated'          => 'Duplicado',
             'description'            => 'Descripción',
+            'comments'               => 'Comentarios',
             'resolution'             => 'Resolución',
             'comments_programming' => 'Comentarios de programación',
 

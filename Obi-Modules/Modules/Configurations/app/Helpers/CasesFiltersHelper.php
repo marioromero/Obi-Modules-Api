@@ -104,6 +104,14 @@ class CasesFiltersHelper
                     continue;
                 }
 
+                if ($c === 'comments') {
+                    $out[$c] = isset($r->description) && trim((string) $r->description) !== ''
+                        ? 'Si'
+                        : 'No';
+
+                    continue;
+                }
+
                 $out[$c] = property_exists($r, $c) ? $r->{$c} : null;
             }
 
