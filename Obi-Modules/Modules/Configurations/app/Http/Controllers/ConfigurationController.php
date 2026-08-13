@@ -13,6 +13,7 @@ use Modules\Core\app\Helpers\ColumnMap;
 use Modules\Cases\Support\CasesCache;
 use Modules\Configurations\app\Helpers\CasesFiltersHelper;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Modules\Configurations\app\Helpers\UserFiltersHelper;
 use Modules\Configurations\app\Helpers\UserChartsHelper;
 
@@ -238,6 +239,14 @@ class ConfigurationController extends BaseApiController
         }
         $roleKey = (string) $roleId;
 
+        $requesterId = $request->header('X-User-Id') ?? auth()->id();
+        $cacheKey = "cols-by-role.{$roleKey}." . ($requesterId ?? 'anon');
+        $cached = Cache::get($cacheKey);
+
+        if ($cached !== null) {
+            return $this->success($cached, 'Casos por rol obtenidos correctamente (cache)');
+        }
+
         $configConnection = (new Configuration)->getConnectionName() ?: 'configurations_db';
 
         $typeId = DB::connection($configConnection)
@@ -278,23 +287,16 @@ class ConfigurationController extends BaseApiController
         // ─────────────────────────────────────────────
 
         $isConsultantRole = ($roleKey === '5');
-        $requesterId      = $request->header('X-User-Id') ?? auth()->id();
 
         // 1) Traer TODOS los casos cacheados (payload completo de v_cases_details)
         //    CasesCache::getAll() devuelve [id => payload_array]
+        //    buildAll() ya ordena por created_at DESC, id DESC → snapshot pre-ordenado
         $allCasesArray = CasesCache::getAll();
 
         // Convertir a colección de arrays
         $rows = collect($allCasesArray)->values();
 
-        // 2) Orden base: created_at DESC, id DESC
-        // sortBy es estable, así que ordenamos primero por id y luego por created_at
-        $rows = $rows
-            ->sortByDesc('id')
-            ->sortByDesc('created_at')
-            ->values();
-
-        // 3) Si es rol consultor (5), priorizar sus casos (igual idea que CASE WHEN en SQL)
+        // 2) Si es rol consultor (5), priorizar sus casos (igual idea que CASE WHEN en SQL)
         if ($isConsultantRole && $requesterId) {
             $requesterIdInt = (int) $requesterId;
 
@@ -304,7 +306,7 @@ class ConfigurationController extends BaseApiController
             })->values();
         }
 
-        // 4) Mapear solo las columnas configuradas para el rol
+        // 3) Mapear solo las columnas configuradas para el rol
         $cases = $rows->map(function (array $row) use ($columns, $safeJsonDecode) {
             $record = [
                 'id' => $row['id'] ?? null,
@@ -312,7 +314,6 @@ class ConfigurationController extends BaseApiController
 
             foreach ($columns as $col) {
                 if ($col === 'case_flows_last') {
-                    // Mapear case_flows_last (config) ← desde v_cases_details.case_flow_last_json (vista)
                     $json = $row['case_flow_last_json'] ?? null;
                     $record['case_flows_last'] = $safeJsonDecode($json);
                 } else {
@@ -323,10 +324,14 @@ class ConfigurationController extends BaseApiController
             return $record;
         })->values();
 
-        return $this->success([
+        $result = [
             'columns' => ColumnMap::translate($columns, 'cases'),
             'cases'   => $cases,
-        ], 'Casos por rol obtenidos correctamente');
+        ];
+
+        Cache::put($cacheKey, $result, 30);
+
+        return $this->success($result, 'Casos por rol obtenidos correctamente');
     }
 
     public function filtersByUsers(TraroUser $user)

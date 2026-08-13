@@ -14,6 +14,7 @@ class CasesCache
 {
     public const CACHE_KEY_ALL       = 'cases.all';
     public const CACHE_KEY_LAST_SYNC = 'cases.last_sync';
+    public const CACHE_KEY_SANITY    = 'cases.sanity_checked_at';
 
     /**
      * Devuelve TODOS los casos desde cache,
@@ -33,20 +34,26 @@ class CasesCache
 
         // 3) SANITY CHECK: si el snapshot es "demasiado chico" respecto a la tabla cases,
         //    asumimos que alguien lo pisó con datos parciales y reconstruimos completo.
-        try {
-            $totalCases = CaseEntity::withoutGlobalScope('exclude_softdeleted')->count();
-        } catch (\Throwable $e) {
-            // Por seguridad, si falla el count devolvemos lo que haya
-            return $payload;
-        }
+        //    Solo se ejecuta cada 60 segundos para evitar COUNT(*) en cada request.
+        $sanityCheckedAt = Cache::get(self::CACHE_KEY_SANITY);
+        $sanityFresh = $sanityCheckedAt
+            && (time() - strtotime(is_string($sanityCheckedAt) ? $sanityCheckedAt : $sanityCheckedAt->toDateTimeString())) < 60;
 
-        $payloadCount = is_array($payload) ? count($payload) : 0;
+        if (! $sanityFresh) {
+            try {
+                $totalCases = CaseEntity::withoutGlobalScope('exclude_softdeleted')->count();
+            } catch (\Throwable $e) {
+                return $payload;
+            }
 
-        // Si ambos son > 0 y el snapshot tiene menos del 50% de los casos reales, lo consideramos corrupto
-        if ($totalCases > 0 && $payloadCount > 0 && $payloadCount < ($totalCases * 0.5)) {
+            $payloadCount = is_array($payload) ? count($payload) : 0;
 
-            self::buildAll();
-            $payload = Cache::get(self::CACHE_KEY_ALL, []);
+            if ($totalCases > 0 && $payloadCount > 0 && $payloadCount < ($totalCases * 0.5)) {
+                self::buildAll();
+                $payload = Cache::get(self::CACHE_KEY_ALL, []);
+            }
+
+            Cache::put(self::CACHE_KEY_SANITY, now()->toDateTimeString(), 120);
         }
 
         return $payload;
@@ -69,7 +76,8 @@ class CasesCache
 
         DB::connection('cases_db')
             ->table('v_cases_details')
-            ->orderBy('id')
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->chunk(1000, function ($chunk) use (&$payload, &$maxUpdatedAt) {
                 foreach ($chunk as $row) {
                     $rowArr = (array) $row;
