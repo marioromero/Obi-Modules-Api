@@ -500,59 +500,67 @@ class CaseController extends BaseApiController
         return $this->success(['next' => $next, 'prev' => $prev], 'Transiciones disponibles', 200);
     }
 
-    public function transition(TransitionCaseRequest $req, CaseEntity $case)
+public function transition(TransitionCaseRequest $req, CaseEntity $case)
      {
          try {
+             // Estado origen antes de transicionar (Clase base: Ingreso, Denuncio, ...)
+             $fromBase   = class_basename($case->state::class);
+             $nextState  = $req->input('next_state');
+             $toBase     = class_basename(
+                 str_contains($nextState, '\\')
+                     ? $nextState
+                     : "Modules\\Cases\\States\\Traro\\{$nextState}"
+             );
+
              $updated = app(\Modules\Cases\app\Services\CaseTransitionService::class)->transition(
                  $case,
-                 $req->input('next_state'),
+                 $nextState,
                  $req->input('comments'),
                  $req->input('user_id')
              );
 
-             // Actualizar campos en la tabla case_flows de traro_db
-$caseFlow = DB::connection('traro_db')
-                  ->table('case_flows')
-                  ->where('obi_case_id', $case->id)
-                  ->where('is_active', 1)
-                  ->first();
+             // Sólo se rellenan los flags de firma en case_flows para la transición
+             // manual Ingreso -> Denuncio. Para cualquier otra transición se deja sin
+             // firmar case_flows; la firma la debe registrar el cron de etapas-1
+             // consultando Acepta (única fuente de verdad del estado de firma real).
+             if ($fromBase === 'Ingreso' && $toBase === 'Denuncio') {
+                 $caseFlow = DB::connection('traro_db')
+                           ->table('case_flows')
+                           ->where('obi_case_id', $case->id)
+                           ->where('is_active', 1)
+                           ->first();
 
-             if ($caseFlow) {
-                 $updates = [];
-                 $needsUpdate = false;
+                 if ($caseFlow) {
+                     $updates = [];
+                     $needsUpdate = false;
 
-                 // Verificar mandato_firmado
-                 if (!isset($caseFlow->mandato_firmado) || $caseFlow->mandato_firmado == 0) {
-                     $updates['mandato_firmado'] = 1;
-                     $updates['fecha_firma_mandato'] = now();
-                     $needsUpdate = true;
-                 }
+                     if (!isset($caseFlow->mandato_firmado) || $caseFlow->mandato_firmado == 0) {
+                         $updates['mandato_firmado']    = 1;
+                         $updates['fecha_firma_mandato'] = now();
+                         $needsUpdate = true;
+                     }
 
-                 // Verificar contrato_firmado
-                 if (!isset($caseFlow->contrato_firmado) || $caseFlow->contrato_firmado == 0) {
-                     $updates['contrato_firmado'] = 1;
-                     $updates['fecha_firma_contrato'] = now();
-                     $needsUpdate = true;
-                 }
+                     if (!isset($caseFlow->contrato_firmado) || $caseFlow->contrato_firmado == 0) {
+                         $updates['contrato_firmado']    = 1;
+                         $updates['fecha_firma_contrato'] = now();
+                         $needsUpdate = true;
+                     }
 
-              // Actualizar si hay cambios
-                  if ($needsUpdate) {
-DB::connection('traro_db')
+                     if ($needsUpdate) {
+                         DB::connection('traro_db')
                            ->table('case_flows')
                            ->where('obi_case_id', $case->id)
                            ->where('is_active', 1)
                            ->update($updates);
 
-                      // Si se actualizó alguno de los campos de firma, actualizar document_signing_date en cases table
-                      if (isset($updates['mandato_firmado']) || isset($updates['contrato_firmado'])) {
-                          $case->update([
-                              'document_signing_date' => now()->toDateString()
-                          ]);
-                      }
-                  }
-              }
+                         $case->update([
+                             'document_signing_date' => now()->toDateString()
+                         ]);
+                     }
+                 }
+             }
 
-              return $this->success($updated, 'Transición realizada satisfactoriamente', 200);
+             return $this->success($updated, 'Transición realizada satisfactoriamente', 200);
          } catch (\Illuminate\Validation\ValidationException $e) {
              return $this->error('Datos inválidos', 422);
          } catch (\Throwable $e) {
