@@ -403,4 +403,29 @@ class CaseDocumentController extends BaseApiController
 
         return $name;
     }
+
+    public function checkMandatoContrato(string $code)
+    {
+        try {
+            $list = $this->storage->list($code, true, false);
+
+            $hasMandato  = false;
+            $hasContrato = false;
+
+            foreach ($list as $doc) {
+                $type = $doc['type'] ?? 'OTRO';
+                if ($type === 'MANDATO')  $hasMandato  = true;
+                if ($type === 'CONTRATO') $hasContrato = true;
+            }
+
+            return $this->success([
+                'mandato'  => $hasMandato,
+                'contrato' => $hasContrato,
+            ], 'Verificacion de documentos completada', 200);
+        } catch (RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        } catch (\Throwable $e) {
+            return $this->error('Error interno al verificar documentos', 500);
+        }
+    }
 }

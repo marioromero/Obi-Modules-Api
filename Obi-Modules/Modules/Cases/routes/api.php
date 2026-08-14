@@ -80,6 +80,8 @@ Route::delete('agreements/{agreement}', [AgreementController::class, 'destroy'])
 
 // REST para Documents
 Route::get('cases/{code}/documents', [CaseDocumentController::class, 'index']);
+Route::get('cases/{code}/documents/has-mandato-contrato', [CaseDocumentController::class, 'checkMandatoContrato'])
+    ->where('code', 'TR\d+');
 Route::post('cases/{code}/documents', [CaseDocumentController::class, 'store']);
 Route::post('cases/{code}/documents/base64', [CaseDocumentController::class, 'storeBase64']);
 Route::delete('cases/{code}/documents', [CaseDocumentController::class, 'destroy']);
