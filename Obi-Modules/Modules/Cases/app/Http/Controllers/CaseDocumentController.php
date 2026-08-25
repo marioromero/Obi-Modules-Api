@@ -5,6 +5,7 @@ namespace Modules\Cases\app\Http\Controllers;
 use iio\libmergepdf\Merger;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Modules\Cases\Services\CasesDocsStorage;
@@ -71,6 +72,9 @@ class CaseDocumentController extends BaseApiController
      */
     public function download(string $code, Request $request)
     {
+        $tStart = microtime(true);
+        $log = Log::channel('documents');
+
         try {
             $path = (string) $request->query('path', '');
             if ($path === '') {
@@ -85,18 +89,67 @@ class CaseDocumentController extends BaseApiController
             $this->storage->sanitizeCaseCode($code);
             $path = $this->guardPath($code, $path);
 
-            if (!Storage::disk('cases-docs')->exists($path)) {
+            $disk = Storage::disk('cases-docs');
+
+            $tExistsStart = microtime(true);
+            $exists = $disk->exists($path);
+            $existsMs = (microtime(true) - $tExistsStart) * 1000;
+
+            if ($existsMs > 1000) {
+                $log->warning('documents.exists.slow', [
+                    'case_code' => $code,
+                    'path' => $path,
+                    'exists_ms' => round($existsMs, 2),
+                    'timestamp' => date('c'),
+                ]);
+            }
+
+            if (!$exists) {
                 return $this->error('Archivo no existe', 404);
             }
 
+            $size = $disk->size($path);
             $disposition = $request->boolean('download') ? 'attachment' : 'inline';
             $name = basename($path);
 
-            return Storage::disk('cases-docs')->response($path, $name, [
+            // TTFB del lado app: validación + exists() + size() + setup de response.
+            // No incluye tiempo de stream físico (lo maneja LiteSpeed).
+            $ttfbMs = (microtime(true) - $tStart) * 1000;
+
+            $stream = $disk->readStream($path);
+
+            $response = response()->stream(function () use ($stream, $tStart, $ttfbMs, $code, $path, $size, $log) {
+                // Primer byte físico emitido por PHP (cuando Laravel invoca este callback).
+                $firstByteMs = (microtime(true) - $tStart) * 1000;
+
+                while (!feof($stream)) {
+                    echo fread($stream, 8192);
+                }
+                fclose($stream);
+
+                $totalMs = (microtime(true) - $tStart) * 1000;
+
+                if ($ttfbMs > 2000) {
+                    $log->warning('documents.download.slow_ttfb', [
+                        'case_code' => $code,
+                        'path' => $path,
+                        'ttfb_ms' => round($ttfbMs, 2),
+                        'first_byte_ms' => round($firstByteMs, 2),
+                        'total_ms' => round($totalMs, 2),
+                        'size_bytes' => $size,
+                        'timestamp' => date('c'),
+                    ]);
+                }
+            }, 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => $disposition . '; filename="' . $name . '"',
                 'Cache-Control' => 'no-cache, must-revalidate',
+                'Content-Length' => (string) $size,
+                'X-TTFB-ms' => (string) round($ttfbMs, 2),
+                'X-Document-Case' => $code,
             ]);
+
+            return $response;
         } catch (RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         } catch (\Throwable $e) {
