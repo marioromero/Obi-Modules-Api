@@ -130,6 +130,14 @@ return [
         'documents' => [
             'driver' => 'daily',
             'path' => storage_path('logs/documents.log'),
+            'level' => 'debug',
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
+        'transitions' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/transitions.log'),
             'level' => 'warning',
             'days' => 30,
             'replace_placeholders' => true,

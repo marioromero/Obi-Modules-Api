@@ -69,11 +69,26 @@ class CaseDocumentController extends BaseApiController
 
     /**
      * Descarga/visualiza un documento
+     *
+     * Hitos de timing medidos desde $_SERVER['REQUEST_TIME_FLOAT'] (cuando PHP
+     * arranca, DESPUÉS de la cola LSAPI):
+     *   tRequest → t0   boot (Laravel bootstrap + middleware + routing)
+     *   t0 → t1         validación (sanitize + guardPath)
+     *   t1 → t2         exists() (I/O disco)
+     *   t2 → t3         size()
+     *   t3 → t4         readStream + build response
+     *   t4 → t5         overhead LiteSpeed (response built → primer byte físico)
+     *   t5 → t6         stream (throughput)
+     *
+     * LSAPI queueing (request llega a LiteSpeed → PHP arranca) es INVISIBLE
+     * desde PHP. Se infiere: frontend_ttfb - first_byte_ms ≈ cola + red + TLS.
      */
     public function download(string $code, Request $request)
     {
-        $tStart = microtime(true);
+        $tRequest = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true);
+        $t0 = microtime(true);
         $log = Log::channel('documents');
+        $downloadId = uniqid('dl_', true);
 
         try {
             $path = (string) $request->query('path', '');
@@ -88,15 +103,17 @@ class CaseDocumentController extends BaseApiController
 
             $this->storage->sanitizeCaseCode($code);
             $path = $this->guardPath($code, $path);
+            $t1 = microtime(true);
 
             $disk = Storage::disk('cases-docs');
 
-            $tExistsStart = microtime(true);
             $exists = $disk->exists($path);
-            $existsMs = (microtime(true) - $tExistsStart) * 1000;
+            $t2 = microtime(true);
+            $existsMs = ($t2 - $t1) * 1000;
 
             if ($existsMs > 1000) {
-                $log->warning('documents.exists.slow', [
+                $log->warning('[DOC_EXISTS_SLOW]', [
+                    'download_id' => $downloadId,
                     'case_code' => $code,
                     'path' => $path,
                     'exists_ms' => round($existsMs, 2),
@@ -109,31 +126,63 @@ class CaseDocumentController extends BaseApiController
             }
 
             $size = $disk->size($path);
+            $t3 = microtime(true);
+
             $disposition = $request->boolean('download') ? 'attachment' : 'inline';
             $name = basename($path);
 
-            // TTFB del lado app: validación + exists() + size() + setup de response.
-            // No incluye tiempo de stream físico (lo maneja LiteSpeed).
-            $ttfbMs = (microtime(true) - $tStart) * 1000;
-
             $stream = $disk->readStream($path);
+            $t4 = microtime(true);
 
-            $response = response()->stream(function () use ($stream, $tStart, $ttfbMs, $code, $path, $size, $log) {
-                // Primer byte físico emitido por PHP (cuando Laravel invoca este callback).
-                $firstByteMs = (microtime(true) - $tStart) * 1000;
+            $bootMs = ($t0 - $tRequest) * 1000;
+            $validateMs = ($t1 - $t0) * 1000;
+            $sizeMs = ($t3 - $t2) * 1000;
+            $buildMs = ($t4 - $t3) * 1000;
+            $appTtfbMs = ($t4 - $tRequest) * 1000;
+
+            $response = response()->stream(function () use (
+                $stream, $tRequest, $appTtfbMs, $code, $path, $size, $log,
+                $downloadId, $bootMs, $validateMs, $existsMs, $sizeMs, $buildMs
+            ) {
+                // t5: primer byte físico emitido por PHP
+                $t5 = microtime(true);
+                $firstByteMs = ($t5 - $tRequest) * 1000;
 
                 while (!feof($stream)) {
                     echo fread($stream, 8192);
                 }
                 fclose($stream);
 
-                $totalMs = (microtime(true) - $tStart) * 1000;
+                // t6: stream completo
+                $t6 = microtime(true);
+                $streamMs = ($t6 - $t5) * 1000;
+                $totalMs = ($t6 - $tRequest) * 1000;
 
-                if ($ttfbMs > 2000) {
-                    $log->warning('documents.download.slow_ttfb', [
+                // Logear TODAS las descargas a INFO para cruzar con frontend
+                $log->info('[DOC_DOWNLOAD]', [
+                    'download_id' => $downloadId,
+                    'case_code' => $code,
+                    'path' => $path,
+                    'boot_ms' => round($bootMs, 2),
+                    'validate_ms' => round($validateMs, 2),
+                    'exists_ms' => round($existsMs, 2),
+                    'size_ms' => round($sizeMs, 2),
+                    'build_ms' => round($buildMs, 2),
+                    'app_ttfb_ms' => round($appTtfbMs, 2),
+                    'first_byte_ms' => round($firstByteMs, 2),
+                    'stream_ms' => round($streamMs, 2),
+                    'total_ms' => round($totalMs, 2),
+                    'size_bytes' => $size,
+                    'timestamp' => date('c'),
+                ]);
+
+                // Warning adicional si procesamiento app > 2000ms
+                if ($appTtfbMs > 2000) {
+                    $log->warning('[DOC_DOWNLOAD_SLOW]', [
+                        'download_id' => $downloadId,
                         'case_code' => $code,
                         'path' => $path,
-                        'ttfb_ms' => round($ttfbMs, 2),
+                        'app_ttfb_ms' => round($appTtfbMs, 2),
                         'first_byte_ms' => round($firstByteMs, 2),
                         'total_ms' => round($totalMs, 2),
                         'size_bytes' => $size,
@@ -145,8 +194,9 @@ class CaseDocumentController extends BaseApiController
                 'Content-Disposition' => $disposition . '; filename="' . $name . '"',
                 'Cache-Control' => 'no-cache, must-revalidate',
                 'Content-Length' => (string) $size,
-                'X-TTFB-ms' => (string) round($ttfbMs, 2),
+                'X-TTFB-ms' => (string) round($appTtfbMs, 2),
                 'X-Document-Case' => $code,
+                'X-Download-Id' => $downloadId,
             ]);
 
             return $response;

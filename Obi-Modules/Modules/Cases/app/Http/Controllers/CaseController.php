@@ -40,11 +40,28 @@ class CaseController extends BaseApiController
 
     public function show(CaseEntity $case)
     {
+        $tStart = microtime(true);
+
         $detail = CaseDetail::find($case->id);
         if (! $detail) {
             return $this->error('Caso no encontrado', 404);
         }
-        return $this->success($detail, 'Caso obtenido correctamente', 200);
+
+        $response = $this->success($detail, 'Caso obtenido correctamente', 200);
+        $ttfbMs = (microtime(true) - $tStart) * 1000;
+
+        $response->headers->set('X-TTFB-ms', (string) round($ttfbMs, 2));
+        $response->headers->set('X-Case-Id', (string) $case->id);
+
+        if ($ttfbMs > 2000) {
+            Log::channel('transitions')->warning('cases.show.slow_ttfb', [
+                'case_id' => $case->id,
+                'ttfb_ms' => round($ttfbMs, 2),
+                'timestamp' => date('c'),
+            ]);
+        }
+
+        return $response;
     }
 
     public function store(StoreCaseRequest $request)
@@ -502,6 +519,8 @@ class CaseController extends BaseApiController
 
 public function transition(TransitionCaseRequest $req, CaseEntity $case)
      {
+         $tStart = microtime(true);
+
          try {
              // Estado origen antes de transicionar (Clase base: Ingreso, Denuncio, ...)
              $fromBase   = class_basename($case->state::class);
@@ -560,7 +579,23 @@ public function transition(TransitionCaseRequest $req, CaseEntity $case)
                  }
              }
 
-             return $this->success($updated, 'Transición realizada satisfactoriamente', 200);
+             $response = $this->success($updated, 'Transición realizada satisfactoriamente', 200);
+             $ttfbMs = (microtime(true) - $tStart) * 1000;
+
+             $response->headers->set('X-TTFB-ms', (string) round($ttfbMs, 2));
+             $response->headers->set('X-Case-Id', (string) $case->id);
+
+             if ($ttfbMs > 2000) {
+                 Log::channel('transitions')->warning('cases.transition.slow_ttfb', [
+                     'case_id' => $case->id,
+                     'from_state' => $fromBase,
+                     'to_state' => $toBase,
+                     'ttfb_ms' => round($ttfbMs, 2),
+                     'timestamp' => date('c'),
+                 ]);
+             }
+
+             return $response;
          } catch (\Illuminate\Validation\ValidationException $e) {
              return $this->error('Datos inválidos', 422);
          } catch (\Throwable $e) {
