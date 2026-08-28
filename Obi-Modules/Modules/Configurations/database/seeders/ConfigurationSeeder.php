@@ -374,7 +374,7 @@ class ConfigurationSeeder extends Seeder
                             'name'    => 'Casos desistidos',
                             'color'   => '#a7c7e7',
                             'columns' => [
-                                'code','state','customer_name','customer_id','is_duplicated','commune_name','bank_name',
+                                'code','state','customer_name','customer_id','is_duplicated','comments','commune_name','bank_name',
                                 'accident_type_name','complaint_date','inspection_date','bank_service_number','created_at'
                             ],
                             'sql'     => "WHERE SUBSTRING_INDEX(REPLACE(state,'\\\\','/'), '/', -1) IN ('Desistido', 'DesistidoSinVisita')
