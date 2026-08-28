@@ -147,7 +147,7 @@ class StatsController extends BaseApiController
         ], 'Casos firmados', 200);
     }
 
-    // Metodo que devuelve el conteo de inspecciones (inspection_date) con filtro opcional por asesor
+    // Metodo que devuelve el conteo de inspecciones (inspection_date) realizadas con filtro opcional por asesor
     public function statsCasesInspected(?int $year = null, ?int $month = null, ?int $advisor = null): JsonResponse
     {
         $this->assertYearMonth($year, $month);
@@ -155,8 +155,16 @@ class StatsController extends BaseApiController
 
         $column = 'inspection_date';
 
+        // Estados permitidos que confirman que el caso avanzó/realizó su inspección
+        $allowedStates = [
+            \Modules\Cases\States\Traro\Presupuesto::class,
+            \Modules\Cases\States\Traro\Liquidacion::class,
+            \Modules\Cases\States\Traro\Recaudacion::class,
+        ];
+
         $q = CaseEntity::query()
             ->whereNotNull($column)
+            ->whereIn('state', $allowedStates)
             ->whereRaw($this->notTestCustomersSql((new CaseEntity)->getTable()));
 
         if ($start && $end) {
@@ -168,7 +176,8 @@ class StatsController extends BaseApiController
             $q->where('consultant_id', (int) $advisor);
         }
 
-        $value = (int) $q->count();
+        // Conteo asegurando únicamente IDs de caso únicos
+        $value = (int) $q->distinct()->count((new CaseEntity)->getTable() . '.id');
 
         return $this->success([
             'year'            => $year,
@@ -188,13 +197,14 @@ class StatsController extends BaseApiController
 
         $q = CaseEntity::query()
             ->whereNotNull($column)
+            ->where('softdeleted', 0)
             ->whereRaw($this->notTestCustomersSql((new CaseEntity)->getTable()));
 
         if ($start && $end) {
             $q->whereBetween($column, [$start, $end]);
         }
 
-        $value = (int) $q->count();
+        $value = (int) $q->distinct()->count((new CaseEntity)->getTable() . '.id');
 
         return $this->success([
             'year'            => $year,
