@@ -155,15 +155,16 @@ class StatsController extends BaseApiController
 
         $column = 'inspection_date';
 
-        // Estados permitidos que confirman que el caso avanzó/realizó su inspección
+        // Se usan los strings exactos para evitar discrepancias con el FQCN de PHP
         $allowedStates = [
-            \Modules\Cases\States\Traro\Presupuesto::class,
-            \Modules\Cases\States\Traro\Liquidacion::class,
-            \Modules\Cases\States\Traro\Recaudacion::class,
+            'Modules\\Cases\\States\\Traro\\Presupuesto',
+            'Modules\\Cases\\States\\Traro\\Liquidacion',
+            'Modules\\Cases\\States\\Traro\\Recaudacion',
         ];
 
         $q = CaseEntity::query()
             ->whereNotNull($column)
+            ->where('softdeleted', 0)
             ->whereIn('state', $allowedStates)
             ->whereRaw($this->notTestCustomersSql((new CaseEntity)->getTable()));
 
@@ -171,19 +172,17 @@ class StatsController extends BaseApiController
             $q->whereBetween($column, [$start, $end]);
         }
 
-        // Filtro por asesor: cases.consultant_id debe ser igual a {advisor}
         if (!is_null($advisor)) {
             $q->where('consultant_id', (int) $advisor);
         }
 
-        // Conteo asegurando únicamente IDs de caso únicos
         $value = (int) $q->distinct()->count((new CaseEntity)->getTable() . '.id');
 
         return $this->success([
-            'year'            => $year,
-            'month'           => $month,
-            'advisor'         => $advisor,
-            'value'           => $value,
+            'year'    => $year,
+            'month'   => $month,
+            'advisor' => $advisor,
+            'value'   => $value,
         ], 'Casos visitados', 200);
     }
 
