@@ -1465,6 +1465,7 @@ class ConfigurationController extends BaseApiController
 
             $rows = $dedupRows($rows);
             $rows = $filterOutTest($rows);
+            $rows = CasesFiltersHelper::filterInspectionsAsesores($rows);
             $rows = $projectRows($rows, $columnsEn);
 
             $defaultColumnsEn = array_values(array_unique($stepCfg['default'] ?? []));

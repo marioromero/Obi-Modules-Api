@@ -208,4 +208,59 @@ class CasesFiltersHelper
 
         return ['months' => $managedMonths, 'data' => $managedData];
     }
+
+    /**
+     * Filtra las inspecciones de asesores:
+     * - Excluye 'Modules\Cases\States\Traro\DesistidoSinVisita'
+     * - Excluye 'Modules\Cases\States\Traro\Cancelado'
+     * - Mantiene todas las visitas fallidas (inspection_failed = 1)
+     * - Para las no fallidas, deja únicamente la más reciente por case_id.
+     */
+    public static function filterInspectionsAsesores(array $rows): array
+    {
+        $filteredNonFailed = [];
+        $failedVisits = [];
+
+        $excludedStates = [
+            'Modules\\Cases\\States\\Traro\\Visita',
+            'Modules\\Cases\\States\\Traro\\DesistidoSinVisita',
+            'Modules\\Cases\\States\\Traro\\Cancelado',
+        ];
+
+        foreach ($rows as $r) {
+            $state = trim($r->state ?? '');
+            
+            // Excluir si el estado coincide exactamente con alguno de los prohibidos
+            if ($state && in_array($state, $excludedStates, true)) {
+                continue;
+            }
+
+            $caseId = $r->case_id ?? null;
+            $isFailed = (int) ($r->inspection_failed ?? 0) === 1;
+
+            if ($isFailed) {
+                // Las visitas fallidas se conservan todas
+                $failedVisits[] = $r;
+            } else {
+                // Visitas no fallidas: conserva estrictamente la más reciente por case_id
+                if ($caseId) {
+                    if (!isset($filteredNonFailed[$caseId])) {
+                        $filteredNonFailed[$caseId] = $r;
+                    } else {
+                        $currentDate = $r->inspection_date ?? '';
+                        $existingDate = $filteredNonFailed[$caseId]->inspection_date ?? '';
+                        
+                        if ($currentDate > $existingDate || ($currentDate === $existingDate && $r->id > $filteredNonFailed[$caseId]->id)) {
+                            $filteredNonFailed[$caseId] = $r;
+                        }
+                    }
+                } else {
+                    $filteredNonFailed[] = $r;
+                }
+            }
+        }
+
+        // Unir las visitas fallidas con las no fallidas únicas más recientes
+        return array_values(array_merge($failedVisits, array_values($filteredNonFailed)));
+    }
 }
