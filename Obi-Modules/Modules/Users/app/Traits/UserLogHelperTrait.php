@@ -4,6 +4,8 @@ namespace Modules\Users\app\Traits;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -14,6 +16,26 @@ trait UserLogHelperTrait
     /** -----------------------------------------------------------
      *  BÁSICOS: nombres, columnas, formato y valores
      *  ----------------------------------------------------------- */
+
+    /**
+     * ¿user_logs tiene columna entity_pk? (cacheado; ante duda = false)
+     * Sirve para poder pre-filtrar por SQL en logsByEntity sin cargar
+     * toda la tabla en memoria.
+     */
+    protected function userLogsHasEntityPk(): bool
+    {
+        try {
+            return (bool) Cache::remember('users:user_logs:has_entity_pk', 300, function () {
+                try {
+                    return Schema::connection('users_db')->hasColumn('user_logs', 'entity_pk');
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            });
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
     protected function resolveUserName($userId): string
     {
         $id = (int)($userId ?? 0);

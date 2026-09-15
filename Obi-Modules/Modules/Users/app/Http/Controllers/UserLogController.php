@@ -354,11 +354,57 @@ public function logsByUser(int $userId): \Illuminate\Http\JsonResponse
         }
 
         // 1) Traer logs base de users_db
-        $rows = DB::connection('users_db')
+        //    FIX CRÍTICO (500 en prod para modelId=1): antes se cargaban TODAS las
+        //    filas del modelo (model_id=1/cases = cientos de miles de logs con
+        //    snapshots completos en details) y el filtrado por entidad se hacía
+        //    en PHP. Eso agotaba memoria/límite de tiempo (fatal PHP: 500 con body
+        //    vacío y sin CORS) para CUALQUIER entityId. Ahora se pre-filtra en SQL:
+        //      - si existe columna entity_pk: entity_pk = entityId, o (entity_pk
+        //        NULL/0 y details coincide por LIKE)
+        //      - si no existe: pre-filtro LIKE sobre claves id/entity_id de details
+        //    El filtro exacto por details se mantiene abajo (el LIKE solo acota).
+        $eid = (string) $entityId;
+        $needleVariants = [
+            '"id":'.$eid,
+            '"id": '.$eid,
+            '"id":"'.$eid.'"',
+            '"id": "'.$eid.'"',
+            '"entity_id":'.$eid,
+            '"entity_id": '.$eid,
+            '"entity_id":"'.$eid.'"',
+            '"entity_id": "'.$eid.'"',
+        ];
+        $likePatterns = array_map(fn ($v) => '%'.$v.'%', $needleVariants);
+
+        $rowsQuery = DB::connection('users_db')
             ->table('user_logs')
-            ->where('model_id', $modelId)
-            ->orderByDesc('timestamp')
-            ->orderByDesc('id')
+            ->where('model_id', $modelId);
+
+        if ($this->userLogsHasEntityPk()) {
+            $rowsQuery->where(function ($w) use ($entityId, $likePatterns) {
+                $w->where('entity_pk', $entityId);
+                $w->orWhere(function ($w2) use ($likePatterns) {
+                    $w2->where(function ($w3) {
+                        $w3->whereNull('entity_pk')->orWhere('entity_pk', 0);
+                    });
+                    $w2->where(function ($w3) use ($likePatterns) {
+                        foreach ($likePatterns as $p) {
+                            $w3->orWhere('details', 'LIKE', $p);
+                        }
+                    });
+                });
+            });
+        } else {
+            $rowsQuery->where(function ($w) use ($likePatterns) {
+                foreach ($likePatterns as $p) {
+                    $w->orWhere('details', 'LIKE', $p);
+                }
+            });
+        }
+
+        $rows = $rowsQuery
+            ->orderBy('timestamp')
+            ->orderBy('id')
             ->get();
 
         // 2) Filtrar por entity_id buscando SIEMPRE en details.before/after/id
@@ -445,12 +491,23 @@ public function logsByUser(int $userId): \Illuminate\Http\JsonResponse
 
         $caseSteps = [];
         if ($isCase) {
-            $caseSteps = DB::connection('cases_db')
-                ->table('case_step_logs')
-                ->where('case_id', $entityId)
-                ->orderByDesc('created_at')
-                ->orderByDesc('id')
-                ->get();
+            try {
+                $caseSteps = DB::connection('cases_db')
+                    ->table('case_step_logs')
+                    ->where('case_id', $entityId)
+                    ->orderByDesc('created_at')
+                    ->orderByDesc('id')
+                    ->get();
+            } catch (\Throwable $e) {
+                // Si case_step_logs falla (tabla/columna/conexión rota), degradar con
+                // lista vacía en vez de romper todo el endpoint con 500.
+                \Log::error('logsByEntity: fallo al consultar case_step_logs', [
+                    'model_id'  => $modelId,
+                    'entity_id' => $entityId,
+                    'error'     => $e->getMessage(),
+                ]);
+                $caseSteps = [];
+            }
         }
 
         $map   = $this->columnMap();

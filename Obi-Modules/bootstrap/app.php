@@ -47,85 +47,94 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Captura y renderiza todas las excepciones para rutas API
         $exceptions->renderable(function (Throwable $e, $request) {
-            $wantsJson = $request->expectsJson() || $request->is('api/*');
+            $apiPrefix = trim((string) env('API_GATEWAY_PREFIX', 'api'), '/');
+            $wantsJson = $request->expectsJson()
+                || $request->is($apiPrefix.'/*')
+                || $request->is('*/'.$apiPrefix.'/*');
             if (! $wantsJson) {
                 // Si no es API/JSON, deja que fluyan las vistas HTML normales
                 return;
             }
 
             $controller = app(BaseApiController::class);
+            $response = null;
 
             // 1) Errores de validación
             if ($e instanceof ValidationException) {
-                return $controller->error(
+                $response = $controller->error(
                     'Errores de validación',
                     422,
                     $e->errors()
                 );
             }
-
             // 2) No autenticado
-            if ($e instanceof AuthenticationException) {
-                return $controller->error(
+            elseif ($e instanceof AuthenticationException) {
+                $response = $controller->error(
                     'No autenticado',
                     401
                 );
             }
-
             // 3) No autorizado
-            if ($e instanceof AuthorizationException) {
-                return $controller->error(
+            elseif ($e instanceof AuthorizationException) {
+                $response = $controller->error(
                     'No autorizado',
                     403
                 );
             }
-
             // 4) Modelo no encontrado
-            if ($e instanceof ModelNotFoundException) {
+            elseif ($e instanceof ModelNotFoundException) {
                 $model = class_basename($e->getModel());
-                return $controller->error(
+                $response = $controller->error(
                     "{$model} no encontrado",
                     404
                 );
             }
-
             // 5) Límite de peticiones (Throttle)
-            if ($e instanceof TooManyRequestsHttpException) {
-                return $controller->error(
+            elseif ($e instanceof TooManyRequestsHttpException) {
+                $response = $controller->error(
                     'Demasiadas peticiones',
                     429
                 );
             }
-
             // 6) Otras HTTP exceptions (404 ruta, 405 método, etc.)
-            if ($e instanceof HttpExceptionInterface) {
+            elseif ($e instanceof HttpExceptionInterface) {
                 $status  = $e->getStatusCode();
                 $message = $e->getMessage()
                     ?: (SymfonyResponse::$statusTexts[$status] ?? 'Error HTTP');
-                return $controller->error(
+                $response = $controller->error(
                     $message,
                     $status
                 );
             }
-
             // 7) Errores de base de datos
-            if ($e instanceof QueryException) {
-                return $controller->error(
+            elseif ($e instanceof QueryException) {
+                $response = $controller->error(
                     'Error en base de datos',
                     500,
                     $e->getMessage()
                 );
             }
-
             // 8) Cualquier otra excepción inesperada
-            $msg = app()->isProduction()
-                ? 'Error interno del servidor'
-                : $e->getMessage();
+            else {
+                $msg = app()->isProduction()
+                    ? 'Error interno del servidor'
+                    : $e->getMessage();
 
-            return $controller->error(
-                $msg,
-                500
-            );
+                $response = $controller->error(
+                    $msg,
+                    500
+                );
+            }
+
+            // Las respuestas de error se renderizan FUERA del pipeline global de
+            // middleware, por lo que nunca pasan por HandleCors y llegaban al
+            // navegador SIN Access-Control-Allow-Origin (el browser las reporta
+            // como error CORS y enmascara el 5xx real). Re-aplicar CORS aquí.
+            try {
+                return app(HandleCors::class)->handle($request, fn () => $response);
+            } catch (\Throwable $corsError) {
+                return $response;
+            }
         });
     })
     ->create();
