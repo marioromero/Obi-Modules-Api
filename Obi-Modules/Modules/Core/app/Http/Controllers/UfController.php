@@ -2,14 +2,14 @@
 
 namespace Modules\Core\app\Http\Controllers;
 
-use Modules\Core\app\Http\BaseApiController;
-use Modules\Core\app\Services\MindicadorService;
 use Illuminate\Http\Request;
+use Modules\Core\app\Http\BaseApiController;
+use Modules\Core\app\Services\UfService;
 
 class UfController extends BaseApiController
 {
     public function __construct(
-        private readonly MindicadorService $mindicadorService
+        private readonly UfService $ufService
     ) {}
 
     public function getByDate(Request $request)
@@ -19,7 +19,7 @@ class UfController extends BaseApiController
         ]);
 
         return $this->respondService(
-            $this->mindicadorService->getUfByDate($request->input('date'))
+            $this->ufService->getUfByDate($request->input('date'))
         );
     }
 }

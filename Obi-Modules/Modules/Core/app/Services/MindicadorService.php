@@ -3,17 +3,21 @@
 namespace Modules\Core\app\Services;
 
 use Carbon\Carbon;
-use Modules\Core\app\Support\Services\ServiceHandlerException;
 use Modules\Core\app\Support\DTO\ServiceResponseDTO;
+use Modules\Core\app\Support\Services\ServiceHandlerException;
 
 class MindicadorService
 {
     private string $base;
+
+    private float $timeout;
+
     private ServiceHandlerException $handler;
 
     public function __construct(ServiceHandlerException $handler)
     {
         $this->base = config('services.mindicador.base_uri', 'https://mindicador.cl/api');
+        $this->timeout = (float) config('services.mindicador.timeout', 5);
         $this->handler = $handler;
     }
 
@@ -21,10 +25,10 @@ class MindicadorService
     {
         $url = "{$this->base}/uf";
         // 1) Llamada genérica
-        $response = $this->handler->fetchJson($url, 'serie', 'UF obtenida correctamente');
+        $response = $this->handler->fetchJson($url, 'serie', 'UF obtenida correctamente', $this->timeout);
 
         // 2) Si el handler devolvió error (502, 503, SSL, etc.), reenvíalo tal cual
-        if (!$response->success) {
+        if (! $response->success) {
             return $response;
         }
 
@@ -56,9 +60,6 @@ class MindicadorService
 
     /**
      * Obtiene la UF para una fecha específica (dd-mm-aaaa).
-     *
-     * @param \DateTimeInterface|string $date
-     * @return ServiceResponseDTO
      */
     public function getUfByDate(\DateTimeInterface|string $date): ServiceResponseDTO
     {
@@ -70,10 +71,10 @@ class MindicadorService
 
         // 2) Llamada genérica al handler
         $url = "{$this->base}/uf/{$ddmmyyyy}";
-        $response = $this->handler->fetchJson($url, 'serie', "UF para el {$ddmmyyyy}");
+        $response = $this->handler->fetchJson($url, 'serie', "UF para el {$ddmmyyyy}", $this->timeout);
 
         // 3) Si hubo error de infraestructura, reenvíalo
-        if (!$response->success) {
+        if (! $response->success) {
             return $response;
         }
 
@@ -100,5 +101,4 @@ class MindicadorService
             "UF para el {$ddmmyyyy}"
         );
     }
-
 }

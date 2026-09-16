@@ -35,6 +35,18 @@ return [
         ],
     ],
 
+    'mindicador' => [
+        'base_uri' => env('MINDICADOR_BASE_URI', 'https://mindicador.cl/api'),
+        'timeout' => (float) env('MINDICADOR_TIMEOUT', 5),
+    ],
+
+    'bcentral' => [
+        'base_uri' => env('BCENTRAL_BASE_URI', 'https://si3.bcentral.cl/SieteRestWS/SieteRestWS.ashx'),
+        'token' => env('BCENTRAL_TOKEN'),
+        'timeout' => (float) env('BCENTRAL_TIMEOUT', 10),
+        'uf_series' => env('BCENTRAL_UF_SERIES', 'F073.UFF.PRE.Z.D'),
+    ],
+
     'trusted_internal_api_key' => env('TRUSTED_INTERNAL_API_KEY'),
 
 ];
