@@ -81,6 +81,7 @@ class ScheduleController extends BaseApiController
             'message_sent'              => 'nullable|boolean',
             'message_confirmed'         => 'nullable|boolean',
             'inspection_failed'         => 'nullable|boolean',
+            'inspection_cancelled'      => 'nullable|boolean',
         ]);
 
         return DB::connection($this->conn)->transaction(function () use ($caseId, $data) {
@@ -103,6 +104,7 @@ class ScheduleController extends BaseApiController
                     'message_sent'              => $data['message_sent'] ?? false,
                     'message_confirmed'         => $data['message_confirmed'] ?? false,
                     'inspection_failed'         => $data['inspection_failed'] ?? false,
+                    'inspection_cancelled'      => $data['inspection_cancelled'] ?? false,
                 ]);
 
                 $detail = ScheduleDetail::on($this->conn)->find($schedule->id);
@@ -113,8 +115,8 @@ class ScheduleController extends BaseApiController
         // Reprogramación
         if ($isReprog) {
 
-            // Guardar comentario y/o marcar visita fallida SOLO en la programación anterior
-            if (!empty($data['comments']) || isset($data['inspection_failed'])) {
+            // Guardar comentario y/o marcar visita fallida/cancelada SOLO en la programación anterior
+            if (!empty($data['comments']) || isset($data['inspection_failed']) || isset($data['inspection_cancelled'])) {
 
                 $previousComments = trim((string)$current->comments);
                 $newComment = $previousComments === ''
@@ -123,10 +125,13 @@ class ScheduleController extends BaseApiController
 
                 $current->update([
                     'comments' => $newComment,
-                    // Si viene inspection_failed → úsalo. Si no viene, no modificar.
+                    // Si viene inspection_failed / inspection_cancelled → úsalo. Si no viene, no modificar.
                     'inspection_failed' => array_key_exists('inspection_failed', $data)
                         ? (bool)$data['inspection_failed']
                         : $current->inspection_failed,
+                    'inspection_cancelled' => array_key_exists('inspection_cancelled', $data)
+                        ? (bool)$data['inspection_cancelled']
+                        : $current->inspection_cancelled,
                 ]);
             }
 
@@ -142,6 +147,7 @@ class ScheduleController extends BaseApiController
                     'message_sent'              => $data['message_sent'] ?? false,
                     'message_confirmed'         => $data['message_confirmed'] ?? false,
                     'inspection_failed'         => false,
+                    'inspection_cancelled'      => false,
                 ]);
 
                 $detail = ScheduleDetail::on($this->conn)->find($new->id);
@@ -168,6 +174,7 @@ class ScheduleController extends BaseApiController
             'message_confirmed'         => 'sometimes|boolean',
 
             'inspection_failed'         => 'nullable|boolean',
+            'inspection_cancelled'      => 'nullable|boolean',
         ]);
 
         $schedule = Schedule::on($this->conn)
