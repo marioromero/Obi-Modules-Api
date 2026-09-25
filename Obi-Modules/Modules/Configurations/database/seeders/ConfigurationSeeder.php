@@ -658,7 +658,7 @@ class ConfigurationSeeder extends Seeder
                             'name'    => 'Inspecciones Asesores',
                             'color'   => '#36A4FF',
                             'columns' => [
-                                'case_code', 'state', 'customer_name', 'inspection_date', 'inspection_failed', 'consultant_name',
+                                'case_code', 'state', 'customer_name', 'inspection_date', 'inspection_failed', 'inspection_cancelled', 'consultant_name',
                             ],
                             'sql'     => "/* handled_in_code */",
                         ],

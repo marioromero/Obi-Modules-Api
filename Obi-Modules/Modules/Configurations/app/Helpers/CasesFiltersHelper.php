@@ -214,12 +214,13 @@ class CasesFiltersHelper
      * - Excluye 'Modules\Cases\States\Traro\DesistidoSinVisita'
      * - Excluye 'Modules\Cases\States\Traro\Cancelado'
      * - Mantiene todas las visitas fallidas (inspection_failed = 1)
-     * - Para las no fallidas, deja únicamente la más reciente por case_id.
+     * - Mantiene todas las visitas canceladas (inspection_cancelled = 1)
+     * - Para las no fallidas/canceladas, deja únicamente la más reciente por case_id.
      */
     public static function filterInspectionsAsesores(array $rows): array
     {
         $filteredNonFailed = [];
-        $failedVisits = [];
+        $flaggedVisits = [];
 
         $excludedStates = [
             'Modules\\Cases\\States\\Traro\\Visita',
@@ -236,11 +237,12 @@ class CasesFiltersHelper
             }
 
             $caseId = $r->case_id ?? null;
-            $isFailed = (int) ($r->inspection_failed ?? 0) === 1;
+            $isFailed    = (int) ($r->inspection_failed ?? 0) === 1;
+            $isCancelled = (int) ($r->inspection_cancelled ?? 0) === 1;
 
-            if ($isFailed) {
-                // Las visitas fallidas se conservan todas
-                $failedVisits[] = $r;
+            if ($isFailed || $isCancelled) {
+                // Las visitas fallidas/canceladas se conservan todas
+                $flaggedVisits[] = $r;
             } else {
                 // Visitas no fallidas: conserva estrictamente la más reciente por case_id
                 if ($caseId) {
@@ -260,7 +262,7 @@ class CasesFiltersHelper
             }
         }
 
-        // Unir las visitas fallidas con las no fallidas únicas más recientes
-        return array_values(array_merge($failedVisits, array_values($filteredNonFailed)));
+        // Unir las visitas fallidas/canceladas con las no fallidas únicas más recientes
+        return array_values(array_merge($flaggedVisits, array_values($filteredNonFailed)));
     }
 }

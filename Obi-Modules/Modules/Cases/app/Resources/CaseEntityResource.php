@@ -82,6 +82,8 @@ class CaseEntityResource extends JsonResource
             'contestation_date'   => $this->contestation_date,
             'schedule_message_sent'      => (bool) ($this->schedule_message_sent ?? false),
             'schedule_message_confirmed' => (bool) ($this->schedule_message_confirmed ?? false),
+            'schedule_inspection_failed'    => (bool) ($this->schedule_inspection_failed ?? false),
+            'schedule_inspection_cancelled' => (bool) ($this->schedule_inspection_cancelled ?? false),
             'schedule_inspection_time'   => $this->schedule_inspection_time,
 
             /* --- Sub-estados del flujo --- */
