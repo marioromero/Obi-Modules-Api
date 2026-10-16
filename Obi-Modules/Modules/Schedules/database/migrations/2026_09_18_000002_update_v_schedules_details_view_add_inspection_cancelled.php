@@ -39,7 +39,7 @@ return new class extends Migration
             c.customer_id        AS customer_id,    -- ID de cliente
             c.code               AS case_code,      -- Codigo caso
             c.state              AS state,          -- Estado
-            cu.name              AS customer_name,  -- Nombre cliente
+            CONCAT_WS(' ', cu.name, cu.lastname) AS customer_name,  -- Nombre + apellido (igual que vista vigente en server)
             la.name              AS loss_adjuster_name,
             u.name               AS consultant_name
 

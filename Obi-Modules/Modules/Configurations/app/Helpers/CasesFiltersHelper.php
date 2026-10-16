@@ -90,6 +90,9 @@ class CasesFiltersHelper
      */
     public static function projectRows(array $rows, array $columnsEn): array
     {
+        // Visita cancelada viaja siempre junto a los demás flags de schedule
+        $columnsEn = self::withScheduleCancelled($columnsEn);
+
         $selectCols = array_values(array_unique(array_merge(['id'], $columnsEn)));
 
         return array_map(function ($r) use ($selectCols) {
@@ -117,6 +120,36 @@ class CasesFiltersHelper
 
             return $out;
         }, $rows);
+    }
+
+    /**
+     * Asegura el flag de visita cancelada en una lista de columnas a proyectar,
+     * cuando ya viaja alguno de sus hermanos (flags de schedule).
+     * - Filas de v_cases_details     → agrega 'schedule_inspection_cancelled'.
+     * - Filas de v_schedules_details → agrega 'inspection_cancelled'.
+     */
+    public static function withScheduleCancelled(array $columns): array
+    {
+        $strs = array_values(array_filter($columns, 'is_string'));
+
+        $hasScheduleFlag = false;
+        foreach ($strs as $c) {
+            if (str_starts_with($c, 'schedule_')) {
+                $hasScheduleFlag = true;
+                break;
+            }
+        }
+
+        if ($hasScheduleFlag && ! in_array('schedule_inspection_cancelled', $strs, true)) {
+            $columns[] = 'schedule_inspection_cancelled';
+        }
+
+        if (in_array('inspection_failed', $strs, true)
+            && ! in_array('inspection_cancelled', $strs, true)) {
+            $columns[] = 'inspection_cancelled';
+        }
+
+        return array_values($columns);
     }
 
     /**

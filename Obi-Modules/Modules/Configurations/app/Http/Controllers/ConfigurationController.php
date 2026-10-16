@@ -321,6 +321,9 @@ class ConfigurationController extends BaseApiController
                 }
             }
 
+            // Visita cancelada: siempre viaja en la fila aunque no esté en columnas del rol
+            $record['schedule_inspection_cancelled'] = $row['schedule_inspection_cancelled'] ?? null;
+
             return $record;
         })->values();
 

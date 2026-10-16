@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Modules\Cases\Support\CasesCache;
 use Illuminate\Validation\ValidationException;
 use Modules\Configurations\Models\Configuration;
+use Modules\Configurations\app\Helpers\CasesFiltersHelper;
 use Illuminate\Support\Facades\DB;
 use Modules\Users\Models\TraroUser;
 use Illuminate\Support\Facades\Log;
@@ -374,7 +375,10 @@ class CaseController extends BaseApiController
         ];
 
         $project = function ($rows, array $roleCols, array $forcedCols) {
-        $cols = array_values(array_unique(array_merge($roleCols, $forcedCols)));
+        // Visita cancelada viaja siempre junto a los demás flags de schedule
+        $cols = CasesFiltersHelper::withScheduleCancelled(
+            array_values(array_unique(array_merge($roleCols, $forcedCols)))
+        );
         return collect($rows)->map(function ($row) use ($cols) {
             $rec = ['id' => $row->id];
             foreach ($cols as $c) {
