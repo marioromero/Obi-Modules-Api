@@ -85,12 +85,21 @@ class ScheduleController extends BaseApiController
         ]);
 
         return DB::connection($this->conn)->transaction(function () use ($caseId, $data) {
+            // Lock fila vigente para serializar ráfagas (doble-click / submit concurrente).
             $current = Schedule::on($this->conn)
                 ->where('case_id', $caseId)
                 ->orderByDesc('id')
+                ->lockForUpdate()
                 ->first();
 
             $isReprog = (bool)($data['is_reprogramming'] ?? false);
+
+            // Comentario obligatorio al reprogramar: el front ya lo exige,
+            // pero el backend debe ser la barrera final (llamadas directas a API).
+            if ($isReprog && trim((string)($data['comments'] ?? '')) === '') {
+                // Sin crear fila. Transacción confirma sin writes.
+                return $this->error('Debe ingresar el motivo de la reprogramación', 422);
+            }
 
             //Primera programación
             if (!$current) {
@@ -115,13 +124,28 @@ class ScheduleController extends BaseApiController
         // Reprogramación
         if ($isReprog) {
 
-            // Guardar comentario y/o marcar visita fallida/cancelada SOLO en la programación anterior
-            if (!empty($data['comments']) || isset($data['inspection_failed']) || isset($data['inspection_cancelled'])) {
+            // Dedup: si la vigente ya tiene exactamente los mismos datos de agenda,
+            // es un reintento / doble-submit. No crear fila fantasma.
+            $sameSlot = $current
+                && ($current->inspection_date ?? null) === ($data['inspection_date'] ?? null)
+                && ($current->inspection_time ?? null) === ($data['inspection_time'] ?? null)
+                && (int)($current->consultant_id ?? 0) === (int)($data['consultant_id'] ?? 0)
+                && (int)($current->loss_adjuster_id ?? 0) === (int)($data['loss_adjuster_id'] ?? 0);
+
+            if ($sameSlot) {
+                $detail = ScheduleDetail::on($this->conn)->find($current->id);
+                return $this->success($detail, 'La programación vigente ya tiene esos datos, no se duplicó');
+            }
+
+            // Guardar comentario y/o marcar visita fallida/cancelada SOLO en la programación anterior.
+            // Solo anexar comentario si viene no vacío (evita "\n" basura en ráfagas).
+            $newCommentText = trim((string)($data['comments'] ?? ''));
+            if ($newCommentText !== '' || isset($data['inspection_failed']) || isset($data['inspection_cancelled'])) {
 
                 $previousComments = trim((string)$current->comments);
                 $newComment = $previousComments === ''
-                    ? ($data['comments'] ?? '')
-                    : ($previousComments . "\n" . ($data['comments'] ?? ''));
+                    ? $newCommentText
+                    : ($newCommentText === '' ? $previousComments : ($previousComments . "\n" . $newCommentText));
 
                 $current->update([
                     'comments' => $newComment,
