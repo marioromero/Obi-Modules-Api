@@ -82,6 +82,7 @@ class ScheduleController extends BaseApiController
             'message_confirmed'         => 'nullable|boolean',
             'inspection_failed'         => 'nullable|boolean',
             'inspection_cancelled'      => 'nullable|boolean',
+            'user_name'                 => 'nullable|string',
         ]);
 
         return DB::connection($this->conn)->transaction(function () use ($caseId, $data) {
@@ -138,17 +139,43 @@ class ScheduleController extends BaseApiController
             }
 
             // Guardar comentario y/o marcar visita fallida/cancelada SOLO en la programación anterior.
-            // Solo anexar comentario si viene no vacío (evita "\n" basura en ráfagas).
+            // El comentario se guarda en `comments` como JSON [{hora, contenido, usuario}]
+            // siguiendo el patrón de historial de comentarios de programación. Las filas
+            // antiguas con texto plano se convierten a JSON con usuario/fecha "Sin información".
             $newCommentText = trim((string)($data['comments'] ?? ''));
             if ($newCommentText !== '' || isset($data['inspection_failed']) || isset($data['inspection_cancelled'])) {
 
-                $previousComments = trim((string)$current->comments);
-                $newComment = $previousComments === ''
-                    ? $newCommentText
-                    : ($newCommentText === '' ? $previousComments : ($previousComments . "\n" . $newCommentText));
+                $usuario = !empty(trim((string)($data['user_name'] ?? '')))
+                    ? trim((string)$data['user_name'])
+                    : (auth()->user()?->name ?? 'Sin información');
+                $hora = now()->format('d-m-Y H:i');
+
+                $nuevoEntry = [
+                    'hora' => $hora,
+                    'contenido' => $newCommentText,
+                    'usuario' => $usuario,
+                ];
+
+                $entradas = [];
+                $raw = trim((string)$current->comments);
+                if ($raw !== '') {
+                    $decoded = json_decode($raw, true);
+                    if (is_array($decoded)) {
+                        $entradas = array_values($decoded);
+                    } else {
+                        // Texto plano de reprogramación antigua: se conserva el contenido
+                        // pero sin datos de auditoría (blindado como "Sin información").
+                        $entradas[] = [
+                            'hora' => 'Sin información',
+                            'contenido' => $raw,
+                            'usuario' => 'Sin información',
+                        ];
+                    }
+                }
+                $entradas[] = $nuevoEntry;
 
                 $current->update([
-                    'comments' => $newComment,
+                    'comments' => json_encode($entradas, JSON_UNESCAPED_UNICODE),
                     // Si viene inspection_failed / inspection_cancelled → úsalo. Si no viene, no modificar.
                     'inspection_failed' => array_key_exists('inspection_failed', $data)
                         ? (bool)$data['inspection_failed']
