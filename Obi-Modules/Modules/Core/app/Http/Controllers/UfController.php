@@ -3,6 +3,7 @@
 namespace Modules\Core\app\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Modules\Core\app\Http\BaseApiController;
 use Modules\Core\app\Services\UfService;
 
@@ -12,14 +13,14 @@ class UfController extends BaseApiController
         private readonly UfService $ufService
     ) {}
 
-    public function getByDate(Request $request)
+    public function getByDate(Request $request): JsonResponse
     {
-        $request->validate([
-            'date' => 'required|date_format:d-m-Y',
+        $validated = $request->validate([
+            'date' => 'required|date_format:Y-m-d',
         ]);
 
-        return $this->respondService(
-            $this->ufService->getUfByDate($request->input('date'))
-        );
+        $result = $this->ufService->getUfDashboard($validated['date']);
+
+        return response()->json($result, 200);
     }
 }
