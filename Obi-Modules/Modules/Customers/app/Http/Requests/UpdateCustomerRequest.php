@@ -32,7 +32,7 @@ class UpdateCustomerRequest extends FormRequest
             'gender'         => ['nullable','in:M,F,O'],
             'marital_status' => ['sometimes','nullable','string','in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo'],
             'occupation'     => ['sometimes','nullable','string','max:100'],
-            'nationality'    => ['sometimes','nullable','string','in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña'],
+            'nationality'    => ['sometimes','nullable','string','in:Chilena,Venezolana,Peruana,Colombiana,Haitiana,Boliviana,Argentina,Ecuatoriana,Mexicana,Cubana,Dominicana,Puertorriqueña,Costarricense,Panameña,Guatemalteca,Salvadoreña,Hondureña,Nicaragüense,Uruguaya,Paraguaya,Brasileña,Española,Italiana,Francesa,Alemana,Portuguesa,Polaca,Rumana,Ucraniana,Rusa,Inglesa,Escocesa,Australiana,Neozelandesa'],
             'commune_id'     => ['sometimes','nullable','exists:geography_db.communes,id'],
             'assigned_agent' => ['sometimes','nullable','exists:traro_db.users,id'],
             'is_enabled'     => ['sometimes','boolean'],

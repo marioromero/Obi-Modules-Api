@@ -38,7 +38,7 @@ class StoreCustomerRequest extends FormRequest
             'gender'         => 'nullable|in:M,F',
             'marital_status' => 'required|in:Casada,Casado,Conviviente Civil,Divorciada,Divorciado,Separada,Separado,Soltera,Soltero,Unión Civil,Viuda,Viudo',
             'occupation'     => 'required|string|max:255',
-            'nationality'    => 'nullable|in:Chilena,Venezolana,Peruana,Argentina,Colombiana,Brasileña',
+            'nationality'    => 'nullable|in:Chilena,Venezolana,Peruana,Colombiana,Haitiana,Boliviana,Argentina,Ecuatoriana,Mexicana,Cubana,Dominicana,Puertorriqueña,Costarricense,Panameña,Guatemalteca,Salvadoreña,Hondureña,Nicaragüense,Uruguaya,Paraguaya,Brasileña,Española,Italiana,Francesa,Alemana,Portuguesa,Polaca,Rumana,Ucraniana,Rusa,Inglesa,Escocesa,Australiana,Neozelandesa',
             'is_enabled'     => ['sometimes','boolean'],
             'comments'       => 'nullable', 'string',
 
