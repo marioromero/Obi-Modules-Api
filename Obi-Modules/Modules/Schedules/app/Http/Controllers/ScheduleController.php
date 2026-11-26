@@ -237,11 +237,12 @@ class ScheduleController extends BaseApiController
 
         $requestId = $data['request_id'] ?? null;
         $caseId = (int) $caseId;
+        $casesTable = config('database.connections.cases_db.database').'.cases';
 
         try {
-            $detail = DB::connection($this->conn)->transaction(function () use ($caseId, $data) {
+            $detail = DB::connection($this->conn)->transaction(function () use ($caseId, $data, $casesTable) {
                 $caseExists = DB::connection($this->conn)
-                    ->table('grupoint_obi_cases.cases')
+                    ->table($casesTable)
                     ->where('id', $caseId)
                     ->exists();
 
@@ -432,8 +433,10 @@ class ScheduleController extends BaseApiController
             $caseUpdate['insurer_id'] = $data['insurer_id'];
         }
 
+        $casesTable = config('database.connections.cases_db.database').'.cases';
+
         DB::connection($this->conn)
-            ->table('grupoint_obi_cases.cases')
+            ->table($casesTable)
             ->where('id', $caseId)
             ->update($caseUpdate);
     }
