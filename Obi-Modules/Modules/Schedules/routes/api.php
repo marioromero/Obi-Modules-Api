@@ -20,6 +20,7 @@ Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy']);
 Route::get('schedule/{case}', [ScheduleController::class, 'indexScheduleByCaseId']);   // Listar programaciones por caso
 Route::post('schedule/{case}', [ScheduleController::class, 'save']);               // Crear o reprogramar
 Route::patch('schedule/{case}', [ScheduleController::class, 'updateSchedule']);    // Editar programación vigente
+Route::post('schedule/{case}/atomic', [ScheduleController::class, 'saveAtomic']);  // Programación + agenda del caso en una transacción
 
 // REST para ScheduleStatus
 Route::get('schedule-statuses', [ScheduleStatusController::class, 'index']);
