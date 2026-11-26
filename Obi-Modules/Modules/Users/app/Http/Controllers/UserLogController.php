@@ -309,11 +309,27 @@ public function logsByUser(int $userId): \Illuminate\Http\JsonResponse
             return $this->error('El parámetro eventId debe ser numérico y mayor a 0.', 422);
         }
 
-        $rows = DB::connection('users_db')
+        // Limitar la consulta: event_id=2 (update_case) tiene decenas de miles
+        // de filas y cargarlas completas agotaba la memoria del proceso.
+        $limit = (int) request()->integer('limit', 500);
+        $limit = max(1, min($limit, 2000));
+
+        $query = DB::connection('users_db')
             ->table('user_logs')
-            ->where('event_id', $eventId)
+            ->where('event_id', $eventId);
+
+        if ($from = request()->input('from')) {
+            $query->where('timestamp', '>=', $from);
+        }
+
+        if ($to = request()->input('to')) {
+            $query->where('timestamp', '<=', $to);
+        }
+
+        $rows = $query
             ->orderByDesc('timestamp')
             ->orderByDesc('id')
+            ->limit($limit)
             ->get();
 
         $map = $this->columnMap();
