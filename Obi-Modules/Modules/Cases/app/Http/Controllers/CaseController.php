@@ -2,6 +2,7 @@
 
 namespace Modules\Cases\app\Http\Controllers;
 
+use Modules\Cases\app\Http\Requests\RegisterBudgetSendingRequest;
 use Modules\Cases\app\Http\Requests\StoreCaseRequest;
 use Modules\Cases\app\Http\Requests\TransitionCaseRequest;
 use Modules\Cases\app\Http\Requests\UpdateCaseByCodeRequest;
@@ -739,6 +740,40 @@ public function transition(TransitionCaseRequest $req, CaseEntity $case)
         }
 
         return $this->success($detail, 'Caso obtenido correctamente', 200);
+    }
+
+    /**
+     * Registra la fecha de envío de presupuesto de un caso, buscándolo por su código.
+     * Pensado para integraciones externas (GPT / automatizaciones de envío de correos).
+     */
+    public function registerBudgetSendingDate(RegisterBudgetSendingRequest $request)
+    {
+        $data = $request->validated();
+        $code = strtoupper(trim($data['code']));
+
+        $case = CaseEntity::where('code', $code)->first();
+
+        if (! $case) {
+            return $this->error("Caso con código {$code} no encontrado", 404);
+        }
+
+        $case->budget_sending_date = $data['budget_sending_date']
+            ?? now('America/Santiago')->toDateString();
+
+        $case->save();
+
+        Log::info('cases.budget_sending_date.updated', [
+            'case_id'             => $case->id,
+            'code'                => $case->code,
+            'budget_sending_date' => $case->budget_sending_date,
+        ]);
+
+        return $this->success([
+            'id'                  => $case->id,
+            'code'                => $case->code,
+            'budget_sending_date' => $case->budget_sending_date,
+            'updated_at'          => $case->updated_at?->format('d/m/Y H:i:s'),
+        ], "Fecha de envío de presupuesto registrada para el caso {$case->code}", 200);
     }
 
     public function filterByPaymentDate(Request $request)

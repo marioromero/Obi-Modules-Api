@@ -66,6 +66,7 @@ Route::get('cases/{case}/comments', [CaseController::class, 'getCommentsByCaseId
 Route::post('cases/{case}/comments', [CaseController::class, 'StoreCommentForCase'])->whereNumber('case');
 Route::patch('cases/code/{code}', [CaseController::class, 'UpdateCaseByCode']);
 Route::get('cases/code/{code}', [CaseController::class, 'getCaseByCode']);
+Route::post('cases/budget-sending-date', [CaseController::class, 'registerBudgetSendingDate']);
 Route::get('cases/filter-by-payment-date', [CaseController::class, 'filterByPaymentDate']);
 Route::patch('cases/{case}/soft-delete', [CaseController::class, 'softDelete'])->whereNumber('case');
 Route::post('cases/{caseId}/refresh-cache', [CaseController::class, 'refreshCache']);
