@@ -47,6 +47,25 @@ return [
         'uf_series' => env('BCENTRAL_UF_SERIES', 'F073.UFF.PRE.Z.D'),
     ],
 
+    'uf' => [
+        // Días hacia atrás en que se acepta la última UF publicada para
+        // fines de semana/feriados. Evita repetir un valor viejo por semanas.
+        'lookback_days' => (int) env('UF_LOOKBACK_DAYS', 7),
+
+        // Fechas Y-m-d que deben tratarse como feriado sin publicación.
+        // Formato de UF_HOLIDAYS: 2026-01-01,2026-05-01,...
+        'holidays' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('UF_HOLIDAYS', ''))
+        ))),
+
+        // Cache por fecha. Segundos. 0 desactiva el cache correspondiente.
+        'cache_ttl_history' => (int) env('UF_CACHE_TTL_HISTORY', 86400),
+        'cache_ttl_recent' => (int) env('UF_CACHE_TTL_RECENT', 900),
+        'cache_ttl_last_published' => (int) env('UF_CACHE_TTL_LAST_PUBLISHED', 300),
+        'cache_ttl_error' => (int) env('UF_CACHE_TTL_ERROR', 30),
+    ],
+
     'trusted_internal_api_key' => env('TRUSTED_INTERNAL_API_KEY'),
 
 ];
