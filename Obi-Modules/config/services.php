@@ -64,6 +64,10 @@ return [
         'cache_ttl_recent' => (int) env('UF_CACHE_TTL_RECENT', 900),
         'cache_ttl_last_published' => (int) env('UF_CACHE_TTL_LAST_PUBLISHED', 300),
         'cache_ttl_error' => (int) env('UF_CACHE_TTL_ERROR', 30),
+
+        // Archivo histórico diario de UF (storage/app/private/...).
+        'history_enabled' => (bool) env('UF_HISTORY_ENABLED', true),
+        'history_path' => env('UF_HISTORY_PATH', 'uf/uf-history.json'),
     ],
 
     'trusted_internal_api_key' => env('TRUSTED_INTERNAL_API_KEY'),

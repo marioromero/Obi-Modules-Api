@@ -18,6 +18,7 @@ class UfServiceTest extends TestCase
 
         Cache::flush();
 
+        config()->set('services.uf.history_enabled', false);
         config()->set('services.bcentral.token', 'test-token');
         config()->set('services.mindicador.timeout', 5);
         config()->set('services.bcentral.timeout', 10);

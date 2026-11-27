@@ -19,7 +19,8 @@ class UfService
 
     public function __construct(
         private readonly MindicadorService $mindicadorService,
-        private readonly BancoCentralService $bancoCentralService
+        private readonly BancoCentralService $bancoCentralService,
+        private readonly UfHistoryService $ufHistoryService
     ) {}
 
     public function getCurrentUf(): ServiceResponseDTO
@@ -79,6 +80,7 @@ class UfService
                 'fecha' => $result['fecha'],
                 'fecha_valor' => $result['fecha_valor'],
                 'fuente' => $result['fuente'],
+                'origen' => $result['origen'] ?? 'api',
                 'ultima_publicada' => $result['ultima_publicada'],
             ];
         }
@@ -101,6 +103,12 @@ class UfService
             : Carbon::parse($date);
         $requested = $requested->copy()->startOfDay();
         $ymd = $requested->format('Y-m-d');
+
+        $history = $this->ufHistoryService->resolve($ymd);
+
+        if ($history !== null) {
+            return $history;
+        }
 
         $cacheKey = "uf:valor:v2:{$ymd}";
         $cached = Cache::get($cacheKey);
@@ -410,6 +418,7 @@ class UfService
             'fecha' => $ymd,
             'fecha_valor' => $valorFecha,
             'fuente' => $fuente,
+            'origen' => 'api',
             'ultima_publicada' => $ultimaPublicada,
         ];
     }

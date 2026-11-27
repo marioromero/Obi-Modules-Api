@@ -5,6 +5,7 @@ namespace Modules\Core\Providers;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
+use Modules\Core\app\Console\Commands\SyncUfHistory;
 
 class CoreServiceProvider extends ServiceProvider
 {
@@ -20,6 +21,12 @@ class CoreServiceProvider extends ServiceProvider
     public function boot(): void
     {
         parent::boot();
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                SyncUfHistory::class,
+            ]);
+        }
     }
 
     /**

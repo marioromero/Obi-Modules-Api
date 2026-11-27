@@ -87,4 +87,95 @@ class BancoCentralService
             "UF para el {$ymd} (Banco Central)"
         );
     }
+
+    /**
+     * Obtiene todas las observaciones de UF en un rango de fechas.
+     *
+     * @return ServiceResponseDTO data = [['fecha' => 'Y-m-d', 'valor' => float], ...]
+     */
+    public function getUfRange(\DateTimeInterface|string $from, \DateTimeInterface|string $to): ServiceResponseDTO
+    {
+        $fromDate = $from instanceof \DateTimeInterface ? Carbon::instance($from) : Carbon::parse($from);
+        $toDate = $to instanceof \DateTimeInterface ? Carbon::instance($to) : Carbon::parse($to);
+
+        if ($fromDate->gt($toDate)) {
+            return ServiceResponseDTO::fail('Rango de fechas inválido', 400);
+        }
+
+        $query = http_build_query([
+            'token' => $this->token,
+            'function' => 'GetSeries',
+            'timeseries' => $this->ufSeries,
+            'firstdate' => $fromDate->format('Y-m-d'),
+            'lastdate' => $toDate->format('Y-m-d'),
+        ]);
+        $url = "{$this->base}?{$query}";
+
+        $response = $this->handler->fetchJson(
+            $url,
+            'Series.Obs',
+            "UF desde {$fromDate->format('Y-m-d')} hasta {$toDate->format('Y-m-d')}",
+            $this->timeout
+        );
+
+        if (! $response->success) {
+            return $response;
+        }
+
+        if (empty($response->data) || ! is_array($response->data)) {
+            return ServiceResponseDTO::fail(
+                "No hay datos de UF entre {$fromDate->format('Y-m-d')} y {$toDate->format('Y-m-d')}",
+                404
+            );
+        }
+
+        $observations = [];
+
+        foreach ($response->data as $item) {
+            if (! is_array($item) || ! isset($item['value']) || ! is_numeric($item['value'])) {
+                continue;
+            }
+
+            $date = $this->normalizeDate($item['indexDateString'] ?? null);
+
+            if ($date === null) {
+                continue;
+            }
+
+            $observations[$date] = [
+                'fecha' => $date,
+                'valor' => (float) $item['value'],
+            ];
+        }
+
+        if (empty($observations)) {
+            return ServiceResponseDTO::fail(
+                "No hay datos de UF entre {$fromDate->format('Y-m-d')} y {$toDate->format('Y-m-d')}",
+                404
+            );
+        }
+
+        ksort($observations);
+
+        return ServiceResponseDTO::ok(array_values($observations));
+    }
+
+    private function normalizeDate(?string $value): ?string
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $value = trim($value);
+
+        try {
+            if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $value) === 1) {
+                return Carbon::createFromFormat('d-m-Y', $value)->format('Y-m-d');
+            }
+
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
 }
