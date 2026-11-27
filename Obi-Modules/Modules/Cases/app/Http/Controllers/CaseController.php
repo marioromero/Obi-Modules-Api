@@ -743,7 +743,8 @@ public function transition(TransitionCaseRequest $req, CaseEntity $case)
     }
 
     /**
-     * Registra la fecha de envío de presupuesto de un caso, buscándolo por su código.
+     * Registra la fecha de envío de presupuesto de un caso, buscándolo por su código,
+     * y avanza el estado global de Presupuesto a Liquidación.
      * Pensado para integraciones externas (GPT / automatizaciones de envío de correos).
      */
     public function registerBudgetSendingDate(RegisterBudgetSendingRequest $request)
@@ -757,23 +758,63 @@ public function transition(TransitionCaseRequest $req, CaseEntity $case)
             return $this->error("Caso con código {$code} no encontrado", 404);
         }
 
-        $case->budget_sending_date = $data['budget_sending_date']
+        $stateBefore = class_basename($case->state::class);
+
+        if (! in_array($stateBefore, ['Presupuesto', 'Liquidacion'], true)) {
+            return $this->error(
+                "El caso {$code} está en estado {$stateBefore}; se esperaba Presupuesto o Liquidacion",
+                409
+            );
+        }
+
+        $budgetSendingDate = $data['budget_sending_date']
             ?? now('America/Santiago')->toDateString();
 
-        $case->save();
+        $transitioned = false;
+
+        try {
+            $case = DB::connection('cases_db')->transaction(function () use ($case, $budgetSendingDate, $stateBefore, &$transitioned) {
+                $case->budget_sending_date = $budgetSendingDate;
+                $case->save();
+
+                if ($stateBefore === 'Presupuesto') {
+                    $case = app(CaseTransitionService::class)->transition(
+                        $case,
+                        'Liquidacion',
+                        'Presupuesto enviado (integración externa)'
+                    );
+                    $transitioned = true;
+                }
+
+                return $case;
+            });
+        } catch (ValidationException $e) {
+            return $this->error($e->getMessage(), 409);
+        }
 
         Log::info('cases.budget_sending_date.updated', [
             'case_id'             => $case->id,
             'code'                => $case->code,
             'budget_sending_date' => $case->budget_sending_date,
+            'from_state'          => $stateBefore,
+            'to_state'            => class_basename($case->state::class),
+            'transitioned'        => $transitioned,
         ]);
+
+        $stateAfter = class_basename($case->state::class);
+
+        $message = $transitioned
+            ? "Fecha de envío de presupuesto registrada y caso {$case->code} pasado a Liquidación"
+            : "Fecha de envío de presupuesto actualizada para el caso {$case->code} (ya estaba en Liquidación)";
 
         return $this->success([
             'id'                  => $case->id,
             'code'                => $case->code,
             'budget_sending_date' => $case->budget_sending_date,
+            'state'               => $stateAfter,
+            'transitioned'        => $transitioned,
             'updated_at'          => $case->updated_at?->format('d/m/Y H:i:s'),
-        ], "Fecha de envío de presupuesto registrada para el caso {$case->code}", 200);
+        ], $message, 200);
     }
 
     public function filterByPaymentDate(Request $request)
